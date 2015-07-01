@@ -1,0 +1,8 @@
+.reveal table th, .reveal table td {
+    text-align: center;
+    border: 1px solid white;
+}
+#sec-title-slide h1 {
+  font-size: 2.5em; }
+}
+
