@@ -1,0 +1,31 @@
+name: github pages
+
+on:
+  push:
+    branches:
+      - source # 确保这里是您存放源代码的分支
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest # 更新为使用最新的 Ubuntu 运行环境
+
+    steps:
+      - uses: actions/checkout@v2 # 更新为推荐的 v2 版本
+        with:
+          submodules: 'recursive' # 这将自动检出子模块
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v2
+        with:
+          hugo-version: 'latest'
+          extended: true
+
+      - name: Build
+        run: hugo --gc --minify --cleanDestinationDir
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+          publish_dir: ./public
+          publish_branch: master # 确保这是您的 GitHub Pages 托管分支
