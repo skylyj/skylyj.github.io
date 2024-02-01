@@ -1,19 +1,11 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>My New Hugo Site</title>
-    <link>https://example.org/</link>
-    <description>Recent content on My New Hugo Site</description>
+    <title>连博讲AI</title>
+    <link>https://skylyj.github.io/</link>
+    <description>Recent content on 连博讲AI</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 01 Feb 2024 16:46:50 +0800</lastBuildDate>
-    <atom:link href="https://example.org/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>我的第一篇博客</title>
-      <link>https://example.org/posts/2024/02/first_blog/</link>
-      <pubDate>Thu, 01 Feb 2024 16:41:00 +0800</pubDate>
-      <guid>https://example.org/posts/2024/02/first_blog/</guid>
-      <description>This is My first Blog how are you</description>
-    </item>
+    <atom:link href="https://skylyj.github.io/index.xml" rel="self" type="application/rss+xml" />
   </channel>
 </rss>
