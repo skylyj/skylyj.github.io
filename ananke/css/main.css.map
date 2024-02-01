@@ -1,7 +1,7 @@
 {
 	"version": 3,
 	"file": "main.css",
-	"sourceRoot": "/Users/lianyijiang/Github/PrivateHub/Blog/quickstart",
+	"sourceRoot": "/home/runner/work/skylyj.github.io/skylyj.github.io",
 	"sources": [
 		"ananke/css/main.css"
 	],
