@@ -20,7 +20,7 @@ jobs:
           repository: skylyj/conf_org
           token: ${{ secrets.ACCESS_TOKEN }}
           path: temp_config
-          ref: master # 或者是你存放hugo.toml的分支
+          ref: master # 或者是你存放hugo.toml的分支 
 
       - name: Copy hugo.toml to the current directory
         run: cp temp_config/hugo.toml ./
