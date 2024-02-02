@@ -7,7 +7,7 @@
 ### 主要内容 {#主要内容}
 
 -   参考
-    -   2017. (引用 106576)
+    -   2017. (引用 106576) Attention is All Your Need
         (<a href="#citeproc_bib_item_2">Vaswani et al. 2023</a>)
     -   2020. (引用 975)
         Fast Autoregressive Transformers with Linear Attention
