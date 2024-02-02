@@ -7,6 +7,7 @@
 #+author: 
 #+hugo_custom_front_matter: :author "连义江"
 #+bibliography: /Users/lianyijiang/llm.bib
+#+cite_export: csl
 
 * DONE 深入理解transformer                 :transformer:大模型:matrix:@大模型:
 :PROPERTIES:
@@ -16,5 +17,6 @@
 :EXPORT_HUGO_BUNDLE: 2024/02/transformer
 :END:
 #+INCLUDE: "./itransformer.org" :minlevel 2 :lines "1-"
+
 ** 参考论文
 [[bibliography:/Users/lianyijiang/llm.bib]]

@@ -2,7 +2,7 @@
 * transformer背景
 ** 主要内容
 - 参考
-  + 2017. (引用 106576)
+  + 2017. (引用 106576) Attention is All Your Need
      [[cite:&vaswaniAttentionAllYou2023]]
   + 2020. (引用 975)
      Fast Autoregressive Transformers with Linear Attention
