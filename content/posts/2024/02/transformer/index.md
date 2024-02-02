@@ -2,26 +2,23 @@
 title: "深入理解transformer"
 description: "Whole hugo blog in plain text!"
 date: 2024-02-01
-lastmod: 2024-02-02T13:10:59+08:00
-tags: ["transformer", "llm", "matrix"]
-categories: ["llm"]
+lastmod: 2024-02-02T16:36:24+08:00
+tags: ["transformer", "大模型", "matrix"]
+categories: ["大模型"]
 draft: false
 weight: 1001
 toc: true
 author: "连义江"
 ---
 
-\#+BEGIN_line3
-
-
-## transformer背景 {#background}
+## transformer背景 {#transformer背景}
 
 
 ### 主要内容 {#主要内容}
 
 -   参考
     -   2017. (引用 106576)
-        Attention Is All You Need
+        (<a href="#citeproc_bib_item_1">Vaswani et al. 2023</a>)
     -   2020. (引用 975)
         Fast Autoregressive Transformers with Linear Attention
     -   [mingpt by karpathy](https://github.com/karpathy/minGPT/tree/master/mingpt)
@@ -293,7 +290,7 @@ focus到 encoder部分来理解transformer
         -   再施加若干非线性变换
 
 
-## tranformer网络结构 {#network}
+## tranformer网络结构 {#tranformer网络结构}
 
 
 ### 基于KV查询的相似性计算 {#基于kv查询的相似性计算}
@@ -755,4 +752,9 @@ class Block(nn.Module):
 
 -   positional embedding
 
-\#+END_line3
+
+## 参考论文 {#参考论文}
+
+<style>.csl-entry{text-indent: -1.5em; margin-left: 1.5em;}</style><div class="csl-bib-body">
+  <div class="csl-entry"><a id="citeproc_bib_item_1"></a>Vaswani, Ashish, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Lukasz Kaiser, and Illia Polosukhin. 2023. “Attention Is All You Need.” arXiv. <a href="https://arxiv.org/abs/1706.03762">https://arxiv.org/abs/1706.03762</a>.</div>
+</div>
