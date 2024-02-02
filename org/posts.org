@@ -16,7 +16,6 @@
 :EXPORT_DESCRIPTION: Whole hugo blog in plain text!
 :EXPORT_HUGO_BUNDLE: 2024/02/transformer
 :END:
-#+INCLUDE: "./itransformer.org" :minlevel 2 :lines "1-"
-
+#+INCLUDE: "./transformer.org" :minlevel 2 :lines "1-"
 ** 参考论文
 [[bibliography:/Users/lianyijiang/llm.bib]]

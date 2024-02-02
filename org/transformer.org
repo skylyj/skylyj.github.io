@@ -1,22 +1,12 @@
-#+OPTIONS: author:nil ^:{}
-#+hugo_front_matter_format: yaml
-#+HUGO_BASE_DIR: ../
-#+HUGO_SECTION: posts/2024/02
-#+DATE: [2024-02-01 四 20:06]
-#+HUGO_CUSTOM_FRONT_MATTER: :toc true
-#+HUGO_AUTO_SET_LASTMOD: t
-#+HUGO_TAGS: 
-#+HUGO_CATEGORIES: 
-#+HUGO_DRAFT: false
-#+TITLE: 理解transformer
-#+HTML_HEAD_EXTRA: <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+#+TITLE: 深入理解transformer
 * transformer背景
 ** 主要内容
 - 参考
-  + 2017. (引用 106576)
-     Attention Is All You Need
+  + 2017. (引用 106576) Attention is All Your Need
+     [[cite:&vaswaniAttentionAllYou2023]]
   + 2020. (引用 975)
      Fast Autoregressive Transformers with Linear Attention
+     [[cite:&katharopoulosTransformersAreRNNs2020]]
   + [[https://github.com/karpathy/minGPT/tree/master/mingpt][mingpt by karpathy]]
 - 主要内容
   + transformer 的设计推演
@@ -54,9 +44,9 @@
 $tokens=\begin{pmatrix}
    hello \\
    world \\
-   <pad> \\
-   <pad> \\
-   <pad> 
+   pad \\
+   pad \\
+   pad 
    \end{pmatrix} 
    \rightarrow X=\begin{pmatrix}
    [0.59, 0.20, 0.04, 0.96] \\
@@ -90,7 +80,7 @@ $tokens=\begin{pmatrix}
   \mathcal{A}(X_N) 
   \end{pmatrix}=\mathcal{A}(X)$
 - 代码对应于 nn.Linear
-#+begin_src python :results output
+#+begin_src python -n :results output
   import torch
   import torch.nn as nn
   F = 6
@@ -102,47 +92,38 @@ $tokens=\begin{pmatrix}
 #+end_src   
 - 算子是对矩阵乘法的一种物理理解
   + 旋转矩阵
+     
      $R(\theta)=\begin{pmatrix}
         cos\theta& sin\theta\\
-        -sin\theta& cos\theta\\\end{pmatrix}$
+        -sin\theta& cos\theta
+        \end{pmatrix}$
   + 缩放变换
+     
      $R(\lambda_1,\lambda_2)=\begin{pmatrix} \lambda_1 & \\
-        & \lambda_2 \\ \end{pmatrix}$
+        & \lambda_2  \end{pmatrix}$
 
 
 *** transformer中的$QK^{T}V$
 
 - $S=QK^T$ = 行向量两两计算点积相似性
-$\begin{pmatrix}
-Q_{1}\\
-Q_{2}\\
-\vdots\\
-Q_N
-\end{pmatrix}
-\begin{pmatrix}
-K_{1}^T, K_2^T,\ldots,K_N^T\\
-\end{pmatrix}=(Q_{i}K_j^T)_{ij}=S$
+   
+    $\begin{pmatrix}
+    Q_{1}\\
+    Q_{2}\\
+    \vdots\\
+    Q_N
+    \end{pmatrix}
+    \begin{pmatrix}
+    K_{1}^T, K_2^T,\ldots,K_N^T
+    \end{pmatrix}=(Q_{i}K_j^T)_{ij}=S$
 
 - $SV$ = 对行向量做加权求和
-$\begin{pmatrix}
-S_{11},S_{12},\ldots, S_{1N}\\
-S_{21},S_{22},\ldots, S_{2N}\\
-\vdots\\
-S_{N1},S_{N2},\ldots, S_{NN}\\
-\end{pmatrix}
-\begin{pmatrix}
-Q_{1}\\
-Q_{2}\\
-\vdots\\
-Q_N
-\end{pmatrix}
-=(Q_{i}K_j^T)_{ij}=S$
-
+   
 *** 代码
 - pytorch/tensorflow中的代码都是按照作用于行向量来组织的
 - nn.Linear 作用于行向量
 - nn.Embedding 按照行向量来组织数据
-#+begin_src python :results output
+#+begin_src python -n :results output
   import torch
   import torch.nn as nn
   N = 3
@@ -208,11 +189,11 @@ focus到 encoder部分来理解transformer
      $Y=\mathcal{T}_{L}\circ \mathcal{T}_{L-1}\circ \ldots \circ \mathcal{T}_{1}(X)$
 
 ** 核心的问题
-*** 问题
+**** 问题
 如何设计 $Y_{i}=f(X_{1}, X_2, \ldots, X_{N})$
 - $Y_{1}, \ldots, Y_N$ 能否并行得到
 - $Y_{i}$ 能否高效的建立起远程的依赖
-*** RNN
+**** RNN
 #+DOWNLOADED: screenshot @ 2024-01-18 14:03:26
 #+ATTR_HTML: :width 600px :align middle
 [[file:images/2024-01-18_14-03-26_screenshot.png]]
@@ -221,7 +202,7 @@ focus到 encoder部分来理解transformer
 - $Y_{i}=tanh(X_{i}W + Y_{i-1}U)$
 - 串行
 - 单方向的依赖关系，间接
-*** CNN
+**** CNN
 #+DOWNLOADED: screenshot @ 2024-01-18 14:04:23
 #+ATTR_HTML: :width 600px :align middle
 [[file:images/2024-01-18_14-04-23_screenshot.png]]
@@ -230,7 +211,7 @@ focus到 encoder部分来理解transformer
 - 并行
 - 长距离依赖？
    + 一层卷积只能依赖于当前窗口内，不能对窗口外的形成依赖。
-*** transformer思路
+**** transformer思路
 设计$Y_{i}=f(X_{1}, X_2, \ldots, X_{N})$，使得
 - 使得 $Y_{1},\ldots, Y_N$ 可以做并行计算
 - 同时解决长距离依赖的问题
@@ -242,21 +223,23 @@ focus到 encoder部分来理解transformer
 $Y=\mathcal{F}\circ \mathcal{A}(X)$ 做两次矩阵的变换
 - $Y=\mathcal{A}(X)$    MultiHead Attention
   + 高阶的语义等于对 /全部/ 的低阶语义向量基于 /相似性(Attention)/ 做 /加权平均/
-  + $$\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(X_i,X_j) X_j}{\sum_{j=1}^N sim(X_i,X_j)} \\\end{aligned}$$
+  + $$\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(X_i,X_j) X_j}{\sum_{j=1}^N sim(X_i,X_j)} \end{aligned}$$
   + attention = 相似性
     
 - $Y'=\mathcal{F}(Y)$  Position-wise Feedforward
   + 再施加若干非线性变换
+
 * tranformer网络结构
 ** 基于KV查询的相似性计算
-$$\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(X_i,X_j) X_j}{\sum_{j=1}^N sim(X_i,X_j)} \\\end{aligned}$$
+$$\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(X_i,X_j) X_j}{\sum_{j=1}^N sim(X_i,X_j)} \end{aligned}$$
 *** 如何来定义相似性
 - $sim(X_{i}, X_j)= \mathrm{exp}(\dfrac{X_i X_{j}^T}{\sqrt{D}})$
 - 所有的正的kernel函数都可以
 *** 直接计算相似性？
 - 参数太少
 - 投影到别的空间来计算相似度   $X_{i}\rightarrow X_iW$
-   $$\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(X_iW_1,X_jW_{2}) X_jW_3}{\sum_{j=1}^N sim(X_iW_1,X_jW_2)} \\\end{aligned}$$
+   
+   $$\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(X_iW_1,X_jW_{2}) X_jW_3}{\sum_{j=1}^N sim(X_iW_1,X_jW_2)} \end{aligned}$$
 
 *** 基于KV查询理解
 - 把$X_i$ 投影出三个向量 $Q_i,K_i,V_i$
@@ -279,14 +262,18 @@ $$\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(X_i,X_j) X_j}{\su
    \vdots\\
    sim(Q_i,K_N)V_N
    \end{pmatrix}\Rightarrow\sum_{j=1}^N sim(Q_i,K_j)V_j$
-- $$\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(Q_i,K_j) V_j}{\sum_{j=1}^N sim(Q_i,K_j)} \\\end{aligned}$$
+- $\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(Q_i,K_j) V_j}{\sum_{j=1}^N sim(Q_i,K_j)} \end{aligned}$
 - 参数： 对应于$Q,K,V$ 产生了三个投影矩阵矩阵 $W_{Q}, W_K,W_V$
 ** 在一个低维空间做attention
 *** 单个头的attention
 - 把$X_{i}$ 从$F$ 维空间投影到$D$ 维空间
+   
    $W_{Q}\in R^{F\times D}, W_K\in R^{F\times D}, W_{V} \in R^{F\times M}$
-   $Q_i &= X_iW_{Q}, \quad  K_i &= X_iW_{K}, \quad  V_i &= X_iW_{V}$
+ 
+   $Q_i = X_iW_{Q}, \quad  K_i = X_iW_{K}, \quad  V_i = X_iW_{V}$
+   
 - $Q_i$ 和所有的$K_j$ 做基于点积的相似度计算，
+   
    这里简单起见，我们省略掉了scaling $\frac{1}{\sqrt{D}}$
    
    $Q_iK^{T}=Q_i(K^T_1, \ldots, K^T_N)=(Q_iK^T_1, \ldots, Q_iK^T_N)$
@@ -297,8 +284,10 @@ $$\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(X_i,X_j) X_j}{\su
    $s_{i,j}= \dfrac{exp(Q_iK_j^T)}{\sum_{j=1}^N exp(Q_iK_j^T)}$
 
 - 加权平均
-   $\mathcal{A}(X_i)=\sum_{j=1}^Ns_jV_j=(s_{i1},\ldots, s_{iN})\begin{pmatrix}V_1\\V_2\\\vdots\\V_N\end{pmatrix}$
-   $\mathcal{A}(X_i) &= \mathrm{soft}(Q_iK^{T})V = \mathrm{soft}(X_iW_QW_K^TX^T)XW_V$
+   
+   $\mathcal{A}(X_i)=\sum_{j=1}^Ns_jV_j=(s_{i1},\ldots, s_{iN})\begin{pmatrix}V_1 \\ V_2 \\ \vdots \\V_N\end{pmatrix}$
+   
+   $\mathcal{A}(X_i) = \mathrm{soft}(Q_iK^{T})V = \mathrm{soft}(X_iW_QW_K^TX^T)XW_V$
 *** 矩阵表达
 $$\begin{aligned}Y&=\mathcal{A}(X)=\begin{pmatrix}
 \mathcal{A}(X_1)\\
@@ -354,8 +343,8 @@ Multi-head attention allows the model to jointly attend to information from diff
   + 假设有$H$ 个头，每个头作用的低维空间维度是$D$
   + $D\times H = F$
 - 对$H$ 个 $D$ 行向量拼接
-   $W_O\in R^{F\times F}$
-   $\mathcal{A}(X) = \mathrm{concat}(\mathcal{A}^1(X), \mathcal{A}^2(X), \ldots, \mathcal{A}^{H}(X) W_O$
+   
+   $W_O\in R^{F\times F}\\ \mathcal{A}(X) = \mathrm{concat}(\mathcal{A}^1(X), \mathcal{A}^2(X), \ldots, \mathcal{A}^{H}(X) W_O$
 - 或者对前面的符号简化
   + 在第$j$ 个子空间做单头注意力 $Y^{j}=sim(Q^{j}, K^{j})V^{j}$
   + 合并 $Y=(Y^{1},\ldots, Y^H)$   
@@ -585,5 +574,26 @@ $\mathcal{A}(X_i)=\dfrac{\sum_{j=1}^{N} sim(Q_i,K_j) V_j}{\sum_{j=1}^N sim(Q_i,K
   + <cls> 从 北京 到 上海 的 火车票
   + <cls> 从 上海 到 北京 的 火车票
 - 计算的复杂度是序列长度平方
+** 总结
+*** 核心的问题：语义向量序列变换
+  $\mathcal{T}\begin{pmatrix}
+   X_1\\
+   X_2\\
+   \vdots\\
+   X_N
+   \end{pmatrix}
+   \rightarrow\begin{pmatrix}
+   Y_1\\
+   Y_2\\
+   \vdots\\
+   Y_N
+   \end{pmatrix}$
+*** 思路
+- $$\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(X_i,X_j) X_j}{\sum_{j=1}^N sim(X_i,X_j)} \end{aligned}$$
+
+- $$\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(X_iW_1,X_jW_{2}) X_jW_3}{\sum_{j=1}^N sim(X_iW_1,X_jW_2)} \end{aligned}$$
+   
+- $\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(Q_i,K_j) V_j}{\sum_{j=1}^N sim(Q_i,K_j)} \end{aligned}$
+   
 ** 下期内容预告
 - positional embedding

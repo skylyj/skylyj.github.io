@@ -2,7 +2,7 @@
 title: "深入理解transformer"
 description: "Whole hugo blog in plain text!"
 date: 2024-02-01
-lastmod: 2024-02-02T17:21:27+08:00
+lastmod: 2024-02-02T19:21:48+08:00
 tags: ["transformer", "大模型", "matrix"]
 categories: ["大模型"]
 draft: false
@@ -335,7 +335,7 @@ focus到 encoder部分来理解transformer
            \vdots\\\\
            sim(Q\_i,K\_N)V\_N
            \end{pmatrix}\Rightarrow\sum\_{j=1}^N sim(Q\_i,K\_j)V\_j\\)
--   \\[\begin{aligned}\mathcal{A}(X\_i) &=  \frac{\sum\_{j=1}^{N} sim(Q\_i,K\_j) V\_j}{\sum\_{j=1}^N sim(Q\_i,K\_j)} \end{aligned}\\]
+-   \\(\begin{aligned}\mathcal{A}(X\_i) &=  \frac{\sum\_{j=1}^{N} sim(Q\_i,K\_j) V\_j}{\sum\_{j=1}^N sim(Q\_i,K\_j)} \end{aligned}\\)
 -   参数： 对应于\\(Q,K,V\\) 产生了三个投影矩阵矩阵 \\(W\_{Q}, W\_K,W\_V\\)
 
 
@@ -436,8 +436,8 @@ class SingleHeadAttention(nn.Module):
     -   假设有\\(H\\) 个头，每个头作用的低维空间维度是\\(D\\)
     -   \\(D\times H = F\\)
 -   对\\(H\\) 个 \\(D\\) 行向量拼接
-    \\(W\_O\in R^{F\times F}\\)
-    \\(\mathcal{A}(X) = \mathrm{concat}(\mathcal{A}^1(X), \mathcal{A}^2(X), \ldots, \mathcal{A}^{H}(X) W\_O\\)
+
+    \\(W\_O\in R^{F\times F}\\\ \mathcal{A}(X) = \mathrm{concat}(\mathcal{A}^1(X), \mathcal{A}^2(X), \ldots, \mathcal{A}^{H}(X) W\_O\\)
 -   或者对前面的符号简化
     -   在第\\(j\\) 个子空间做单头注意力 \\(Y^{j}=sim(Q^{j}, K^{j})V^{j}\\)
     -   合并 \\(Y=(Y^{1},\ldots, Y^H)\\)
