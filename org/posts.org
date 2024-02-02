@@ -6,11 +6,11 @@
 #+hugo_auto_set_lastmod: t
 #+author:
 #+hugo_custom_front_matter: :author "连义江"
-* DONE 深入理解transformer                       :transformer:llm:matrix:@llm:
+* DONE 深入理解transformer                 :transformer:大模型:matrix:@大模型:
 :PROPERTIES:
 :EXPORT_FILE_NAME: index
 :EXPORT_DATE: 2024-02-01
 :EXPORT_DESCRIPTION: Whole hugo blog in plain text!
 :EXPORT_HUGO_BUNDLE: 2024/02/transformer
 :END:
-#+INCLUDE: "./itransformer.org" :minlevel 2 :line3 "-1"
+#+INCLUDE: "./itransformer.org" :minlevel 2 :line3 "-2"

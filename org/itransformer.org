@@ -1,12 +1,11 @@
 #+TITLE: 深入理解transformer
+#+AUTHOR: 连义江
 * transformer背景
-:PROPERTIES:
-:CUSTOM_ID: background
-:END:
 ** 主要内容
 - 参考
   + 2017. (引用 106576)
      Attention Is All You Need
+     
   + 2020. (引用 975)
      Fast Autoregressive Transformers with Linear Attention
   + [[https://github.com/karpathy/minGPT/tree/master/mingpt][mingpt by karpathy]]
@@ -231,11 +230,7 @@ $Y=\mathcal{F}\circ \mathcal{A}(X)$ 做两次矩阵的变换
 - $Y'=\mathcal{F}(Y)$  Position-wise Feedforward
   + 再施加若干非线性变换
 
-
 * tranformer网络结构
-:PROPERTIES:
-:CUSTOM_ID: network
-:END:
 ** 基于KV查询的相似性计算
 $$\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(X_i,X_j) X_j}{\sum_{j=1}^N sim(X_i,X_j)} \end{aligned}$$
 *** 如何来定义相似性

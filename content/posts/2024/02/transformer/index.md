@@ -2,7 +2,7 @@
 title: "深入理解transformer"
 description: "Whole hugo blog in plain text!"
 date: 2024-02-01
-lastmod: 2024-02-02T11:19:25+08:00
+lastmod: 2024-02-02T13:10:59+08:00
 tags: ["transformer", "llm", "matrix"]
 categories: ["llm"]
 draft: false
