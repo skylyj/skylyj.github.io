@@ -14,6 +14,17 @@ jobs:
         with:
           submodules: 'recursive' # 这将自动检出子模块
 
+      - name: Checkout hugo.yaml from the config repository
+        uses: actions/checkout@v2
+        with:
+          repository: skylyj/conf_org
+          token: ${{ secrets.CONF_REPO_KEY }}
+          path: temp_config
+          ref: master # 或者是你存放hugo.yaml的分支
+
+      - name: Copy hugo.yaml to the current directory
+        run: cp temp_config/hugo.yaml ./
+        
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v2
         with:
