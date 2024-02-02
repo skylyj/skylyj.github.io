@@ -6,6 +6,7 @@
      [[cite:&vaswaniAttentionAllYou2023]]
   + 2020. (引用 975)
      Fast Autoregressive Transformers with Linear Attention
+     [[cite:&katharopoulosTransformersAreRNNs2020]]
   + [[https://github.com/karpathy/minGPT/tree/master/mingpt][mingpt by karpathy]]
 - 主要内容
   + transformer 的设计推演

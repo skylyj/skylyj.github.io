@@ -4,7 +4,7 @@
 #+hugo_front_matter_format: yaml
 #+hugo_weight: auto
 #+hugo_auto_set_lastmod: t
-#+author:
+#+author: 
 #+hugo_custom_front_matter: :author "连义江"
 #+bibliography: /Users/lianyijiang/llm.bib
 
