@@ -1,0 +1,379 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=robots content="noodp"><title>深入理解transformer - 连义江的博客</title><meta name=Description content="Whole hugo blog in plain text!"><meta property="og:title" content="深入理解transformer">
+<meta property="og:description" content="Whole hugo blog in plain text!"><meta property="og:type" content="article"><meta property="og:url" content="https://skylyj.github.io/transformer/"><meta property="og:image" content="https://skylyj.github.io/logo.png"><meta property="article:section" content="posts"><meta property="article:published_time" content="2024-02-01T00:00:00+00:00"><meta property="article:modified_time" content="2024-02-02T12:31:31+08:00"><meta property="og:site_name" content="连义江的博客"><meta name=twitter:card content="summary_large_image"><meta name=twitter:image content="https://skylyj.github.io/logo.png"><meta name=twitter:title content="深入理解transformer"><meta name=twitter:description content="Whole hugo blog in plain text!"><meta name=twitter:site content="@xxxx"><meta name=application-name content="LoveIt"><meta name=apple-mobile-web-app-title content="LoveIt"><meta name=theme-color content="#ffffff"><meta name=msapplication-TileColor content="#da532c"><link rel="shortcut icon" type=image/x-icon href=/favicon.ico><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><link rel=manifest href=/site.webmanifest><link rel=canonical href=https://skylyj.github.io/transformer/><link rel=stylesheet href=/css/style.min.css><link rel=preload href=https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.1.1/css/all.min.css as=style onload='this.onload=null,this.rel="stylesheet"'><noscript><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.1.1/css/all.min.css></noscript><link rel=preload href=https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css as=style onload='this.onload=null,this.rel="stylesheet"'><noscript><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css></noscript><script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","headline":"深入理解transformer","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/skylyj.github.io\/transformer\/"},"image":["https:\/\/skylyj.github.io\/images\/Apple-Devices-Preview.png"],"genre":"posts","keywords":"transformer, llm, matrix","wordcount":1337,"url":"https:\/\/skylyj.github.io\/transformer\/","datePublished":"2024-02-01T00:00:00+00:00","dateModified":"2024-02-02T12:31:31+08:00","license":"This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher":{"@type":"Organization","name":"xxxx","logo":"https:\/\/skylyj.github.io\/images\/avatar.png"},"author":{"@type":"Person","name":"连义江"},"description":"Whole hugo blog in plain text!"}</script></head><body data-header-desktop=fixed data-header-mobile=auto><script type=text/javascript>(window.localStorage&&localStorage.getItem("theme")?localStorage.getItem("theme")==="dark":"auto"==="auto"?window.matchMedia("(prefers-color-scheme: dark)").matches:"auto"==="dark")&&document.body.setAttribute("theme","dark")</script><div id=mask></div><div class=wrapper><header class=desktop id=header-desktop><div class=header-wrapper><div class=header-title><a href=/ title=连义江的博客><span class=header-title-pre><i class='far fa-kiss-wink-heart fa-fw' aria-hidden=true></i></span>连博讲AI</a></div><div class=menu><div class=menu-inner><a class=menu-item href=/posts/>Posts </a><a class=menu-item href=/tags/>Tags </a><a class=menu-item href=/categories/>Categories </a><a class=menu-item href=/categories/documentation/>Docs </a><a class=menu-item href=/about/>About </a><a class=menu-item href=https://github.com/dillonzq/LoveIt title=GitHub rel="noopener noreffer" target=_blank><i class='fab fa-github fa-fw' aria-hidden=true></i> </a><span class="menu-item delimiter"></span><span class="menu-item search" id=search-desktop>
+<input type=text placeholder="Search titles or contents..." id=search-input-desktop>
+<a href=javascript:void(0); class="search-button search-toggle" id=search-toggle-desktop title=Search><i class="fas fa-search fa-fw" aria-hidden=true></i>
+</a><a href=javascript:void(0); class="search-button search-clear" id=search-clear-desktop title=Clear><i class="fas fa-times-circle fa-fw" aria-hidden=true></i>
+</a><span class="search-button search-loading" id=search-loading-desktop><i class="fas fa-spinner fa-fw fa-spin" aria-hidden=true></i>
+</span></span><a href=javascript:void(0); class="menu-item theme-switch" title="Switch Theme"><i class="fas fa-adjust fa-fw" aria-hidden=true></i>
+</a><a href=javascript:void(0); class="menu-item language" title="Select Language"><i class="fa fa-globe" aria-hidden=true></i>
+<select class=language-select id=language-select-desktop onchange="location=this.value"><option value=/transformer/ selected>English</option></select></a></div></div></div></header><header class=mobile id=header-mobile><div class=header-container><div class=header-wrapper><div class=header-title><a href=/ title=连义江的博客><span class=header-title-pre><i class='far fa-kiss-wink-heart fa-fw' aria-hidden=true></i></span>连博讲AI</a></div><div class=menu-toggle id=menu-toggle-mobile><span></span><span></span><span></span></div></div><div class=menu id=menu-mobile><div class=search-wrapper><div class="search mobile" id=search-mobile><input type=text placeholder="Search titles or contents..." id=search-input-mobile>
+<a href=javascript:void(0); class="search-button search-toggle" id=search-toggle-mobile title=Search><i class="fas fa-search fa-fw" aria-hidden=true></i>
+</a><a href=javascript:void(0); class="search-button search-clear" id=search-clear-mobile title=Clear><i class="fas fa-times-circle fa-fw" aria-hidden=true></i>
+</a><span class="search-button search-loading" id=search-loading-mobile><i class="fas fa-spinner fa-fw fa-spin" aria-hidden=true></i></span></div><a href=javascript:void(0); class=search-cancel id=search-cancel-mobile>Cancel</a></div><a class=menu-item href=/posts/ title>Posts</a><a class=menu-item href=/tags/ title>Tags</a><a class=menu-item href=/categories/ title>Categories</a><a class=menu-item href=/categories/documentation/ title>Docs</a><a class=menu-item href=/about/ title>About</a><a class=menu-item href=https://github.com/dillonzq/LoveIt title=GitHub rel="noopener noreffer" target=_blank><i class='fab fa-github fa-fw' aria-hidden=true></i></a><a href=javascript:void(0); class="menu-item theme-switch" title="Switch Theme">
+<i class="fas fa-adjust fa-fw" aria-hidden=true></i>
+</a><a href=javascript:void(0); class=menu-item title="Select Language"><i class="fa fa-globe fa-fw" aria-hidden=true></i>
+<select class=language-select onchange="location=this.value"><option value=/transformer/ selected>English</option></select></a></div></div></header><div class="search-dropdown desktop"><div id=search-dropdown-desktop></div></div><div class="search-dropdown mobile"><div id=search-dropdown-mobile></div></div><main class=main><div class=container><div class=toc id=toc-auto><h2 class=toc-title>Contents</h2><div class=toc-content id=toc-content-auto></div></div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">深入理解transformer</h1><div class=post-meta><div class=post-meta-line><span class=post-author><a href=/ title=Author rel=author class=author><i class="fas fa-user-circle fa-fw" aria-hidden=true></i>连义江</a></span>&nbsp;<span class=post-category>included in <a href=/categories/llm/><i class="far fa-folder fa-fw" aria-hidden=true></i>llm</a></span></div><div class=post-meta-line><i class="far fa-calendar-alt fa-fw" aria-hidden=true></i>&nbsp;<time datetime=2024-02-01>2024-02-01</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden=true></i>&nbsp;1337 words&nbsp;
+<i class="far fa-clock fa-fw" aria-hidden=true></i>&nbsp;7 minutes&nbsp;<span id=/transformer/ class=leancloud_visitors data-flag-title=深入理解transformer>
+<i class="far fa-eye fa-fw" aria-hidden=true></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;views
+</span>&nbsp;</div></div><div class="details toc" id=toc-static data-kept><div class="details-summary toc-title"><span>Contents</span>
+<span><i class="details-icon fas fa-angle-right" aria-hidden=true></i></span></div><div class="details-content toc-content" id=toc-content-static><nav id=TableOfContents><ul><li><a href=#background>transformer背景</a><ul><li><a href=#主要内容>主要内容</a></li><li><a href=#矩阵知识>矩阵知识</a><ul><li><a href=#why>why</a></li><li><a href=#矩阵和行向量>矩阵和行向量</a></li><li><a href=#矩阵相乘和算子作用>矩阵相乘和算子作用</a></li><li><a href=#transformer中的-qk-t-v>transformer中的\(QK^{T}V\)</a></li><li><a href=#代码>代码</a></li><li><a href=#注>注</a></li></ul></li><li><a href=#encoder-decoder>encoder-decoder</a></li><li><a href=#低阶到高阶语义向量的转换>低阶到高阶语义向量的转换</a></li><li><a href=#核心的问题>核心的问题</a></li></ul></li><li><a href=#network>tranformer网络结构</a><ul><li><a href=#基于kv查询的相似性计算>基于KV查询的相似性计算</a><ul><li><a href=#如何来定义相似性>如何来定义相似性</a></li><li><a href=#直接计算相似性>直接计算相似性？</a></li><li><a href=#基于kv查询理解>基于KV查询理解</a></li></ul></li><li><a href=#在一个低维空间做attention>在一个低维空间做attention</a><ul><li><a href=#单个头的attention>单个头的attention</a></li><li><a href=#矩阵表达>矩阵表达</a></li><li><a href=#代码实现>代码实现</a></li><li><a href=#注>注:</a></li></ul></li><li><a href=#在多个低维空间做attention>在多个低维空间做attention</a><ul><li><a href=#why>why</a></li><li><a href=#做法>做法</a></li><li><a href=#代码实现>代码实现</a></li><li><a href=#代码示意>代码示意</a></li></ul></li><li><a href=#位置无关的全连接>位置无关的全连接</a><ul><li><a href=#代码>代码</a></li></ul></li><li><a href=#归一化-plus-残差网络>归一化 + 残差网络</a><ul><li><a href=#layer-normalization>Layer Normalization</a></li><li><a href=#输入矩阵例子>输入矩阵例子</a></li><li><a href=#行归一化-or-列归一化>行归一化 or 列归一化</a></li><li><a href=#why>Why</a></li><li><a href=#其他的可能选择>其他的可能选择</a></li></ul></li><li><a href=#整体的变换>整体的变换</a><ul><li><a href=#residual-network>residual network</a></li><li><a href=#多层>多层</a></li><li><a href=#代码>代码</a></li></ul></li></ul></li><li><a href=#transformer参数和计算量>transformer参数和计算量</a><ul><li><a href=#关于参数量>关于参数量</a></li><li><a href=#参数的分布>参数的分布</a><ul><li><a href=#多头注意力-4f-2>多头注意力 \(4F^2\)</a></li><li><a href=#ffw-8f-2>FFW \(8F^2\)</a></li><li><a href=#word-embedding>word embedding</a></li><li><a href=#total>total</a></li></ul></li><li><a href=#linear-transformer>linear transformer</a><ul><li><a href=#两个算子的计算量>两个算子的计算量</a></li><li><a href=#softmax-导致了-o--n-2>softmax 导致了\(O(N^2)\)</a></li><li><a href=#kernel>kernel</a></li><li><a href=#linear-transformer-o--n>linear transformer \(O(N)\)</a></li></ul></li><li><a href=#优缺点>优缺点</a><ul><li><a href=#优点>优点</a></li><li><a href=#缺点>缺点</a></li></ul></li><li><a href=#下期内容预告>下期内容预告</a></li></ul></li></ul></nav></div></div><div class=content id=content><p>#+BEGIN_line3</p><h2 id=background>transformer背景</h2><h3 id=主要内容>主要内容</h3><ul><li>参考<ul><li><ol start=2017><li>(引用 106576)
+Attention Is All You Need</li></ol></li><li><ol start=2020><li>(引用 975)
+Fast Autoregressive Transformers with Linear Attention</li></ol></li><li><a href=https://github.com/karpathy/minGPT/tree/master/mingpt target=_blank rel="noopener noreffer">mingpt by karpathy</a></li></ul></li><li>主要内容<ul><li>transformer 的设计推演</li><li>transformer 的代码讲解</li><li>transformer的参数和运算量</li><li>linear attention</li></ul></li></ul><h3 id=矩阵知识>矩阵知识</h3><h4 id=why>why</h4><ul><li>原文直接从整个矩阵作用出发
+\[\begin{aligned}\mathrm{Attention}(Q,K,V)=\mathrm{softmax}(\dfrac{QK^T}{\sqrt{d_k}})V \\ \mathrm{MultiHead}(Q,K,V)=\mathrm{Concat}(\mathrm{head}_1,\ldots,\mathrm{head}_h)W^{O} \\
+\mathrm{head}_i=\mathrm{Attention}(QW_i^Q, KW^{K}_i,VW^V_i)
+\end{aligned}\]</li><li>从行向量的角度更容易理解</li></ul><h4 id=矩阵和行向量>矩阵和行向量</h4><ul><li>矩阵
+\(X\in R^{N\times F}\)
+\(X=\begin{pmatrix}
+X_{11}, X_{12},\ldots, X_{1F} \\
+X_{21}, X_{22},\ldots, X_{2F} \\
+\vdots\\
+X_{N1}, X_{N2},\ldots, X_{NF}
+\end{pmatrix}\)</li><li>行向量
+\(X_{i}=\begin{pmatrix} X_{i1}, X_{i2},\ldots, X_{iF}\end{pmatrix}, X_i \in R^{1\times F}\)</li><li>分块矩阵
+\(X=\begin{pmatrix}
+X_1\\
+X_2\\
+\vdots\\
+X_N
+\end{pmatrix}\)</li></ul><ul><li><p>例子</p><ul><li>\(N\) 个token，\(F\) 是embedding的维度</li><li>每行对应于一个token的embedding 行向量</li></ul><p>\(tokens=\begin{pmatrix}
+hello \\
+world \\
+pad \\
+pad \\
+pad
+\end{pmatrix}
+\rightarrow X=\begin{pmatrix}
+[0.59, 0.20, 0.04, 0.96] \\
+[0.96, 0.30, 0.16, 0.63] \\
+[0.02, 0.19, 0.34, 0.25] \\
+[0.02, 0.19, 0.34, 0.25] \\
+[0.02, 0.19, 0.34, 0.25]
+\end{pmatrix}\)</p></li></ul><h4 id=矩阵相乘和算子作用>矩阵相乘和算子作用</h4><ul><li>定义线性算子 \(\mathcal{A}\)<ul><li>可以作用到行向量 \(\mathcal{A}(X_i) = X_{i} A\)</li><li>也可以作用到矩阵 \(\mathcal{A}(X) = XA\)</li></ul></li><li>右乘矩阵等于对每个行向量逐个施加行变换
+\(XA=\begin{pmatrix}
+X_1\\
+X_2\\
+\vdots\\
+X_N
+\end{pmatrix}A=
+\begin{pmatrix}
+X_1 A\\
+X_2 A\\
+\vdots\\
+X_N A
+\end{pmatrix}=
+\begin{pmatrix}
+\mathcal{A}(X_1) \\
+\mathcal{A}(X_2) \\
+\vdots\\
+\mathcal{A}(X_N)
+\end{pmatrix}=\mathcal{A}(X)\)</li><li>代码对应于 nn.Linear</li></ul><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=kn>import</span> <span class=nn>torch</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>torch.nn</span> <span class=k>as</span> <span class=nn>nn</span>
+</span></span><span class=line><span class=cl><span class=n>F</span> <span class=o>=</span> <span class=mi>6</span>
+</span></span><span class=line><span class=cl><span class=n>linear</span> <span class=o>=</span> <span class=n>nn</span><span class=o>.</span><span class=n>Linear</span><span class=p>(</span><span class=n>in_features</span><span class=o>=</span><span class=n>F</span><span class=p>,</span> <span class=n>out_features</span><span class=o>=</span><span class=n>F</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>X_i</span> <span class=o>=</span> <span class=n>torch</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=mi>1</span><span class=p>,</span> <span class=mi>6</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>X</span> <span class=o>=</span> <span class=n>torch</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=mi>3</span><span class=p>,</span> <span class=mi>6</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=nb>print</span><span class=p>(</span><span class=n>linear</span><span class=p>(</span><span class=n>X_i</span><span class=p>)</span><span class=o>.</span><span class=n>shape</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=nb>print</span><span class=p>(</span><span class=n>linear</span><span class=p>(</span><span class=n>X</span><span class=p>)</span><span class=o>.</span><span class=n>shape</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><ul><li>算子是对矩阵乘法的一种物理理解<ul><li><p>旋转矩阵</p><p>\(R(\theta)=\begin{pmatrix}
+cos\theta& sin\theta\\
+-sin\theta& cos\theta
+\end{pmatrix}\)</p></li><li><p>缩放变换</p><p>\(R(\lambda_1,\lambda_2)=\begin{pmatrix} \lambda_1 & \\
+& \lambda_2 \end{pmatrix}\)</p></li></ul></li></ul><h4 id=transformer中的-qk-t-v>transformer中的\(QK^{T}V\)</h4><ul><li><p>\(S=QK^T\) = 行向量两两计算点积相似性</p><p>\(\begin{pmatrix}
+Q_{1}\\
+Q_{2}\\
+\vdots\\
+Q_N
+\end{pmatrix}
+\begin{pmatrix}
+K_{1}^T, K_2^T,\ldots,K_N^T
+\end{pmatrix}=(Q_{i}K_j^T)_{ij}=S\)</p></li><li><p>\(SV\) = 对行向量做加权求和</p></li></ul><h4 id=代码>代码</h4><ul><li>pytorch/tensorflow中的代码都是按照作用于行向量来组织的</li><li>nn.Linear 作用于行向量</li><li>nn.Embedding 按照行向量来组织数据</li></ul><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=kn>import</span> <span class=nn>torch</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>torch.nn</span> <span class=k>as</span> <span class=nn>nn</span>
+</span></span><span class=line><span class=cl><span class=n>N</span> <span class=o>=</span> <span class=mi>3</span>
+</span></span><span class=line><span class=cl><span class=n>F</span> <span class=o>=</span> <span class=mi>8</span>
+</span></span><span class=line><span class=cl><span class=n>embed</span> <span class=o>=</span> <span class=n>nn</span><span class=o>.</span><span class=n>Embedding</span><span class=p>(</span><span class=mi>30</span><span class=p>,</span> <span class=n>F</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=n>idx</span> <span class=o>=</span> <span class=n>torch</span><span class=o>.</span><span class=n>tensor</span><span class=p>([</span><span class=mi>1</span><span class=p>,</span><span class=mi>2</span><span class=p>,</span><span class=mi>3</span><span class=p>])</span>
+</span></span><span class=line><span class=cl><span class=n>X</span> <span class=o>=</span> <span class=n>embed</span><span class=p>(</span><span class=n>idx</span><span class=p>)</span>
+</span></span><span class=line><span class=cl><span class=nb>print</span><span class=p>(</span><span class=n>X</span><span class=o>.</span><span class=n>shape</span><span class=p>)</span>
+</span></span></code></pre></td></tr></table></div></div><h4 id=注>注</h4><ul><li>左乘以一个矩阵相当于对每个列向量来施加变化</li><li>论文：一般会有行/列向量两种表示方式</li><li>代码：基本都是行向量来作为数据组织的标准</li><li>本文:<ul><li>向量都按照行向量的形式来组织</li><li>按照作用于单个行向量的方式来讲解transformer</li></ul></li></ul><h3 id=encoder-decoder>encoder-decoder</h3><ul><li>大部分的s2s 的任务建模为 encoder-decoder的结构<ul><li>机器翻译，语音识别，文本摘要，问答系统等</li></ul></li><li>encoder<ul><li>把token序列\((x_{1}, x_2,\ldots, x_N)\) 转化为语义向量序列 \((Y_{1}, Y_2, \ldots, Y_N)\)</li><li>一般组织为多层的网络的形式<ul><li>第一层：基础语义向量序列
+\((x_{1}, x_2,\ldots, x_N)\rightarrow (X_{1}, X_2,\ldots, X_N)\)</li><li>其它层：高阶语义向量序列
+\((X_{1}, X_2,\ldots, X_N)\rightarrow (Y_{1}, Y_2,\ldots, Y_N)\)</li></ul></li></ul></li><li>decoder
+基于\((Y_{1}, Y_2, \ldots, Y_N)\) 自回归式的逐个token解码</li></ul><p>focus到 encoder部分来理解transformer</p><h3 id=低阶到高阶语义向量的转换>低阶到高阶语义向量的转换</h3><p>寻找算子 \(\mathcal{T}\) 将低阶的语义向量序列变换为高阶的语义向量序列
+\(\mathcal{T}\begin{pmatrix}
+X_1\\
+X_2\\
+\vdots\\
+X_N
+\end{pmatrix}
+\rightarrow\begin{pmatrix}
+Y_1\\
+Y_2\\
+\vdots\\
+Y_N
+\end{pmatrix}\)</p><ul><li>输入: \(X\) 低阶语义向量序列，输出: \(Y\) 高阶语义向量序列</li><li>意义<ul><li>\(Y_{i}=f(X_{1}, X_2, \ldots, X_{N})\)</li><li>对低阶语义向量做加工组合处理和抽象，变换为一个高阶的语义向量序列</li><li>高阶语义向量考虑了 <em>上下文</em> 的语义向量表达</li></ul></li><li>motivation<ul><li><ol start=1957><li>Firth</li></ol><blockquote><p>a word is characterized by the company it keeps.</p></blockquote><p>例子：</p><blockquote><p>The <strong>enigmatic</strong> smile on Mona Lisa&rsquo;s face has intrigued art enthusiasts for centuries, leaving them to speculate about its true meaning.</p></blockquote></li></ul></li><li>用矩阵变换表达 \(Y=\mathcal{T}(X)\)<ul><li>\(X \in R^{N\times F}\), \(Y=\mathcal{T}(X): \quad R^{N\times F}\rightarrow R^{N\times F}\)</li><li>这个算子天然可以复合嵌套，形成多层的网络结构
+\(Y=\mathcal{T}_{L}\circ \mathcal{T}_{L-1}\circ \ldots \circ \mathcal{T}_{1}(X)\)</li></ul></li></ul><h3 id=核心的问题>核心的问题</h3><ul><li><p>问题</p><p>如何设计 \(Y_{i}=f(X_{1}, X_2, \ldots, X_{N})\)</p><ul><li>\(Y_{1}, \ldots, Y_N\) 能否并行得到</li><li>\(Y_{i}\) 能否高效的建立起远程的依赖</li></ul></li></ul><ul><li><p>RNN</p><figure><img src=images/2024-01-18_14-03-26_screenshot.png width=600px></figure><ul><li>递归语义序列 \(Y_{0}\rightarrow Y_1 \rightarrow \ldots \rightarrow Y_{N}\)</li><li>\(Y_{i}=tanh(X_{i}W + Y_{i-1}U)\)</li><li>串行</li><li>单方向的依赖关系，间接</li></ul></li></ul><ul><li><p>CNN</p><figure><img src=images/2024-01-18_14-04-23_screenshot.png width=600px></figure><ul><li>\(Y_{i}=(X_{i-1},X_i, X_{i+1}) W\) 假设窗口宽度是3</li><li>并行</li><li>长距离依赖？<ul><li>一层卷积只能依赖于当前窗口内，不能对窗口外的形成依赖。</li></ul></li></ul></li></ul><ul><li><p>transformer思路</p><p>设计\(Y_{i}=f(X_{1}, X_2, \ldots, X_{N})\)，使得</p><ul><li>使得 \(Y_{1},\ldots, Y_N\) 可以做并行计算</li><li>同时解决长距离依赖的问题</li></ul><figure><img src=images/2024-01-18_14-13-40_screenshot.png width=400px></figure><p>\(Y=\mathcal{F}\circ \mathcal{A}(X)\) 做两次矩阵的变换</p><ul><li><p>\(Y=\mathcal{A}(X)\) MultiHead Attention</p><ul><li>高阶的语义等于对 <em>全部</em> 的低阶语义向量基于 <em>相似性(Attention)</em> 做 <em>加权平均</em></li><li>\[\begin{aligned}\mathcal{A}(X_i) &= \frac{\sum_{j=1}^{N} sim(X_i,X_j) X_j}{\sum_{j=1}^N sim(X_i,X_j)} \end{aligned}\]</li><li>attention = 相似性</li></ul></li><li><p>\(Y&rsquo;=\mathcal{F}(Y)\) Position-wise Feedforward</p><ul><li>再施加若干非线性变换</li></ul></li></ul></li></ul><h2 id=network>tranformer网络结构</h2><h3 id=基于kv查询的相似性计算>基于KV查询的相似性计算</h3><p>\[\begin{aligned}\mathcal{A}(X_i) &= \frac{\sum_{j=1}^{N} sim(X_i,X_j) X_j}{\sum_{j=1}^N sim(X_i,X_j)} \end{aligned}\]</p><h4 id=如何来定义相似性>如何来定义相似性</h4><ul><li>\(sim(X_{i}, X_j)= \mathrm{exp}(\dfrac{X_i X_{j}^T}{\sqrt{D}})\)</li><li>所有的正的kernel函数都可以</li></ul><h4 id=直接计算相似性>直接计算相似性？</h4><ul><li><p>参数太少</p></li><li><p>投影到别的空间来计算相似度 \(X_{i}\rightarrow X_iW\)</p><p>\[\begin{aligned}\mathcal{A}(X_i) &= \frac{\sum_{j=1}^{N} sim(X_iW_1,X_jW_{2}) X_jW_3}{\sum_{j=1}^N sim(X_iW_1,X_jW_2)} \end{aligned}\]</p></li></ul><h4 id=基于kv查询理解>基于KV查询理解</h4><ul><li>把\(X_i\) 投影出三个向量 \(Q_i,K_i,V_i\)</li><li>QKV<ul><li>KV 是大家熟悉的key-value存储 \(K_{j}\rightarrow V_{j}\)</li><li>Q 是查询使用的query向量 \(Q_{i}\)</li></ul></li><li>QKV的查询方法<ol><li><p>query查询多个key，获取多个value</p></li><li><p>最后把这些value加权平均</p><p>\(Q_i\Rightarrow \begin{pmatrix}
+K_{1}\rightarrow V_{1}\\
+K_2\rightarrow V_2\\
+\vdots\\
+K_N\rightarrow V_N
+\end{pmatrix}
+\Rightarrow \begin{pmatrix}
+sim(Q_i,K_1)V_{1} \\
+sim(Q_i,K_2)V_{2} \\
+\vdots\\
+sim(Q_i,K_N)V_N
+\end{pmatrix}\Rightarrow\sum_{j=1}^N sim(Q_i,K_j)V_j\)</p></li></ol></li><li>\[\begin{aligned}\mathcal{A}(X_i) &= \frac{\sum_{j=1}^{N} sim(Q_i,K_j) V_j}{\sum_{j=1}^N sim(Q_i,K_j)} \end{aligned}\]</li><li>参数： 对应于\(Q,K,V\) 产生了三个投影矩阵矩阵 \(W_{Q}, W_K,W_V\)</li></ul><h3 id=在一个低维空间做attention>在一个低维空间做attention</h3><h4 id=单个头的attention>单个头的attention</h4><ul><li><p>把\(X_{i}\) 从\(F\) 维空间投影到\(D\) 维空间</p><p>\(W_{Q}\in R^{F\times D}, W_K\in R^{F\times D}, W_{V} \in R^{F\times M}\)</p><p>\(Q_i = X_iW_{Q}, \quad K_i = X_iW_{K}, \quad V_i = X_iW_{V}\)</p></li><li><p>\(Q_i\) 和所有的\(K_j\) 做基于点积的相似度计算，</p><p>这里简单起见，我们省略掉了scaling \(\frac{1}{\sqrt{D}}\)</p><p>\(Q_iK^{T}=Q_i(K^T_1, \ldots, K^T_N)=(Q_iK^T_1, \ldots, Q_iK^T_N)\)</p></li><li><p>对相似度的分布做softmax</p><p>\(S=\mathrm{soft}(Q_iK^T_1, \ldots, Q_iK^T_N)=(s_{i1},\ldots, s_{iN})\)</p><p>\(s_{i,j}= \dfrac{exp(Q_iK_j^T)}{\sum_{j=1}^N exp(Q_iK_j^T)}\)</p></li><li><p>加权平均</p><p>\(\mathcal{A}(X_i)=\sum_{j=1}^Ns_jV_j=(s_{i1},\ldots, s_{iN})\begin{pmatrix}V_1 \\ V_2 \\ \vdots \\V_N\end{pmatrix}\)</p><p>\(\mathcal{A}(X_i) = \mathrm{soft}(Q_iK^{T})V = \mathrm{soft}(X_iW_QW_K^TX^T)XW_V\)</p></li></ul><h4 id=矩阵表达>矩阵表达</h4><p>\[\begin{aligned}Y&=\mathcal{A}(X)=\begin{pmatrix}
+\mathcal{A}(X_1)\\
+\mathcal{A}(X_2)\\
+\vdots\\
+\mathcal{A}(X_N)
+\end{pmatrix}=\begin{pmatrix}
+\mathrm{soft}(Q_1K^T)V\\
+\mathrm{soft}(Q_2K^T)V\\
+\vdots \\
+\mathrm{soft}(Q_NK^T)V\end{pmatrix}\\
+&=\mathrm{soft}(QK^T)V=\mathrm{soft}(XW_QW_K^TX^T)XW_V\end{aligned}\]
+简化符号 \(sim(Q,K)V\)</p><h4 id=代码实现>代码实现</h4><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=kn>import</span> <span class=nn>torch</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>torch.nn</span> <span class=k>as</span> <span class=nn>nn</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>math</span>
+</span></span><span class=line><span class=cl><span class=kn>from</span> <span class=nn>torch.nn</span> <span class=kn>import</span> <span class=n>functional</span> <span class=k>as</span> <span class=n>F</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>class</span> <span class=nc>SingleHeadAttention</span><span class=p>(</span><span class=n>nn</span><span class=o>.</span><span class=n>Module</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=k>def</span> <span class=fm>__init__</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>config</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>      <span class=nb>super</span><span class=p>()</span><span class=o>.</span><span class=fm>__init__</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>      <span class=bp>self</span><span class=o>.</span><span class=n>F</span> <span class=o>=</span> <span class=n>config</span><span class=p>[</span><span class=s2>&#34;fea_size&#34;</span><span class=p>]</span> <span class=c1>#F</span>
+</span></span><span class=line><span class=cl>      <span class=bp>self</span><span class=o>.</span><span class=n>D</span> <span class=o>=</span> <span class=n>config</span><span class=p>[</span><span class=s2>&#34;subspace_dim&#34;</span><span class=p>]</span> <span class=c1>#D</span>
+</span></span><span class=line><span class=cl>      <span class=bp>self</span><span class=o>.</span><span class=n>q_proj</span> <span class=o>=</span> <span class=n>nn</span><span class=o>.</span><span class=n>Linear</span><span class=p>(</span><span class=bp>self</span><span class=o>.</span><span class=n>F</span><span class=p>,</span> <span class=bp>self</span><span class=o>.</span><span class=n>D</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>      <span class=bp>self</span><span class=o>.</span><span class=n>k_proj</span> <span class=o>=</span> <span class=n>nn</span><span class=o>.</span><span class=n>Linear</span><span class=p>(</span><span class=bp>self</span><span class=o>.</span><span class=n>F</span><span class=p>,</span> <span class=bp>self</span><span class=o>.</span><span class=n>D</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>      <span class=bp>self</span><span class=o>.</span><span class=n>v_proj</span> <span class=o>=</span> <span class=n>nn</span><span class=o>.</span><span class=n>Linear</span><span class=p>(</span><span class=bp>self</span><span class=o>.</span><span class=n>F</span><span class=p>,</span> <span class=bp>self</span><span class=o>.</span><span class=n>D</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=k>def</span> <span class=nf>forward</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>x</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>      <span class=n>B</span><span class=p>,</span> <span class=n>N</span><span class=p>,</span> <span class=n>F</span> <span class=o>=</span> <span class=n>x</span><span class=o>.</span><span class=n>size</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>      <span class=n>q</span> <span class=o>=</span> <span class=bp>self</span><span class=o>.</span><span class=n>q_proj</span><span class=p>(</span><span class=n>x</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>      <span class=n>k</span> <span class=o>=</span> <span class=bp>self</span><span class=o>.</span><span class=n>k_proj</span><span class=p>(</span><span class=n>x</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>      <span class=n>v</span> <span class=o>=</span> <span class=bp>self</span><span class=o>.</span><span class=n>v_proj</span><span class=p>(</span><span class=n>x</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>      <span class=n>att</span> <span class=o>=</span> <span class=p>(</span><span class=n>q</span> <span class=o>@</span> <span class=n>k</span><span class=o>.</span><span class=n>transpose</span><span class=p>(</span><span class=o>-</span><span class=mi>2</span><span class=p>,</span> <span class=o>-</span><span class=mi>1</span><span class=p>))</span> <span class=o>*</span> <span class=p>(</span><span class=mf>1.0</span> <span class=o>/</span> <span class=n>math</span><span class=o>.</span><span class=n>sqrt</span><span class=p>(</span><span class=n>k</span><span class=o>.</span><span class=n>size</span><span class=p>(</span><span class=o>-</span><span class=mi>1</span><span class=p>)))</span>
+</span></span><span class=line><span class=cl>      <span class=n>att</span> <span class=o>=</span> <span class=n>F</span><span class=o>.</span><span class=n>softmax</span><span class=p>(</span><span class=n>att</span><span class=p>,</span> <span class=n>dim</span><span class=o>=-</span><span class=mi>1</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>      <span class=n>y</span> <span class=o>=</span> <span class=n>att</span> <span class=o>@</span> <span class=n>v</span>
+</span></span><span class=line><span class=cl>      <span class=k>return</span> <span class=n>y</span>
+</span></span></code></pre></td></tr></table></div></div><h4 id=注>注:</h4><ol><li>\(D\neq F\) 时，\(\mathcal{A}(X)\) 还不可用</li></ol><h3 id=在多个低维空间做attention>在多个低维空间做attention</h3><h4 id=why>why</h4><blockquote><p>Multi-head attention allows the model to jointly attend to information from different representation subspaces at different positions.</p></blockquote><ul><li>一词多义</li><li>把\(F\) 维的语义向量投影到 \(H\) 个不同的子空间中去计算相似加权组合</li></ul><h4 id=做法>做法</h4><ul><li>每个头投做独立的Attention变换 \(\mathcal{A}^{h}(X)\)<ul><li>假设有\(H\) 个头，每个头作用的低维空间维度是\(D\)</li><li>\(D\times H = F\)</li></ul></li><li>对\(H\) 个 \(D\) 行向量拼接
+\(W_O\in R^{F\times F}\)
+\(\mathcal{A}(X) = \mathrm{concat}(\mathcal{A}^1(X), \mathcal{A}^2(X), \ldots, \mathcal{A}^{H}(X) W_O\)</li><li>或者对前面的符号简化<ul><li>在第\(j\) 个子空间做单头注意力 \(Y^{j}=sim(Q^{j}, K^{j})V^{j}\)</li><li>合并 \(Y=(Y^{1},\ldots, Y^H)\)</li></ul></li></ul><h4 id=代码实现>代码实现</h4><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=c1># 参考 https://github.com/karpathy/minGPT/tree/master/mingpt</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>torch</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>torch.nn</span> <span class=k>as</span> <span class=nn>nn</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>math</span>
+</span></span><span class=line><span class=cl><span class=kn>from</span> <span class=nn>torch.nn</span> <span class=kn>import</span> <span class=n>functional</span> <span class=k>as</span> <span class=n>F</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=k>class</span> <span class=nc>SelfAttention</span><span class=p>(</span><span class=n>nn</span><span class=o>.</span><span class=n>Module</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=k>def</span> <span class=fm>__init__</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>config</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>      <span class=nb>super</span><span class=p>()</span><span class=o>.</span><span class=fm>__init__</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>      <span class=bp>self</span><span class=o>.</span><span class=n>H</span> <span class=o>=</span> <span class=n>config</span><span class=p>[</span><span class=s2>&#34;n_head&#34;</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>      <span class=bp>self</span><span class=o>.</span><span class=n>F</span> <span class=o>=</span> <span class=n>config</span><span class=p>[</span><span class=s2>&#34;fea_size&#34;</span><span class=p>]</span> <span class=c1>#F</span>
+</span></span><span class=line><span class=cl>      <span class=bp>self</span><span class=o>.</span><span class=n>D</span> <span class=o>=</span> <span class=bp>self</span><span class=o>.</span><span class=n>fea_size</span> <span class=o>//</span> <span class=bp>self</span><span class=o>.</span><span class=n>n_head</span> <span class=c1>#D</span>
+</span></span><span class=line><span class=cl>      <span class=c1># 一次把qkv 全部映射完成，对应W_Q, W_K, W_V</span>
+</span></span><span class=line><span class=cl>      <span class=bp>self</span><span class=o>.</span><span class=n>qkv_proj</span> <span class=o>=</span> <span class=n>nn</span><span class=o>.</span><span class=n>Linear</span><span class=p>(</span><span class=bp>self</span><span class=o>.</span><span class=n>fea_size</span><span class=p>,</span> <span class=mi>3</span> <span class=o>*</span> <span class=bp>self</span><span class=o>.</span><span class=n>fea_size</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>      <span class=c1># 最后的投影，对应于 $W_O$</span>
+</span></span><span class=line><span class=cl>      <span class=bp>self</span><span class=o>.</span><span class=n>out_proj</span> <span class=o>=</span> <span class=n>nn</span><span class=o>.</span><span class=n>Linear</span><span class=p>(</span><span class=bp>self</span><span class=o>.</span><span class=n>fea_size</span><span class=p>,</span> <span class=bp>self</span><span class=o>.</span><span class=n>fea_size</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>  <span class=k>def</span> <span class=nf>forward</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>x</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>      <span class=n>B</span><span class=p>,</span> <span class=n>N</span><span class=p>,</span> <span class=n>fea_size</span> <span class=o>=</span> <span class=n>x</span><span class=o>.</span><span class=n>size</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>      <span class=n>q</span><span class=p>,</span> <span class=n>k</span><span class=p>,</span> <span class=n>v</span> <span class=o>=</span> <span class=bp>self</span><span class=o>.</span><span class=n>qkv_proj</span><span class=p>(</span><span class=n>x</span><span class=p>)</span><span class=o>.</span><span class=n>split</span><span class=p>(</span><span class=mi>3</span><span class=p>,</span> <span class=n>dim</span><span class=o>=</span><span class=mi>2</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>      <span class=c1># matmul 只能在最后两个维度相乘，需要对NxD的矩阵相乘，做1,2维度的交换</span>
+</span></span><span class=line><span class=cl>      <span class=n>k</span> <span class=o>=</span> <span class=n>k</span><span class=o>.</span><span class=n>view</span><span class=p>(</span><span class=n>B</span><span class=p>,</span> <span class=n>N</span><span class=p>,</span> <span class=bp>self</span><span class=o>.</span><span class=n>H</span><span class=p>,</span> <span class=bp>self</span><span class=o>.</span><span class=n>D</span><span class=p>)</span><span class=o>.</span><span class=n>transpose</span><span class=p>(</span><span class=mi>1</span><span class=p>,</span> <span class=mi>2</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>      <span class=n>q</span> <span class=o>=</span> <span class=n>q</span><span class=o>.</span><span class=n>view</span><span class=p>(</span><span class=n>B</span><span class=p>,</span> <span class=n>N</span><span class=p>,</span> <span class=bp>self</span><span class=o>.</span><span class=n>H</span><span class=p>,</span> <span class=bp>self</span><span class=o>.</span><span class=n>D</span><span class=p>)</span><span class=o>.</span><span class=n>transpose</span><span class=p>(</span><span class=mi>1</span><span class=p>,</span> <span class=mi>2</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>      <span class=n>v</span> <span class=o>=</span> <span class=n>v</span><span class=o>.</span><span class=n>view</span><span class=p>(</span><span class=n>B</span><span class=p>,</span> <span class=n>N</span><span class=p>,</span> <span class=bp>self</span><span class=o>.</span><span class=n>H</span><span class=p>,</span> <span class=bp>self</span><span class=o>.</span><span class=n>D</span><span class=p>)</span><span class=o>.</span><span class=n>transpose</span><span class=p>(</span><span class=mi>1</span><span class=p>,</span> <span class=mi>2</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>      <span class=c1># 一次把多个头的映射全部完成</span>
+</span></span><span class=line><span class=cl>      <span class=n>att</span> <span class=o>=</span> <span class=p>(</span><span class=n>q</span> <span class=o>@</span> <span class=n>k</span><span class=o>.</span><span class=n>transpose</span><span class=p>(</span><span class=o>-</span><span class=mi>2</span><span class=p>,</span> <span class=o>-</span><span class=mi>1</span><span class=p>))</span> <span class=o>*</span> <span class=p>(</span><span class=mf>1.0</span> <span class=o>/</span> <span class=n>math</span><span class=o>.</span><span class=n>sqrt</span><span class=p>(</span><span class=n>k</span><span class=o>.</span><span class=n>size</span><span class=p>(</span><span class=o>-</span><span class=mi>1</span><span class=p>)))</span>
+</span></span><span class=line><span class=cl>      <span class=n>att</span> <span class=o>=</span> <span class=n>F</span><span class=o>.</span><span class=n>softmax</span><span class=p>(</span><span class=n>att</span><span class=p>,</span> <span class=n>dim</span><span class=o>=-</span><span class=mi>1</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>      <span class=n>y</span> <span class=o>=</span> <span class=n>att</span> <span class=o>@</span> <span class=n>v</span>
+</span></span><span class=line><span class=cl>      <span class=c1># 多头拼接</span>
+</span></span><span class=line><span class=cl>      <span class=n>y</span> <span class=o>=</span> <span class=n>y</span><span class=o>.</span><span class=n>transpose</span><span class=p>(</span><span class=mi>1</span><span class=p>,</span> <span class=mi>2</span><span class=p>)</span><span class=o>.</span><span class=n>contiguous</span><span class=p>()</span><span class=o>.</span><span class=n>view</span><span class=p>(</span><span class=n>B</span><span class=p>,</span> <span class=n>N</span><span class=p>,</span> <span class=n>F</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>      <span class=n>y</span> <span class=o>=</span> <span class=bp>self</span><span class=o>.</span><span class=n>out_proj</span><span class=p>(</span><span class=n>y</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>      <span class=k>return</span> <span class=n>y</span>
+</span></span></code></pre></td></tr></table></div></div><h4 id=代码示意>代码示意</h4><figure><img src=images/2024-01-31_11-11-07_screenshot.png width=600px></figure><h3 id=位置无关的全连接>位置无关的全连接</h3><ul><li>两层的全连接
+\(\mathcal{F}(X_i)=(g(X_iW_1)+b_1)W_2+b_2)\)</li></ul><h4 id=代码>代码</h4><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=kn>import</span> <span class=nn>torch</span>
+</span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>torch.nn</span> <span class=k>as</span> <span class=nn>nn</span>
+</span></span><span class=line><span class=cl><span class=k>class</span> <span class=nc>PWiseFeedForward</span><span class=p>(</span><span class=n>nn</span><span class=o>.</span><span class=n>Module</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=fm>__init__</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>config</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=nb>super</span><span class=p>()</span><span class=o>.</span><span class=fm>__init__</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>        <span class=bp>self</span><span class=o>.</span><span class=n>fea_size</span> <span class=o>=</span> <span class=n>config</span><span class=p>[</span><span class=s2>&#34;fea_size&#34;</span><span class=p>]</span>
+</span></span><span class=line><span class=cl>        <span class=bp>self</span><span class=o>.</span><span class=n>proj_wide</span> <span class=o>=</span> <span class=n>nn</span><span class=o>.</span><span class=n>Linear</span><span class=p>(</span><span class=bp>self</span><span class=o>.</span><span class=n>fea_size</span><span class=p>,</span> <span class=mi>4</span> <span class=o>*</span> <span class=bp>self</span><span class=o>.</span><span class=n>fea_size</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=bp>self</span><span class=o>.</span><span class=n>proj_narrow</span> <span class=o>=</span> <span class=n>nn</span><span class=o>.</span><span class=n>Linear</span><span class=p>(</span><span class=mi>4</span> <span class=o>*</span> <span class=bp>self</span><span class=o>.</span><span class=n>fea_size</span><span class=p>,</span> <span class=bp>self</span><span class=o>.</span><span class=n>fea_size</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=bp>self</span><span class=o>.</span><span class=n>act</span> <span class=o>=</span> <span class=n>nn</span><span class=o>.</span><span class=n>ReLU</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=nf>forward</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>x</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=bp>self</span><span class=o>.</span><span class=n>proj_narrow</span><span class=p>(</span><span class=bp>self</span><span class=o>.</span><span class=n>act</span><span class=p>(</span><span class=bp>self</span><span class=o>.</span><span class=n>proj_wide</span><span class=p>(</span><span class=n>x</span><span class=p>)))</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=归一化-plus-残差网络>归一化 + 残差网络</h3><p>\(\mathcal{T}(X)=\mathcal{F}\circ\mathcal{A}(X)\)</p><h4 id=layer-normalization>Layer Normalization</h4><p>\(\mathcal{A}&rsquo;(X)=\mathcal{N}\circ\mathcal{A}(X)\)
+\(\dfrac{x-\mu}{\sqrt{\sigma}}\gamma + \beta,\mu=\dfrac{1}{d}\sum\limits_{i=1}^{d}x_{i}, \sigma=\sqrt{\dfrac{1}{d}\sum\limits_{i=1}^{d}(x_{i}-\mu)^{2}}\)
+可以看成是作用在行向量上的算子</p><h4 id=输入矩阵例子>输入矩阵例子</h4><p>\(\begin{pmatrix}
+hello \\
+world \\
+<pad>\\
+<pad>\\
+<pad>\end{pmatrix}
+\rightarrow X= \begin{pmatrix}
+[0.59, 0.20, 0.04, 0.96] \\
+[0.96, 0.30, 0.16, 0.63] \\
+[0.02, 0.19, 0.34, 0.25] \\
+[0.02, 0.19, 0.34, 0.25] \\
+[0.02, 0.19, 0.34, 0.25]
+\end{pmatrix}\)</p><h4 id=行归一化-or-列归一化>行归一化 or 列归一化</h4><ul><li>在NLP的序列建模里面，Layer Normalization</li><li>在CV/CTR预估里面, Batch Normalization</li></ul><h4 id=why>Why</h4><ul><li>padding的影响
+不同batch中&lt;pad>个数不同，沿着token方向做归一化没有意义</li><li>每个位置做独立的归一化更有意义</li></ul><h4 id=其他的可能选择>其他的可能选择</h4><ul><li>RMSNorm
+\(\dfrac{x}{RMS(x)}, RMS(x)=\sqrt{\dfrac{1}{d}\sum\limits_{i=1}^{d}x_i^2\)</li></ul><h3 id=整体的变换>整体的变换</h3><p>\(Y=\mathcal{T}(X)\)</p><ol><li>Attention \(Z=\mathcal{N}\circ(X+\mathcal{A}(X))\)</li><li>位置无关的全连接 \(Y=\mathcal{N}\circ(X+\mathcal{F}(Z))\)</li></ol><h4 id=residual-network>residual network</h4><p>\(\mathcal{A}&rsquo;(X)=\mathcal{N}\circ(X+\mathcal{A}(X))\)
+\(\mathcal{F}&rsquo;(X)=\mathcal{N}\circ(X+\mathcal{F}(X))\)</p><h4 id=多层>多层</h4><p>一个 \(L\) 层的transformer 模型</p><p>\begin{equation*}
+\begin{split}
+\mathcal{T}(X) & = \mathcal{T}_L \circ \ldots \mathcal{T}_{2}\circ \mathcal{T}_{1}(X)
+\end{split}
+\end{equation*}</p><h4 id=代码>代码</h4><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=kn>import</span> <span class=nn>torch.nn</span> <span class=k>as</span> <span class=nn>nn</span>
+</span></span><span class=line><span class=cl><span class=k>class</span> <span class=nc>Block</span><span class=p>(</span><span class=n>nn</span><span class=o>.</span><span class=n>Module</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=fm>__init__</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>config</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=nb>super</span><span class=p>()</span><span class=o>.</span><span class=fm>__init__</span><span class=p>()</span>
+</span></span><span class=line><span class=cl>        <span class=bp>self</span><span class=o>.</span><span class=n>layer_norm_1</span> <span class=o>=</span> <span class=n>nn</span><span class=o>.</span><span class=n>LayerNorm</span><span class=p>(</span><span class=n>config</span><span class=o>.</span><span class=n>fea_size</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=bp>self</span><span class=o>.</span><span class=n>attn</span> <span class=o>=</span> <span class=n>SelfAttention</span><span class=p>(</span><span class=n>config</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=bp>self</span><span class=o>.</span><span class=n>layer_norm_2</span> <span class=o>=</span> <span class=n>nn</span><span class=o>.</span><span class=n>LayerNorm</span><span class=p>(</span><span class=n>config</span><span class=o>.</span><span class=n>fea_size</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=bp>self</span><span class=o>.</span><span class=n>mlp</span> <span class=o>=</span> <span class=n>PWiseFeedForward</span><span class=p>(</span><span class=n>config</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=nf>forward</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>x</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=n>x</span> <span class=o>=</span> <span class=bp>self</span><span class=o>.</span><span class=n>layer_norm_1</span><span class=p>(</span><span class=n>x</span> <span class=o>+</span> <span class=bp>self</span><span class=o>.</span><span class=n>attn</span><span class=p>(</span><span class=n>x</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>        <span class=n>x</span> <span class=o>=</span> <span class=bp>self</span><span class=o>.</span><span class=n>layer_norm_2</span><span class=p>(</span><span class=n>x</span> <span class=o>+</span> <span class=bp>self</span><span class=o>.</span><span class=n>mlp</span><span class=p>(</span><span class=n>x</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>x</span>
+</span></span></code></pre></td></tr></table></div></div><h2 id=transformer参数和计算量>transformer参数和计算量</h2><h3 id=关于参数量>关于参数量</h3><ul><li>我们需要一种模型能够方便的去增加模型的复杂度<ul><li>比如增加深度，增加宽度</li><li>增加token的embedding size</li><li>增加词典的大小</li></ul></li><li>transformer模型可以在此之外非常有效的提升模型的参数量</li><li>而且在参数量提升之后效果也有了巨大的提升</li></ul><h3 id=参数的分布>参数的分布</h3><h4 id=多头注意力-4f-2>多头注意力 \(4F^2\)</h4><ul><li>每个头有<ul><li>3个投影矩阵 \(W_Q, W_K, W_V\)</li><li>1个投影concat结果的矩阵 \(W_O\)</li></ul></li><li>参数量: 假设投射到的子空间维度是\(D\), $H$个子空间，\(D\times H = F\)<ul><li>\(F\times D \times 3 \times H = 3F^{2}\)</li><li>\(F^{2}\)</li></ul></li></ul><h4 id=ffw-8f-2>FFW \(8F^2\)</h4><ul><li>两个矩阵，先从\(F\) 变宽到\(4F\)，再收窄回来到\(F\)</li><li>参数量\(F\times4F + 4F\times F= 8F^{2}\)</li></ul><h4 id=word-embedding>word embedding</h4><p>\(E\) 是token字典的大小</p><ul><li>\(E\times F\)</li></ul><h4 id=total>total</h4><p>\(L(12F^{2})+EF\)</p><table><thead><tr><th>model</th><th>维度</th><th>层数</th><th>头数</th><th>字典大小</th><th>参数量</th></tr></thead><tbody><tr><td>bertBase</td><td>768</td><td>12</td><td>12</td><td>30000</td><td>110M</td></tr><tr><td>bertLarge</td><td>1024</td><td>24</td><td>12</td><td>30000</td><td>340M</td></tr></tbody></table><h3 id=linear-transformer>linear transformer</h3><h4 id=两个算子的计算量>两个算子的计算量</h4><ul><li>\(\mathcal{A}(X)\) 计算量 \(O(N^2)\)</li><li>\(\mathcal{F}(X)\) 计算量 \(O(N)\)</li></ul><h4 id=softmax-导致了-o--n-2>softmax 导致了\(O(N^2)\)</h4><p>核心的计算量在这三个矩阵的相乘上，\(QK^{T}V\)</p><ul><li><p>有softmax的存在的话
+只能先计算\(H=QK^{T}\), 对\(H\) 做softmax 变换后，再计算\(HV\)
+乘法的计算量是 \(N^2D+N^2M\), 整体的复杂度是\(O(N^{2})\)
+\(QK^TV=(QK^T)V=\begin{pmatrix}
+H_{11},H_{12},\ldots,H_{1N} \\
+\vdots\\
+H_{N1},H_{N2},\ldots,H_{NN} \\
+\end{pmatrix}V\)</p></li><li><p>如果没有softmax的话
+可以先计算后两个矩阵相乘\(H=K^TV\), 再计算\(QH\)
+计算量可以是\(O(N)\), 因为\(K^TV\) 可以提前算出来缓存，大致如下面这个表达所示
+\(Q(K^TV)=\begin{pmatrix}
+Q_1 \\
+Q_2 \\
+\vdots\\
+Q_{N}
+\end{pmatrix}(K^TV)\)</p></li></ul><h4 id=kernel>kernel</h4><p>\(\mathcal{A}(X_i)=\dfrac{\sum_{j=1}^{N} sim(Q_i,K_j) V_j}{\sum_{j=1}^N sim(Q_i,K_j)}\)</p><ul><li>kernel: \(k(x,y)=&lt;\phi(x),\phi(y)>\)
+\(k(x,y)=(x\cdot z)^2, \phi(x)=(x_{1}^{2},x_{2}^2,\sqrt{2}x_1x_{2})\)<ul><li>kernel 对应一个feature map</li><li>可以用非负的kernel来替换掉</li><li>当前的sim函数 \(sim(x,y)=\mathrm{exp}(xy^{T}/\sqrt{D})\)</li></ul></li></ul><h4 id=linear-transformer-o--n>linear transformer \(O(N)\)</h4><ul><li>用kernel来替换掉sim
+\[\begin{aligned}\mathcal{A}(X_i) &= \frac{\sum_{j=1}^{N} sim(Q_i,K_j) V_j}{\sum_{j=1}^N sim(Q_i,K_j)} \\
+&=\frac{\sum_{j=1}^{N} \phi(Q_i)\phi(K_j)^T V_j}{\sum_{j=1}^N \phi(Q_i)\phi(K_j)^T} \\
+&=\frac{ \phi(Q_i) \sum_{j=1}^{N}\phi(K_j)^T V_j}{\phi(Q_i)\sum_{j=1}^N \phi(K_j)^T}
+\end{aligned}
+\]<ul><li><p>\(\sum_{j=1}^{N}\phi(K_j)^T V, \sum_{j=1}^N \phi(K_j)^T\) 可以提前算好</p></li><li><p>去掉归一化来看 \[(\phi(Q)\phi(K)^{T})V=\phi(Q)(\phi(K)^{T}V)\]</p><p>\[\begin{aligned} \begin{pmatrix}
+\phi(Q_1)\sum_{j=1}^{N} \phi(K_j)^{T} V_j \\
+\vdots \\
+\phi(Q_N)\sum_{j=1}^{N} \phi(K_j)^T V_j \\
+\end{pmatrix}& =\begin{pmatrix}
+\phi(Q_1)\phi(K)^{T}V\\
+\vdots \\
+\phi(Q_N)\phi(K)^{T}V \\
+\end{pmatrix} \\
+&=
+\begin{pmatrix}
+\phi(Q_{1})\\
+\vdots\\
+\phi(Q_N)
+\end{pmatrix}\phi(K)^TV \\
+&=\phi(Q)\phi(K)^TV
+\end{aligned}\]</p></li><li><p>\(O(N)\) 复杂度，Linear Transformer</p></li><li><p>\(\phi(x)=\mathrm{elu}(x)+1\)</p></li></ul></li></ul><h3 id=优缺点>优缺点</h3><h4 id=优点>优点</h4><ul><li>并行</li><li>长距离依赖</li><li>可解释性</li></ul><h4 id=缺点>缺点</h4><ul><li>本身对顺序无感，操作是在集合层次上的，需要额外加入位置编码
+下面的cls token得到的语义向量是完全一样的。<ul><li>&lt;cls> 从 北京 到 上海 的 火车票</li><li>&lt;cls> 从 上海 到 北京 的 火车票</li></ul></li><li>计算的复杂度是序列长度平方</li></ul><h3 id=下期内容预告>下期内容预告</h3><ul><li>positional embedding</li></ul><p>#+END_line3</p></div><div class=post-footer id=post-footer><div class=post-info><div class=post-info-line><div class=post-info-mod><span>Updated on 2024-02-02&nbsp;<a class=git-hash href=https://github.com/dillonzq/LoveIt/commit/621a9b266c86f4b9f84e13607d7ade4329aa5d9a target=_blank title="commit by lianyijiang(sky_yjl@163.com) 621a9b266c86f4b9f84e13607d7ade4329aa5d9a: add LoveIt">
+<i class="fas fa-hashtag fa-fw" aria-hidden=true></i>621a9b2</a></span></div></div><div class=post-info-line><div class=post-info-md><span><a class=link-to-markdown href=/transformer/index.md target=_blank>Read Markdown</a></span></div><div class=post-info-share><span><a href=javascript:void(0); title="Share on Twitter" data-sharer=twitter data-url=https://skylyj.github.io/transformer/ data-title=深入理解transformer data-via=xxxx data-hashtags=transformer,llm,matrix><i class="fab fa-twitter fa-fw" aria-hidden=true></i></a><a href=javascript:void(0); title="Share on Facebook" data-sharer=facebook data-url=https://skylyj.github.io/transformer/ data-hashtag=transformer><i class="fab fa-facebook-square fa-fw" aria-hidden=true></i></a><a href=javascript:void(0); title="Share on Hacker News" data-sharer=hackernews data-url=https://skylyj.github.io/transformer/ data-title=深入理解transformer><i class="fab fa-hacker-news fa-fw" aria-hidden=true></i></a><a href=javascript:void(0); title="Share on Line" data-sharer=line data-url=https://skylyj.github.io/transformer/ data-title=深入理解transformer><i data-svg-src=https://cdn.jsdelivr.net/npm/simple-icons@7.3.0/icons/line.svg aria-hidden=true></i></a><a href=javascript:void(0); title="Share on 微博" data-sharer=weibo data-url=https://skylyj.github.io/transformer/ data-title=深入理解transformer><i class="fab fa-weibo fa-fw" aria-hidden=true></i></a></span></div></div></div><div class=post-info-more><section class=post-tags><i class="fas fa-tags fa-fw" aria-hidden=true></i>&nbsp;<a href=/tags/transformer/>transformer</a>,&nbsp;<a href=/tags/llm/>llm</a>,&nbsp;<a href=/tags/matrix/>matrix</a></section><section><span><a href=javascript:void(0); onclick=window.history.back()>Back</a></span>&nbsp;|&nbsp;<span><a href=/>Home</a></span></section></div><div class=post-nav></div></div><div id=comments><div id=valine class=comment></div><noscript>Please enable JavaScript to view the comments powered by <a href=https://valine.js.org/>Valine</a>.</noscript></div></article></div></main><footer class=footer><div class=footer-container><div class=footer-line>Powered by <a href=https://gohugo.io/ target=_blank rel="noopener noreffer" title="Hugo 0.122.0">Hugo</a> | Theme - <a href=https://github.com/dillonzq/LoveIt target=_blank rel="noopener noreffer" title="LoveIt 0.2.11"><i class="far fa-kiss-wink-heart fa-fw" aria-hidden=true></i> LoveIt</a></div><div class=footer-line itemscope itemtype=http://schema.org/CreativeWork><i class="far fa-copyright fa-fw" aria-hidden=true></i><span itemprop=copyrightYear>2019 - 2024</span><span class=author itemprop=copyrightHolder>&nbsp;<a href=/ target=_blank>xxxx</a></span>&nbsp;|&nbsp;<span class=license><a rel="license external nofollow noopener noreffer" href=https://creativecommons.org/licenses/by-nc/4.0/ target=_blank>CC BY-NC 4.0</a></span></div></div></footer></div><div id=fixed-buttons><a href=# id=back-to-top class=fixed-button title="Back to Top"><i class="fas fa-arrow-up fa-fw" aria-hidden=true></i>
+</a><a href=# id=view-comments class=fixed-button title="View Comments"><i class="fas fa-comment fa-fw" aria-hidden=true></i></a></div><link rel=stylesheet href=/lib/valine/valine.min.css><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css><script type=text/javascript src=https://cdn.jsdelivr.net/npm/valine@1.5.0/dist/Valine.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/autocomplete.js@0.38.1/dist/autocomplete.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/algoliasearch@4.13.1/dist/algoliasearch-lite.umd.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/lazysizes@5.3.2/lazysizes.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/sharer.js@0.5.1/sharer.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/copy-tex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/mhchem.min.js></script><script type=text/javascript>window.config={code:{copyTitle:"Copy to clipboard",maxShownLines:50},comment:{valine:{appId:"QGzwQXOqs5JOhN4RGPOkR2mR-MdYXbMMI",appKey:"WBmoGyJtbqUswvfLh6L8iEBr",avatar:"mp",el:"#valine",emojiCDN:"https://cdn.jsdelivr.net/npm/emoji-datasource-google@14.0.0/img/google/64/",emojiMaps:{100:"1f4af.png",alien:"1f47d.png",anger:"1f4a2.png",angry:"1f620.png",anguished:"1f627.png",astonished:"1f632.png",black_heart:"1f5a4.png",blue_heart:"1f499.png",blush:"1f60a.png",bomb:"1f4a3.png",boom:"1f4a5.png",broken_heart:"1f494.png",brown_heart:"1f90e.png",clown_face:"1f921.png",cold_face:"1f976.png",cold_sweat:"1f630.png",confounded:"1f616.png",confused:"1f615.png",cry:"1f622.png",crying_cat_face:"1f63f.png",cupid:"1f498.png",dash:"1f4a8.png",disappointed:"1f61e.png",disappointed_relieved:"1f625.png",dizzy:"1f4ab.png",dizzy_face:"1f635.png",drooling_face:"1f924.png",exploding_head:"1f92f.png",expressionless:"1f611.png",face_vomiting:"1f92e.png",face_with_cowboy_hat:"1f920.png",face_with_hand_over_mouth:"1f92d.png",face_with_head_bandage:"1f915.png",face_with_monocle:"1f9d0.png",face_with_raised_eyebrow:"1f928.png",face_with_rolling_eyes:"1f644.png",face_with_symbols_on_mouth:"1f92c.png",face_with_thermometer:"1f912.png",fearful:"1f628.png",flushed:"1f633.png",frowning:"1f626.png",ghost:"1f47b.png",gift_heart:"1f49d.png",green_heart:"1f49a.png",grimacing:"1f62c.png",grin:"1f601.png",grinning:"1f600.png",hankey:"1f4a9.png",hear_no_evil:"1f649.png",heart:"2764-fe0f.png",heart_decoration:"1f49f.png",heart_eyes:"1f60d.png",heart_eyes_cat:"1f63b.png",heartbeat:"1f493.png",heartpulse:"1f497.png",heavy_heart_exclamation_mark_ornament:"2763-fe0f.png",hole:"1f573-fe0f.png",hot_face:"1f975.png",hugging_face:"1f917.png",hushed:"1f62f.png",imp:"1f47f.png",innocent:"1f607.png",japanese_goblin:"1f47a.png",japanese_ogre:"1f479.png",joy:"1f602.png",joy_cat:"1f639.png",kiss:"1f48b.png",kissing:"1f617.png",kissing_cat:"1f63d.png",kissing_closed_eyes:"1f61a.png",kissing_heart:"1f618.png",kissing_smiling_eyes:"1f619.png",laughing:"1f606.png",left_speech_bubble:"1f5e8-fe0f.png",love_letter:"1f48c.png",lying_face:"1f925.png",mask:"1f637.png",money_mouth_face:"1f911.png",nauseated_face:"1f922.png",nerd_face:"1f913.png",neutral_face:"1f610.png",no_mouth:"1f636.png",open_mouth:"1f62e.png",orange_heart:"1f9e1.png",partying_face:"1f973.png",pensive:"1f614.png",persevere:"1f623.png",pleading_face:"1f97a.png",pouting_cat:"1f63e.png",purple_heart:"1f49c.png",rage:"1f621.png",relaxed:"263a-fe0f.png",relieved:"1f60c.png",revolving_hearts:"1f49e.png",right_anger_bubble:"1f5ef-fe0f.png",robot_face:"1f916.png",rolling_on_the_floor_laughing:"1f923.png",scream:"1f631.png",scream_cat:"1f640.png",see_no_evil:"1f648.png",shushing_face:"1f92b.png",skull:"1f480.png",skull_and_crossbones:"2620-fe0f.png",sleeping:"1f634.png",sleepy:"1f62a.png",slightly_frowning_face:"1f641.png",slightly_smiling_face:"1f642.png",smile:"1f604.png",smile_cat:"1f638.png",smiley:"1f603.png",smiley_cat:"1f63a.png",smiling_face_with_3_hearts:"1f970.png",smiling_imp:"1f608.png",smirk:"1f60f.png",smirk_cat:"1f63c.png",sneezing_face:"1f927.png",sob:"1f62d.png",space_invader:"1f47e.png",sparkling_heart:"1f496.png",speak_no_evil:"1f64a.png",speech_balloon:"1f4ac.png","star-struck":"1f929.png",stuck_out_tongue:"1f61b.png",stuck_out_tongue_closed_eyes:"1f61d.png",stuck_out_tongue_winking_eye:"1f61c.png",sunglasses:"1f60e.png",sweat:"1f613.png",sweat_drops:"1f4a6.png",sweat_smile:"1f605.png",thinking_face:"1f914.png",thought_balloon:"1f4ad.png",tired_face:"1f62b.png",triumph:"1f624.png",two_hearts:"1f495.png",unamused:"1f612.png",upside_down_face:"1f643.png",weary:"1f629.png",white_frowning_face:"2639-fe0f.png",white_heart:"1f90d.png",wink:"1f609.png",woozy_face:"1f974.png",worried:"1f61f.png",yawning_face:"1f971.png",yellow_heart:"1f49b.png",yum:"1f60b.png",zany_face:"1f92a.png",zipper_mouth_face:"1f910.png",zzz:"1f4a4.png"},enableQQ:!1,highlight:!0,lang:"en",pageSize:10,placeholder:"Your comment ...",recordIP:!0,serverURLs:"https://leancloud.hugoloveit.com",visitor:!0}},math:{delimiters:[{display:!0,left:"$$",right:"$$"},{display:!0,left:"\\[",right:"\\]"},{display:!0,left:"\\begin{equation}",right:"\\end{equation}"},{display:!0,left:"\\begin{equation*}",right:"\\end{equation*}"},{display:!0,left:"\\begin{align}",right:"\\end{align}"},{display:!0,left:"\\begin{align*}",right:"\\end{align*}"},{display:!0,left:"\\begin{alignat}",right:"\\end{alignat}"},{display:!0,left:"\\begin{alignat*}",right:"\\end{alignat*}"},{display:!0,left:"\\begin{gather}",right:"\\end{gather}"},{display:!0,left:"\\begin{CD}",right:"\\end{CD}"},{display:!1,left:"$",right:"$"},{display:!1,left:"\\(",right:"\\)"}],strict:!1},search:{algoliaAppID:"PASDMWALPK",algoliaIndex:"index.en",algoliaSearchKey:"b42948e51daaa93df92381c8e2ac0f93",highlightTag:"em",maxResultLength:10,noResultsFound:"No results found",snippetLength:30,type:"algolia"}}</script><script type=text/javascript src=/js/theme.min.js></script></body></html>
