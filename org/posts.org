@@ -1,0 +1,16 @@
+#+hugo_base_dir: ../
+#+hugo_section: ./posts/
+#+hugo_custom_front_matter: :toc true
+#+hugo_front_matter_format: yaml
+#+hugo_weight: auto
+#+hugo_auto_set_lastmod: t
+#+author:
+#+hugo_custom_front_matter: :author "连义江"
+* DONE 深入理解transformer                       :transformer:llm:matrix:@llm:
+:PROPERTIES:
+:EXPORT_FILE_NAME: index
+:EXPORT_DATE: 2024-02-01
+:EXPORT_DESCRIPTION: Whole hugo blog in plain text!
+:EXPORT_HUGO_BUNDLE: 2024/02/transformer
+:END:
+#+INCLUDE: "./itransformer.org" :minlevel 2 :line3 "-1"
