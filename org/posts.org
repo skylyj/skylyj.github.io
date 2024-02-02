@@ -6,6 +6,8 @@
 #+hugo_auto_set_lastmod: t
 #+author:
 #+hugo_custom_front_matter: :author "连义江"
+#+bibliography: /Users/lianyijiang/llm.bib
+
 * DONE 深入理解transformer                 :transformer:大模型:matrix:@大模型:
 :PROPERTIES:
 :EXPORT_FILE_NAME: index
@@ -13,4 +15,6 @@
 :EXPORT_DESCRIPTION: Whole hugo blog in plain text!
 :EXPORT_HUGO_BUNDLE: 2024/02/transformer
 :END:
-#+INCLUDE: "./itransformer.org" :minlevel 2 :line3 "-2"
+#+INCLUDE: "./itransformer.org" :minlevel 2 :lines "1-"
+** 参考论文
+[[bibliography:/Users/lianyijiang/llm.bib]]
