@@ -8,9 +8,10 @@
 
 -   参考
     -   2017. (引用 106576)
-        (<a href="#citeproc_bib_item_1">Vaswani et al. 2023</a>)
+        (<a href="#citeproc_bib_item_2">Vaswani et al. 2023</a>)
     -   2020. (引用 975)
         Fast Autoregressive Transformers with Linear Attention
+        (<a href="#citeproc_bib_item_1">Katharopoulos et al. 2020</a>)
     -   [mingpt by karpathy](https://github.com/karpathy/minGPT/tree/master/mingpt)
 -   主要内容
     -   transformer 的设计推演
@@ -746,6 +747,7 @@ class Block(nn.Module):
 ## 参考论文 {#参考论文}
 
 <style>.csl-entry{text-indent: -1.5em; margin-left: 1.5em;}</style><div class="csl-bib-body">
-  <div class="csl-entry"><a id="citeproc_bib_item_1"></a>Vaswani, Ashish, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Lukasz Kaiser, and Illia Polosukhin. 2023. “Attention Is All You Need.” arXiv. <a href="https://arxiv.org/abs/1706.03762">https://arxiv.org/abs/1706.03762</a>.</div>
+  <div class="csl-entry"><a id="citeproc_bib_item_1"></a>Katharopoulos, Angelos, Apoorv Vyas, Nikolaos Pappas, and François Fleuret. 2020. “Transformers Are RNNs: Fast Autoregressive Transformers with Linear Attention.” <i>Arxiv.Org</i>. https://arxiv.org/abs/2006.16236v3.</div>
+  <div class="csl-entry"><a id="citeproc_bib_item_2"></a>Vaswani, Ashish, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Lukasz Kaiser, and Illia Polosukhin. 2023. “Attention Is All You Need.” arXiv. <a href="https://arxiv.org/abs/1706.03762">https://arxiv.org/abs/1706.03762</a>.</div>
 </div>
 
