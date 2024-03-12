@@ -19,3 +19,15 @@
 #+INCLUDE: "./transformer.org" :minlevel 2 :lines "1-"
 ** 参考论文
 [[bibliography:/Users/lianyijiang/llm.bib]]
+* TODO transformer是怎样设计的？
+:PROPERTIES:
+:EXPORT_FILE_NAME: index
+:EXPORT_DATE: 2024-02-01
+:EXPORT_DESCRIPTION: Whole hugo blog in plain text!
+:EXPORT_HUGO_BUNDLE: 2024/02/transformer
+:END:
+#+INCLUDE: "./transformer_design.org" :minlevel 2 :lines "1-"
+** 参考论文
+[[bibliography:/Users/lianyijiang/llm.bib]]
+* TODO 关于线性transformer
+* TODO 关于旋转位置编码
