@@ -2,7 +2,7 @@
 title: "深入理解transformer"
 description: "Whole hugo blog in plain text!"
 date: 2024-02-01
-lastmod: 2024-03-12T20:33:58+08:00
+lastmod: 2024-03-12T20:55:01+08:00
 tags: ["transformer"]
 draft: false
 weight: 1001
