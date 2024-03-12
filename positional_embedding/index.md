@@ -271,17 +271,16 @@ Q\_{i}K\_j^T &=X\_{i}R(i\theta)W\_QW\_KR(j\theta)^{T}X\_{j}^T\\\\
        0 & 0 \\\\
        \end{pmatrix}\\)
 
-\\(R(i\Theta)=\begin{pmatrix}
-   R(i\theta\_{1}) & 0 \\\\
-   0 & R(i\theta\_2)
-   \end{pmatrix}=\begin{pmatrix}
-   R(i\theta\_{1}) & 0 \\\\
-   0 & 0 \\\\
-   \end{pmatrix}\begin{pmatrix}
-   0 & 0 \\\\
-   0 & R(i\theta\_2)
-   \end{pmatrix}=\widehat{R}(i\theta\_1)\widehat{R}(i\theta\_2)\\)
-
+    \\(R(i\Theta)=\begin{pmatrix}
+       R(i\theta\_{1}) & 0 \\\\
+       0 & R(i\theta\_2)
+       \end{pmatrix}=\begin{pmatrix}
+       R(i\theta\_{1}) & 0 \\\\
+       0 & 0 \\\\
+       \end{pmatrix}\begin{pmatrix}
+       0 & 0 \\\\
+       0 & R(i\theta\_2)
+       \end{pmatrix}=\widehat{R}(i\theta\_1)\widehat{R}(i\theta\_2)\\)
 -   在第一个二维空间按照 \\(\theta\_{1}\\) 来旋转，第二个 \\(\theta\_{2}\\) 来旋转
 
 
