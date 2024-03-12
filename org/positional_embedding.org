@@ -1,0 +1,385 @@
+#+TITLE: 旋转位置编码ROPE
+
+#+AUTHOR: 连义江
+* 背景
+** 主要内容
+- 内容
+  + 旋转位置编码的来龙去脉
+  + 代码实现
+- 参考：
+  + 论文：2021. Enhanced Transformer with Rotary Position Embedding
+  + [[https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/modeling_llama.py][hugging face llama]]
+** 回顾transformer
+- encoder: 低阶语义向量序列转化为高阶的语义向量序列
+   $\mathcal{T}\begin{pmatrix}
+   X_1\\
+   X_2\\
+   \vdots\\
+   X_N
+   \end{pmatrix}
+   \rightarrow\begin{pmatrix}
+   Y_1\\
+   Y_2\\
+   \vdots\\
+   Y_N
+   \end{pmatrix}$
+- 两个变换组成 $Y=\mathcal{T}(X)=\mathcal{F}(\mathcal{A}(X))$
+  + Attention $\mathcal{A}$
+  + Feedforward $\mathcal{F}$
+- 详细
+   $$\begin{aligned}Q_{i} &= X_{i} W_{Q} \\
+   K_{i} &= X_{i} W_{K}\\
+   V_{i} &= X_{i} W_{V}\\
+   Y_{i} &= \sum_{j=1}^{N}sim(Q_i,K_{j}) V_j\\
+   sim(Q_{i},K_j) = &= \frac{exp(\frac{Q_{i}K_{j}^{T}}{\sqrt{d}})}
+   {\sum_{j=1}^N exp(\frac{Q_iK_j^{T}}{\sqrt{d}})}\\
+   \end{aligned}$$
+
+** 为什么需要位置编码
+- 因为transformer结构本身是和距离无关的，
+   $Y=\mathcal{T}(X)=\mathcal{F}(\mathcal{A}(X))$
+- 高阶语义向量不仅仅是由周围token的语义向量组合表达而成
+  + 还需要加上每个token所处的位置
+- 下面的cls token得到的语义向量是完全一样的。
+  + <cls> 从 北京 到 上海 的 火车票
+  + <cls> 从 上海 到 北京 的 火车票
+- 其他的网络结构天然有序列的位置信息 RNN/CNN
+* 如何加入位置编码
+  $\mathcal{T}(X)=\mathcal{F}(\mathcal{A}(X))$
+  - $\mathcal{F}$ 是位置无关的
+  - 可以修改 $X$ 或者 $\mathcal{A}$
+** 1. 直接修改输入，加入绝对位置编码
+在$X_i \rightarrow Q_i, K_i, V_i$ 之前，直接加入位置的embedding
+$X_i^{'}=X_i+P_i$
+*** learned embedding
+- 优点简单，bert/GPT
+- 外推困难，对于超过序列最大长度的位置
+*** 自定义绝对位置编码
+- 二维函数 f(position, dimension)
+- 要求
+  + 函数随着position,dimension增长应该是有界的
+  + 足够的区分度，对position, dimension
+- 例子 
+   \begin{equation*}
+   \begin{flalign}
+   P_{i,2t} &= sin(k/10000^{2t/d}) &&\\
+   P_{i,2t+1} &= cos(k/10000^{2t/d})&&\\
+   \end{flalign}\\
+   \end{equation*}
+*** 问题
+语义应该是和相对位置有关的，而不是绝对位置
+** 2. 修改Attention，加入相对位置信息
+*** 回顾Attention
+$$\begin{aligned}Q_{i} &= X_{i} W_{Q} \\
+   K_{i} &= X_{i} W_{K}\\
+   V_{i} &= X_{i} W_{V}\\
+   Y_{i} &= \sum_{j=1}^{N}sim(Q_i,K_{j}) V_j\\
+   sim(Q_{i},K_j) &= \frac{exp(\frac{Q_{i}K_{j}^{T}}{\sqrt{d}})}
+{\sum_{j=1}^N exp(\frac{Q_iK_j^{T}}{\sqrt{d}})}\\
+   \end{aligned}$$
+可以从相似性入手，让位置的相对关系反应到q，k的相似性中来。
+*** 希望
+相似性计算只依赖向量还有相对距离, 而不依赖于其绝对的位置。
+$Q_{i}K_j^T=g(X_{i},X_j,i-j)$
+* 旋转位置编码
+** 在二维空间中看motivation
+假设$Q_{i}, K_j$ 都是二维的向量，$i, j$ 是它们对应的position，
+这里$\eta_{i},\eta_{j}$ 是$Q_i, K_j$向量的弧度表示对应的角度.
+- 点击只和模长和夹角有关
+   + $Q_iK_j^T=\|Q_i\|\|K_j\| cos(\eta_{i}-\eta_j)$, 
+- 如果: 基于位置乘倍数旋转之后做点击
+  + 我们把两个向量各自旋转$i\theta,j\theta$ 后再来计算点击
+  + 其中$\theta$ 是一个单位角度，
+  + 应该就只和$Q_i,Q_j,i-j$ 相关了，
+- 因为: 模长没有变，只是夹角变了，夹角增加了 $(i-j)\theta$.
+  + $Q_iR(i\theta)(K_jR(j\theta))^T=\|Q_i\|\|K_j\| cos(\eta_{i}-\eta_{j}+(i-j)\theta)$
+** 回顾矩阵的知识
+*** 关于行向量和矩阵
+- 定义线性算子 $\mathcal{A}$
+  + 可以作用到行向量  $\mathcal{A}(X_i) = X_{i} A$
+  + 也可以作用到矩阵  $\mathcal{A}(X) = XA$
+- 右乘矩阵等于对每个行向量逐个施加行变换
+  $XA=\begin{pmatrix}
+  X_1\\
+  X_2\\
+  \vdots\\
+  X_N
+  \end{pmatrix}A=
+  \begin{pmatrix}
+  X_1 A\\
+  X_2 A\\
+  \vdots\\
+  X_N A
+  \end{pmatrix}=
+  \begin{pmatrix}
+  \mathcal{A}(X_1) \\
+  \mathcal{A}(X_2) \\
+  \vdots\\
+  \mathcal{A}(X_N) 
+  \end{pmatrix}=\mathcal{A}(X)$
+- 算子是对矩阵乘法的一种物理理解
+  + 旋转矩阵
+     $R(\theta)=\begin{pmatrix}
+        cos\theta& sin\theta\\
+        -sin\theta& cos\theta\\\end{pmatrix}$
+  + 缩放变换
+     $R(\lambda_1,\lambda_2)=\begin{pmatrix} \lambda_1 & \\
+        & \lambda_2 \\ \end{pmatrix}$
+*** 关于旋转矩阵
+- 旋转矩阵
+   $R(\theta)=\begin{pmatrix}
+        cos\theta& sin\theta\\
+        -sin\theta& cos\theta\\\end{pmatrix}$
+- 物理意义
+   $X_iR(i\theta)$ 对位置在$i$ 的语义向量$X_i$ 逆时针旋转$i\theta$
+- 性质
+  + $R(\theta)^T=R(-\theta)$
+  + $R(\theta_1)(\theta_2)=R(\theta_1+\theta_{2})$
+#+DOWNLOADED: screenshot @ 2024-03-08 11:42:35
+#+ATTR_HTML: :width 200px :align middle
+[[file:images/2024-03-08_11-42-35_screenshot.png]]
+
+** 二维空间的一个解
+*** 基于旋转矩阵的一个解
+\begin{equation*}
+\begin{split}
+Q_{i}&= X_{i} W_{Q} R(i\theta) \\
+K_{j}&= X_j W_{K} R(j\theta)\\
+Q_{i}K_j^T &=X_{i}W_QR(i\theta)R(j\theta)^{T}W_K^{T}X_{j}^T\\
+&=X_{i}W_QR(i\theta)R(j\theta)^{T}W_K^{T}X_{j}^T\\
+&=X_{i}W_QR(i\theta)R(-j\theta)W_K^{T}X_{j}^T\\
+&=X_{i}W_QR((i-j)\theta)W_K^{T}X_{j}^T\\
+& =g(X_i,X_j,i-j)\\
+     \end{split}
+     \end{equation*}
+*** 为什么是在投影之后旋转，不在投影之前转？
+\begin{equation*}
+\begin{split}
+Q_{i}&= f_{Q}(X_{i}, i)  = X_{i} R(i\theta) W_{Q} \\
+K_{j}&= f_{K}(X_{j}, j)  = X_j R(j\theta) W_{K} \\
+Q_{i}K_j^T &=X_{i}R(i\theta)W_QW_KR(j\theta)^{T}X_{j}^T\\
+&=?\\
+     \end{split}
+     \end{equation*}
+** 推广到高纬的空间
+整个空间分割成$d/2$个子空间，在各个子空间上分别按照一个位置相关的角度旋转
+*** 定义 $R(i\Theta)$
+- $X_{i}R(i\Theta)$
+   表示对$X_{i}$ 在各个子空间分别做角度为$i\theta_1,i\theta_2,\ldots,i\theta_{d/2}$ 的旋转.
+   $\Theta=(\theta_{1},\theta_2,\ldots,\theta_{d/2})$
+   $R(i \Theta)=\begin{pmatrix}
+   cos\,i\theta_{1} & sin\,i\theta_1 & 0 & 0 \\
+   -sin\,i\theta_{1} & cos\,i\theta_1 & 0 & 0 \\
+   0 & 0 & cos\,i\theta_{2} & sin\,i\theta_2 \\
+   0 & 0 & -sin\,i\theta_{2} & cos\,i\theta_2 \\
+   \end{pmatrix}=\begin{pmatrix}
+   R(i\theta_{1}) & 0 \\
+   0 & R(i\theta_2) 
+   \end{pmatrix}$
+*** 物理意义
+- 依次在独立的二维子空间上做旋转变换
+   利用分块矩阵的乘法，我们观察一下, 把对应行向量$X_i$切分为两部分，用上角标来区分
+   $X_i = (X_{i}^1, X_{i}^2)$
+   $XR(i\Theta)=(X^1, X^2)\begin{pmatrix}
+   R(i\theta_{1}) & 0 \\
+   0 & R(i\theta_2) 
+   \end{pmatrix}=(X^1R(i\theta_1), X^2R(i\theta_2))$
+   可以看出这个矩阵的变化的作用就是在各个独立的二维子空间上分别做独立的旋转变化，最后把变换后的向量拼接即可
+- 性质: $R(i\Theta)=\widehat{R}(i\theta_1)\widehat{R}(i\theta_2)\ldots\widehat{R}(i\theta_{d/2})$
+   定义$\widehat{R}(i\theta_1)=
+   \begin{pmatrix}
+   R(i\theta_{1}) & 0 \\
+   0 & 0 \\
+   \end{pmatrix}$
+   
+   $R(i\Theta)=\begin{pmatrix}
+   R(i\theta_{1}) & 0 \\
+   0 & R(i\theta_2) 
+   \end{pmatrix}=\begin{pmatrix}
+   R(i\theta_{1}) & 0 \\
+   0 & 0 \\
+   \end{pmatrix}\begin{pmatrix}
+   0 & 0 \\
+   0 & R(i\theta_2) 
+   \end{pmatrix}=\widehat{R}(i\theta_1)\widehat{R}(i\theta_2)$
+   
+  + 在第一个二维空间按照 $\theta_{1}$ 来旋转，第二个 $\theta_{2}$ 来旋转
+*** ROPE在高维空间
+\begin{equation*}
+\begin{split}
+Q_{i}& = X_{i} W_{Q} R(i\Theta) \\
+K_{j}& = X_j W_{K} R(j\Theta)\\
+Q_{i}K_j^T &=X_{i}W_QR(i\Theta)R(j\Theta)^{T}W_K^{T}X_{j}\\
+&=X_{i}W_QR(i\Theta)R(j\Theta)^{T}W_K^{T}X_{j}\\
+&=X_{i}W_QR((i-j)\Theta)W_K^{T}X_{j}\\
+&=g(X_i,X_j,i-j)\\
+\end{split}
+\end{equation*}
+
+其中
+\begin{equation*}
+\begin{split}
+R(i\Theta)R(j\Theta)^{T} &= \widehat{R}(i\theta_1)\widehat{R}(i\theta_2)\ldots\widehat{R}(i\theta_{d/2})\widehat{R}(j\theta_{d/2})^{T}\ldots \widehat{R}(j\theta_{2})^{T} \widehat{R}(j\theta_{1})^{T} \\
+&= (\widehat{R}(i\theta_1)\widehat{R}(j\theta_1)^T)(\widehat{R}(i\theta_2)\widehat{R}(j\theta_2)^T)\ldots(\widehat{R}(i\theta_{d/2}\widehat{R}(j\theta_{d/2})^T)\\
+&= \widehat{R}((i-j)\theta_1)\widehat{R}((i-j)\theta_2)\ldots \widehat{R}((i-j)\theta_{d/2})\\
+&= R((i-j)\Theta)\\
+\end{split}
+\end{equation*}
+
+
+其中$\theta_{k}$ 是超参数，$\theta_{k}=10000^{-2(k-1)/d}, k\in[1,2,\ldots,d/2]$
+** 总结旋转位置编码
+*** 总结
+- 旋转位置编码是针对$Q,K$ 的每个行向量做对应的位置旋转变换
+   $Q_{i}& = X_{i} W_{Q} R(i\Theta)$
+   $K_{j}& = X_{j} W_{K} R(j\Theta)$
+- 位置旋转矩阵定义 $R(i\Theta)$
+   其中 $\Theta=(\theta_{1},\theta_2,\ldots,\theta_{d/2})$, $\theta_{k}=10000^{-2(k-1)/d}, k\in[1,2,\ldots,d/2]$
+   $R(i\theta)=\begin{pmatrix}
+        cos i\theta& sin i\theta\\
+        -sin i\theta& cos i\theta\\\end{pmatrix}$
+   $R(i \Theta)=\begin{pmatrix}
+   cos\,i\theta_{1} & sin\,i\theta_1 & 0 & 0 & 0 & 0 &0\\
+   -sin\,i\theta_{1} & cos\,i\theta_1 & 0 & 0 & 0 & 0 &0 \\
+   0 & 0 & cos\,i\theta_{2} & sin\,i\theta_2 & 0 & 0 &0 \\
+   0 & 0 & -sin\,i\theta_{2} & cos\,i\theta_2& 0 & 0 &0  \\
+   0 & 0 & 0 & 0 & \ldots &0 & 0 \\
+   0 & 0 & 0 & 0 &\ldots & cos\,i\theta_{d/2} & sin\,i\theta_{d/2}  \\
+   0 & 0 & 0 & 0 &\ldots & -sin\,i\theta_{d/2} & cos\,i\theta_{d/2}
+   \end{pmatrix}$
+   
+   $R(i\Theta)=\begin{pmatrix}
+   R(i\theta_{1}) & 0 &0 & 0\\
+   0 & R(i\theta_2) & 0 &0 \\
+   0 & 0 &\ldots &0  \\
+   0 & 0 & 0 &R(i\theta_{d/2})\\ 
+   \end{pmatrix}$        
+*** 再看下绝对位置编码
+   \begin{equation*}
+   \begin{flalign}
+   P_{i,2t} &= sin(i/10000^{2t/d}) &&\\
+   P_{i,2t+1} &= cos(i/10000^{2t/d})&&\\
+   \end{flalign}\\
+   \end{equation*}
+
+换个表述的形式，
+   $P_{i}=\begin{pmatrix}
+   B_1, B_2, \ldots, B_{d/2}\end{pmatrix}$，   $B_{k}=\begin{pmatrix}
+   sin(i\theta_k),   cos(i\theta_k)
+   \end{pmatrix}$
+   $\theta_{k}=10000^{-2(k-1)/d}, k\in[1,2,\ldots,d/2]$
+** 代码实现
+*** 避开旋转矩阵的相乘
+我们需要对每个$Q_{i}$ 乘以不同的旋转矩阵，也就是
+$QR=\begin{pmatrix}
+Q_1 R(1\Theta)\\
+Q_2 R(2\Theta)\\
+\ldots \\
+Q_N R(N\Theta)\\
+\end{pmatrix}$
+假设是二维空间，把$Q$ 拆分成两个列向量$U,V$, 记录
+$cos=\begin{pmatrix}cos1\theta \\
+cos 2\theta\\ \ldots,\\ cos N\theta
+\end{pmatrix},
+sin=\begin{pmatrix}sin 1\theta \\
+sin 2\theta\\ \ldots,\\ sin N\theta
+\end{pmatrix}$
+那么
+
+$$\begin{aligned}
+QR&=\begin{pmatrix}
+u_1 cos 1\theta-v_1 sin 1\theta, u_1 sin 1\theta + v_1 cos 1\theta\\
+u_2 cos 2\theta-v_2 sin 2\theta, u_2 sin 2\theta + v_2 cos 2\theta\\
+\ldots\\
+u_N cos N\theta-v_N sin\Ntheta, u_N sin N \theta + v_N cos N\theta\\
+\end{pmatrix}\\
+&=(U * cos - V* sin, U*sin+V*cos) \\
+&= (U,V)cos +(V, -U) sin
+\end{aligned}$$
+同样的，在高维空间，我们可以把$Q$ 拆分成$d/2$ 个列向量$U_1,V_1,U_2,V_2,\ldots,U_{d/2},V_{d/2}$, 记录
+
+*** tricks
+- trick2：不需要做严格紧密相连的二维子空间序列，将整个空间分成两部分
+  + 第一个部分放的是每个子空间的第一维度，第二部分放置的是每个子空间的第二维度
+     #+begin_example
+     (x1,y1) 是一个子空间，(x2, y2)是一个子空间，(x3, y3)是一个子空间
+     before： [(x1,y1), (x2,y2), (x3,y3)]
+     after： [(x1,x2,x3), (y1, y2, y3)]
+     #+end_example
+*** code   
+#+begin_src python  :results output
+  import torch
+  import torch.nn as nn
+  import math
+  from torch.nn import functional as F
+  class Rotator:
+      """根据hidden_dim，和position_ids 生成对应的旋转位置编码, 和论文中定义略有不同，一个个二维的子空间被
+      分割到了前后两部分，分别进行旋转，然后拼接起来
+      """
+
+      def __init__(self, dim, position_ids):
+          """ position_ids: [seq_len], dim 和单个头的hidden_dim对应 """
+          base = 10000
+          theta_base = 1.0 / (base ** (torch.arange(0, dim, 2, dtype=torch.int64).float() / dim))
+          thetas = position_ids.outer(theta_base)  # [seq_len, D/2]
+          full_thetas = torch.cat((thetas, thetas), dim=-1)  # [seq_len, D]
+          self.cos = full_thetas.cos()
+          self.sin = full_thetas.sin()
+
+      def rotate(self, x):
+          """ 
+          x: [bs, num_attention_heads, seq_len, D]
+          q: [bs, num_attention_heads, seq_len, D]
+          cos: [seq_len, D]
+          [x,y] @ [[cos, sin], [-sin, cos]] = [x*cos+y*sin, ycos-x*sin] =[x,y]*cos+[y, -x]*sin
+          """
+          return x * self.cos + Rotator.reverse_half(x) * self.sin
+
+      @staticmethod
+      def reverse_half(q):
+          """ q: [bs, num_attention_heads, seq_len, D] """
+          x = q[..., : q.shape[-1] // 2]
+          y = q[..., q.shape[-1] // 2:]
+          return torch.cat((-y, x), dim=-1)
+
+
+  class SelfAttentionWithRoPE(nn.Module):
+
+      def __init__(self, config):
+          super().__init__()
+          self.H = config["n_head"]
+          self.F = config["hidden_dim"]  # F
+          self.D = self.F // self.H  # D
+          # 一次把qkv 全部映射完成，对应W_Q, W_K, W_V
+          self.qkv_proj = nn.Linear(self.F, 3 * self.F)
+          # 最后的投影，对应于 $W_O$
+          self.out_proj = nn.Linear(self.F, self.F)
+
+      def forward(self, x, position_ids):
+          # position_ids: [seq_len]
+          B, N, _ = x.size()
+          q, k, v = self.qkv_proj(x).split(self.F, dim=-1)
+          # matmul 只能在最后两个维度相乘，需要对NxD的矩阵相乘，做1,2维度的交换
+          k = k.view(B, N, self.H, self.D).transpose(1, 2)
+          q = q.view(B, N, self.H, self.D).transpose(1, 2)
+          v = v.view(B, N, self.H, self.D).transpose(1, 2)
+          # 旋转位置编码
+          rotator = Rotator(self.D, position_ids)
+          q = rotator.rotate(q)
+          k = rotator.rotate(k)
+          # 计算相似性
+          att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
+          att = F.softmax(att, dim=-1)
+          y = att @ v
+          # 多头拼接
+          y = y.transpose(1, 2).contiguous().view(B, N, self.F)
+          y = self.out_proj(y)
+          return y
+
+
+  config = {"n_head": 2, "hidden_dim": 16, "batch_size": 3, "seq_len": 5}
+  attn = SelfAttentionWithRoPE(config)
+  x = torch.rand(config["batch_size"], config["seq_len"], config["hidden_dim"])
+  position_ids = torch.arange(config["seq_len"])
+  y = attn(x, position_ids)
+#+end_src
