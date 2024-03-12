@@ -2,7 +2,7 @@
 title: "旋转位置编码"
 description: "Whole hugo blog in plain text!"
 date: 2024-02-01
-lastmod: 2024-03-12T20:29:19+08:00
+lastmod: 2024-03-12T20:33:38+08:00
 tags: ["transformer", "rope"]
 draft: false
 weight: 1002

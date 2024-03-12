@@ -2,7 +2,7 @@
 title: "深入理解transformer"
 description: "Whole hugo blog in plain text!"
 date: 2024-02-01
-lastmod: 2024-03-12T20:28:15+08:00
+lastmod: 2024-03-12T20:33:58+08:00
 tags: ["transformer"]
 draft: false
 weight: 1001
@@ -83,6 +83,7 @@ print(X.shape)
 
     -   \\(N\\) 个token，\\(F\\) 是embedding的维度
     -   每行对应于一个token的embedding 行向量
+
         \\(tokens=\begin{pmatrix}
            \text{hello} \\\\
            \text{world} \\\\
