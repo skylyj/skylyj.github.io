@@ -2,7 +2,7 @@
 title: "旋转位置编码"
 description: "Whole hugo blog in plain text!"
 date: 2024-02-01
-lastmod: 2024-03-12T20:04:32+08:00
+lastmod: 2024-03-12T20:22:51+08:00
 tags: ["transformer", "rope"]
 draft: false
 weight: 1002
@@ -18,7 +18,7 @@ toc: true
     -   旋转位置编码的来龙去脉
     -   代码实现
 -   参考：
-    -   论文：2021. Enhanced Transformer with Rotary Position Embedding
+    -   论文：2021. Enhanced Transformer with Rotary Position Embedding (<a href="#citeproc_bib_item_1">Su et al. 2022</a>)
     -   [hugging face llama](https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/modeling_llama.py)
 
 
@@ -508,4 +508,5 @@ y = attn(x, position_ids)
 ## 参考论文 {#参考论文}
 
 <style>.csl-entry{text-indent: -1.5em; margin-left: 1.5em;}</style><div class="csl-bib-body">
+  <div class="csl-entry"><a id="citeproc_bib_item_1"></a>Su, Jianlin, Yu Lu, Shengfeng Pan, Ahmed Murtadha, Bo Wen, and Yunfeng Liu. 2022. “RoFormer: Enhanced Transformer with Rotary Position Embedding.” arXiv. <a href="https://arxiv.org/abs/2104.09864">https://arxiv.org/abs/2104.09864</a>.</div>
 </div>

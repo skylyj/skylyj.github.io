@@ -5,7 +5,7 @@
   + 旋转位置编码的来龙去脉
   + 代码实现
 - 参考：
-  + 论文：2021. Enhanced Transformer with Rotary Position Embedding
+  + 论文：2021. Enhanced Transformer with Rotary Position Embedding [[cite:&suRoFormerEnhancedTransformer2022]]
   + [[https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/modeling_llama.py][hugging face llama]]
 ** 回顾transformer
 - encoder: 低阶语义向量序列转化为高阶的语义向量序列
@@ -208,7 +208,6 @@ Q_{i}K_j^T &=X_{i}R(i\theta)W_QW_KR(j\theta)^{T}X_{j}^T\\
    0 & 0 \\
    \end{pmatrix}$
    
-   
    $R(i\Theta)=\begin{pmatrix}
    R(i\theta_{1}) & 0 \\
    0 & R(i\theta_2) 
@@ -219,8 +218,7 @@ Q_{i}K_j^T &=X_{i}R(i\theta)W_QW_KR(j\theta)^{T}X_{j}^T\\
    0 & 0 \\
    0 & R(i\theta_2) 
    \end{pmatrix}=\widehat{R}(i\theta_1)\widehat{R}(i\theta_2)$
-   
-  + 在第一个二维空间按照 $\theta_{1}$ 来旋转，第二个 $\theta_{2}$ 来旋转
+- 在第一个二维空间按照 $\theta_{1}$ 来旋转，第二个 $\theta_{2}$ 来旋转
 *** ROPE在高维空间
 \begin{equation*}
 \begin{split}
