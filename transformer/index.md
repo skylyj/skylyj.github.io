@@ -75,6 +75,7 @@ print(X.shape)
 
     -   \\(N\\) 个token，\\(F\\) 是embedding的维度
     -   每行对应于一个token的embedding 行向量
+
         \\(tokens=\begin{pmatrix}
            \text{hello} \\\\
            \text{world} \\\\
