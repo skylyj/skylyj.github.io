@@ -4,30 +4,29 @@
 #+hugo_front_matter_format: yaml
 #+hugo_weight: auto
 #+hugo_auto_set_lastmod: t
-#+author: 
-#+hugo_custom_front_matter: :author "连义江"
+#+options: author:nil
 #+bibliography: /Users/lianyijiang/llm.bib
 #+cite_export: csl
 
-* DONE 深入理解transformer                 :transformer:大模型:matrix:@大模型:
+* DONE 深入理解transformer                                       :transformer:
 :PROPERTIES:
 :EXPORT_FILE_NAME: index
 :EXPORT_DATE: 2024-02-01
 :EXPORT_DESCRIPTION: Whole hugo blog in plain text!
-:EXPORT_HUGO_BUNDLE: 2024/02/transformer
+:EXPORT_HUGO_BUNDLE: 2024/transformer
+:EXPORT_OPTIONS: author:nil
 :END:
 #+INCLUDE: "./transformer.org" :minlevel 2 :lines "1-"
 ** 参考论文
 [[bibliography:/Users/lianyijiang/llm.bib]]
-* TODO transformer是怎样设计的？
+* DONE 旋转位置编码                                         :transformer:rope:
 :PROPERTIES:
 :EXPORT_FILE_NAME: index
 :EXPORT_DATE: 2024-02-01
 :EXPORT_DESCRIPTION: Whole hugo blog in plain text!
-:EXPORT_HUGO_BUNDLE: 2024/02/transformer
+:EXPORT_HUGO_BUNDLE: 2024/positional_embedding
+:EXPORT_OPTIONS: author:nil
 :END:
-#+INCLUDE: "./transformer_design.org" :minlevel 2 :lines "1-"
+#+INCLUDE: "./positional_embedding.org" :minlevel 2 :lines "1-"
 ** 参考论文
 [[bibliography:/Users/lianyijiang/llm.bib]]
-* TODO 关于线性transformer
-* TODO 关于旋转位置编码

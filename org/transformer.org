@@ -1,12 +1,14 @@
 #+TITLE: 深入理解transformer
-#+AUTHOR: 连义江
-#+DATE: 2024/01/28
 * transformer背景
 ** 主要内容
 - 主要内容
-  + 从高阶语义向量的组合表达来看attention $\mathcal{A}(X_i) &=  \dfrac{\sum_{j=1}^{N} sim(Q_i,K_j) V_j}{\sum_{j=1}^N sim(Q_i,K_j)}$
+  + 从高阶语义向量的组合表达来看attention
+     
+     $\mathcal{A}(X_i) =  \dfrac{\sum_{j=1}^{N} sim(Q_i,K_j) V_j}{\sum_{j=1}^N sim(Q_i,K_j)}$
   + 提供transformer 的代码讲解
-  + 从kernel的角度来看attention $O(N^2)$ 的计算量源于softmax的存在
+  + 从kernel的角度来看attention
+     
+     计算量$O(N^2)$ 源于softmax的存在
   + linear attention
 - 参考
   + 2017. Attention Is All You Need
@@ -54,14 +56,15 @@
 **** 例子
 - $N$ 个token，$F$ 是embedding的维度
 - 每行对应于一个token的embedding 行向量
-$tokens=\begin{pmatrix}
+   $tokens=\begin{pmatrix}
    hello \\
    world \\
    <pad> \\
    <pad> \\
-   <pad> 
-   \end{pmatrix} 
-   \rightarrow X=\begin{pmatrix}
+   <pad> \\
+   \end{pmatrix}$
+   
+   $X=\begin{pmatrix}
    [0.59, 0.20, 0.04, 0.96] \\
    [0.96, 0.30, 0.16, 0.63] \\
    [0.02, 0.19, 0.34, 0.25] \\
@@ -225,23 +228,28 @@ focus到 encoder部分来理解transformer
 $Y=\mathcal{F}\circ \mathcal{A}(X)$ 做两次矩阵的变换
 - $Y=\mathcal{A}(X)$    MultiHead Attention
   + 高阶的语义等于对 /全部/ 的低阶语义向量基于 /相似性(Attention)/ 做 /加权平均/
-  + $$\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(X_i,X_j) X_j}{\sum_{j=1}^N sim(X_i,X_j)} \\\end{aligned}$$
+  + $\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(X_i,X_j) X_j}{\sum_{j=1}^N sim(X_i,X_j)} \end{aligned}$
   + attention = 相似性
     
 - $Y'=\mathcal{F}(Y)$  Position-wise Feedforward
   + 再施加若干非线性变换
 * tranformer网络结构
 ** 基于KV查询的相似性计算
-$$\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(X_i,X_j) X_j}{\sum_{j=1}^N sim(X_i,X_j)} \\\end{aligned}$$
+$$\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(X_i,X_j) X_j}{\sum_{j=1}^N sim(X_i,X_j)} \end{aligned}$$
 *** 如何来定义相似性
 - $sim(X_{i}, X_j)= \mathrm{exp}(\dfrac{X_i X_{j}^T}{\sqrt{D}})$
 - $sim(X_{i}, X_j)= X_i X_{j}^T$
 *** 直接计算相似性？
 - 参数太少
 - 投影到别的空间来计算相似度   $X_{i}\rightarrow X_iW$
-   $$\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(X_iW_1,X_jW_{2}) X_jW_3}{\sum_{j=1}^N sim(X_iW_1,X_jW_2)} \\\end{aligned}$$
+      
+   $\begin{aligned}
+   \mathcal{A}(X_i) &=
+   \frac{\sum_{j=1}^{N} sim(X_iW_1,X_jW_{2}) X_jW_3}{\sum_{j=1}^N sim(X_iW_1,X_jW_2)}
+   \end{aligned}$
 - 如果我们记 $X_{i}W_{1}=Q_i, X_iW_2=K_i, X_iW_3=V_{i}$，
-   $$\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(Q_i,K_j) V_j}{\sum_{j=1}^N sim(Q_i,K_j)} \\\end{aligned}$$
+   
+   $\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(Q_i,K_j) V_j}{\sum_{j=1}^N sim(Q_i,K_j)} \end{aligned}$
 
 *** 基于KV查询理解
 - 把$X_i$ 投影出三个向量 $Q_i,K_i,V_i$
@@ -264,28 +272,39 @@ $$\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(X_i,X_j) X_j}{\su
    \vdots\\
    sim(Q_i,K_N)V_N
    \end{pmatrix}\Rightarrow\sum_{j=1}^N sim(Q_i,K_j)V_j$
-  3. $$\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(Q_i,K_j) V_j}{\sum_{j=1}^N sim(Q_i,K_j)} \\\end{aligned}$$
+  3. $\begin{aligned}\mathcal{A}(X_i) &=  \frac{\sum_{j=1}^{N} sim(Q_i,K_j) V_j}{\sum_{j=1}^N sim(Q_i,K_j)} \end{aligned}$
 - 参数： 对应于$Q,K,V$ 产生了三个投影矩阵矩阵 $W_{Q}, W_K,W_V$
 ** 在一个低维空间做attention
 *** 单个头的attention
 - 把$X_{i}$ 从$F$ 维空间投影到$D$ 维空间
+   
    $W_{Q}\in R^{F\times D}, W_K\in R^{F\times D}, W_{V} \in R^{F\times M}$
-   $Q_i &= X_iW_{Q}, \quad  K_i &= X_iW_{K}, \quad  V_i &= X_iW_{V}$
+   
+   $Q_i = X_iW_{Q}, \quad  K_i = X_iW_{K}, \quad  V_i = X_iW_{V}$
 - $Q_i$ 和所有的$K_j$ 做基于点积的相似度计算，
+   
    这里简单起见，我们省略掉了scaling $\frac{1}{\sqrt{D}}$
    
    $Q_iK^{T}=Q_i(K^T_1, \ldots, K^T_N)=(Q_iK^T_1, \ldots, Q_iK^T_N)$
 - 对相似度的分布做softmax
    
    $S=\mathrm{soft}(Q_iK^T_1, \ldots, Q_iK^T_N)=(s_{i1},\ldots, s_{iN})$
-
+   
    $s_{i,j}= \dfrac{exp(Q_iK_j^T)}{\sum_{j=1}^N exp(Q_iK_j^T)}$
-
 - 加权平均
-   $\mathcal{A}(X_i)=\sum_{j=1}^Ns_jV_j=(s_{i1},\ldots, s_{iN})\begin{pmatrix}V_1\\V_2\\\vdots\\V_N\end{pmatrix}$
-   $\mathcal{A}(X_i) &= \mathrm{soft}(Q_iK^{T})V = \mathrm{soft}(X_iW_QW_K^TX^T)XW_V$
+   
+   $\mathcal{A}(X_i)=\sum_{j=1}^Ns_jV_j=(s_{i1},\ldots, s_{iN})
+   \begin{pmatrix}
+   V_1\\
+   V_2\\
+   \vdots\\
+   V_N\end{pmatrix}$
+
+   
+   $\mathcal{A}(X_i) = \mathrm{soft}(Q_iK^{T})V = \mathrm{soft}(X_iW_QW_K^TX^T)XW_V$
 *** 矩阵表达
-$$Y=\mathcal{A}(X)=\begin{pmatrix}
+$Y=\mathcal{A}(X)
+=\begin{pmatrix}
 \mathcal{A}(X_1)\\
 \mathcal{A}(X_2)\\
 \vdots\\
@@ -295,8 +314,9 @@ $$Y=\mathcal{A}(X)=\begin{pmatrix}
 \mathrm{soft}(Q_1K^T)V\\
 \mathrm{soft}(Q_2K^T)V\\
 \vdots \\
-\mathrm{soft}(Q_NK^T)V\end{pmatrix}\\
-&=\mathrm{soft}(QK^T)V$$
+\mathrm{soft}(Q_NK^T)V
+\end{pmatrix}=\mathrm{soft}(QK^T)V$
+
 简化符号  $sim(Q,K)V$
 *** 代码实现
 #+begin_src python :results output
@@ -340,8 +360,8 @@ Multi-head attention allows the model to jointly attend to information from diff
   + 假设有$H$ 个头，每个头作用的低维空间维度是$D$
   + $D\times H = F$
 - 对$H$ 个 $D$ 行向量拼接
-   $W_O\in R^{F\times F}$
-   $\mathcal{A}(X) = \mathrm{concat}(\mathcal{A}^1(X), \mathcal{A}^2(X), \ldots, \mathcal{A}^{H}(X) W_O$
+  + $W_O\in R^{F\times F}$
+  + $\mathcal{A}(X) = \mathrm{concat}(\mathcal{A}^1(X), \mathcal{A}^2(X), \ldots, \mathcal{A}^{H}(X) W_O$
 - 或者对前面的符号简化
   + 在第$j$ 个子空间做单头注意力 $Y^{j}=sim(Q^{j}, K^{j})V^{j}$
   + 合并 $Y=(Y^{1},\ldots, Y^H)$   
@@ -413,13 +433,14 @@ $\dfrac{x-\mu}{\sqrt{\sigma}}\gamma + \beta,\mu=\dfrac{1}{d}\sum\limits_{i=1}^{d
 可以看成是作用在行向量上的算子
 *** 输入矩阵例子
 $\begin{pmatrix}
-  hello \\
-  world \\
-  <pad> \\
-  <pad> \\
-  <pad> 
+  \text{hello} \\
+  \text{world} \\
+  \text{pad} \\
+  \text{pad} \\
+  \text{pad} 
   \end{pmatrix}
-  \rightarrow X= \begin{pmatrix}
+  \rightarrow X=
+  \begin{pmatrix}
   [0.59, 0.20, 0.04, 0.96] \\
   [0.96, 0.30, 0.16, 0.63] \\
   [0.02, 0.19, 0.34, 0.25] \\
@@ -435,7 +456,8 @@ $\begin{pmatrix}
 - 每个位置做独立的归一化更有意义
 *** 其他的可能选择
 - RMSNorm
-   $\dfrac{x}{RMS(x)}, RMS(x)=\sqrt{\dfrac{1}{d}\sum\limits_{i=1}^{d}x_i^2$
+   
+   $\dfrac{x}{\text{RMS}(x)}, \quad \text{RMS}(x) = \sqrt{\frac{1}{d} \sum_{i=1}^{d} x_i^2}$
 ** 整体的变换
 $Y=\mathcal{T}(X)$
 1. Attention $Z=\mathcal{N}\circ(X+\mathcal{A}(X))$
@@ -570,5 +592,3 @@ $\mathcal{A}(X_i)=\dfrac{\sum_{j=1}^{N} sim(Q_i,K_j) V_j}{\sum_{j=1}^N sim(Q_i,K
   + <cls> 从 北京 到 上海 的 火车票
   + <cls> 从 上海 到 北京 的 火车票
 - 计算的复杂度是序列长度平方
-** 下期内容预告
-- positional embedding
