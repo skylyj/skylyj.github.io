@@ -2,7 +2,7 @@
 title: "深入理解transformer"
 description: "Whole hugo blog in plain text!"
 date: 2024-02-01
-lastmod: 2024-03-12T20:11:14+08:00
+lastmod: 2024-03-12T20:28:15+08:00
 tags: ["transformer"]
 draft: false
 weight: 1001
@@ -84,11 +84,11 @@ print(X.shape)
     -   \\(N\\) 个token，\\(F\\) 是embedding的维度
     -   每行对应于一个token的embedding 行向量
         \\(tokens=\begin{pmatrix}
-           hello \\\\
-           world \\\\
-           <pad> \\\\
-           <pad> \\\\
-           <pad> \\\\
+           \text{hello} \\\\
+           \text{world} \\\\
+           \text{pad} \\\\
+           \text{pad} \\\\
+           \text{pad}
            \end{pmatrix}\\)
 
         \\(X=\begin{pmatrix}
@@ -754,7 +754,9 @@ class Block(nn.Module):
 #### 缺点 {#缺点}
 
 -   本身对顺序无感，操作是在集合层次上的，需要额外加入位置编码
+
     下面的cls token得到的语义向量是完全一样的。
+
     -   &lt;cls&gt; 从 北京 到 上海 的 火车票
     -   &lt;cls&gt; 从 上海 到 北京 的 火车票
 -   计算的复杂度是序列长度平方

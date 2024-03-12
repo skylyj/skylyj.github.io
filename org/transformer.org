@@ -56,12 +56,13 @@
 **** 例子
 - $N$ 个token，$F$ 是embedding的维度
 - 每行对应于一个token的embedding 行向量
+   
    $tokens=\begin{pmatrix}
-   hello \\
-   world \\
-   <pad> \\
-   <pad> \\
-   <pad> \\
+   \text{hello} \\
+   \text{world} \\
+   \text{pad} \\
+   \text{pad} \\
+   \text{pad} 
    \end{pmatrix}$
    
    $X=\begin{pmatrix}
