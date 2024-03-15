@@ -7,7 +7,7 @@
 - 内容
   + 旋转位置编码的来龙去脉
   + 代码实现
-  + 绝对位置编码的理解
+  + 绝对位置编码公式解读
 - 参考：
   + 2021. Enhanced Transformer with Rotary Position Embedding
      [[cite:&suRoFormerEnhancedTransformer2022]]
@@ -29,7 +29,7 @@
    \vdots\\
    Y_N
    \end{pmatrix}$
-- 两个变换组成 $Y=\mathcal{T}(X)=\mathcal{F}(\mathcal{A}(X))$
+- $Y=\mathcal{T}(X)=\mathcal{F}(\mathcal{A}(X))$
   + Attention $\mathcal{A}$
   + Feedforward $\mathcal{F}$
 - Attention
@@ -43,7 +43,7 @@
    \end{aligned}$
 
 ** 为什么需要位置编码
-- 因为transformer结构本身是和距离无关的，
+- 因为transformer结构本身是和位置无关的
    $Y=\mathcal{T}(X)=\mathcal{F}(\mathcal{A}(X))$
 - 高阶语义向量不仅仅是由周围token的语义向量组合表达而成
   + 还需要加上每个token所处的位置
@@ -51,33 +51,52 @@
   + <cls> 从 北京 到 上海 的 火车票
   + <cls> 从 上海 到 北京 的 火车票
 - 其他的网络结构天然有序列的位置信息 RNN/CNN
+* 如何加入位置编码
+  $\mathcal{T}(X)=\mathcal{F}(\mathcal{A}(X))$
+  - $\mathcal{F}$ 是位置无关的
+  - 可以修改 $X$ 或者 $\mathcal{A}$
+** 直接修改输入
+在$X_i \rightarrow Q_i, K_i, V_i$ 之前，直接加入位置的embedding
+$X_i^{'}=X_i+P_i$
+*** learned embedding
+- 优点简单，bert/GPT
+- 外推困难，对于超过序列最大长度的位置
+*** 自定义绝对位置编码
+- 二维函数 f(position, dimension)
+- 要求
+  + 函数随着position,dimension增长应该是有界的
+  + 足够的区分度，对每个position,对应的行向量应该是不同的
+- 例子
+   
+   $\begin{aligned}
+   P_{i,2t} &= sin(k/10000^{2t/D}) &&\\
+   P_{i,2t+1} &= cos(k/10000^{2t/D})&&\\
+   \end{aligned}$
+
+   $t\in[0,1,\ldots,D/2-1], i\ge0$
+- 问题: 语义应该是和相对位置有关的，而不是绝对位置
+** 修改Attention
+- Attention
+   
+   $\begin{aligned}Q_{i} &= X_{i} W_{Q} \\
+   K_{i} &= X_{i} W_{K}\\
+   V_{i} &= X_{i} W_{V}\\
+   Y_{i} &= \sum_{j=1}^{N}sim(Q_i,K_{j}) V_j\\
+   sim(Q_{i},K_j) &= \frac{exp(\frac{Q_{i}K_{j}^{T}}{\sqrt{D}})}
+   {\sum_{j=1}^N exp(\frac{Q_iK_j^{T}}{\sqrt{D}})}\\
+   \end{aligned}$
+- 想法
+  + 可以从相似性入手，i和j之间的语义的相似性应该包含相对的距离信息
+  + 希望相似性计算只依赖向量还有相对距离,而不依赖于其绝对的位置。
+  + $Q_{i}K_j^T=g(X_{i},X_j,i-j)$
 ** 回顾矩阵的知识
 *** 关于行向量和矩阵
 - 定义线性算子 $\mathcal{A}$
   + 可以作用到行向量  $\mathcal{A}(X_i) = X_{i} A$
   + 也可以作用到矩阵  $\mathcal{A}(X) = XA$
 - 右乘矩阵等于对每个行向量逐个施加行变换
-   
-   $XA=\begin{pmatrix}
-   X_1\\
-   X_2\\
-   \vdots\\
-   X_N
-   \end{pmatrix}A=
-   \begin{pmatrix}
-   X_1 A\\
-   X_2 A\\
-   \vdots\\
-   X_N A
-   \end{pmatrix}=
-   \begin{pmatrix}
-   \mathcal{A}(X_1) \\
-   \mathcal{A}(X_2) \\
-   \vdots\\
-   \mathcal{A}(X_N) 
-   \end{pmatrix}=\mathcal{A}(X)$
 - 线性算子是对矩阵乘法的一种物理理解
-  + 旋转矩阵
+  + 旋转变换
      
      $R(\theta)=
      \begin{pmatrix}
@@ -89,7 +108,7 @@
      $R(\lambda_1,\lambda_2)=\begin{pmatrix} \lambda_1 & \\
         & \lambda_2 \\ \end{pmatrix}$
 - 用对角阵在正交的子空间上施加不同的行变换
-   假如有两个正交的子空间，A,B 分别可以作用到这两个子空间上，设 $X= (X^1, X^2)$, 那么
+   假设有两个方阵A,B，设 $X= (X^1, X^2)$, 那么
    
    $(X^1,X^2)\begin{pmatrix}
    A & 0 \\
@@ -152,7 +171,7 @@ $R(\Theta)=\begin{pmatrix}
    R(\theta_{1}) & 0 &0 & 0\\
    0 & R(\theta_2) & 0 &0 \\
    0 & 0 &\ldots &0  \\
-   0 & 0 & 0 &R(\theta_{d/2})\\ 
+   0 & 0 & 0 &R(\theta_{D/2})\\ 
    \end{pmatrix}$  
 **** 性质
 - 在独立的二维子空间上做不同角度的旋转
@@ -165,13 +184,13 @@ $R(\Theta)=\begin{pmatrix}
 
 - $R(\Theta)=\widehat{R}(\theta_1)\widehat{R}(\theta_2)\ldots\widehat{R}(\theta_{D/2})$ 逐个在不同的子空间上做旋转
    定义
-   $\widehat{R}(\theta_1)=
+   $\widehat{R}(\theta)=
   \begin{pmatrix}
-  R(\theta_{1}) & 0 \\
+  R(\theta) & 0 \\
   0 & 1 \\
   \end{pmatrix}$
    
-   $R(\theta)=\begin{pmatrix}
+   $R(\Theta)=\begin{pmatrix}
   R(\theta_{1}) & 0 \\
   0 & R(\theta_2) 
   \end{pmatrix}=\begin{pmatrix}
@@ -182,44 +201,6 @@ $R(\Theta)=\begin{pmatrix}
   0 & R(\theta_2) 
   \end{pmatrix}=\widehat{R}(\theta_1)\widehat{R}(\theta_2)$
 
-* 如何加入位置编码
-  $\mathcal{T}(X)=\mathcal{F}(\mathcal{A}(X))$
-  - $\mathcal{F}$ 是位置无关的
-  - 可以修改 $X$ 或者 $\mathcal{A}$
-** 直接修改输入
-在$X_i \rightarrow Q_i, K_i, V_i$ 之前，直接加入位置的embedding
-$X_i^{'}=X_i+P_i$
-*** learned embedding
-- 优点简单，bert/GPT
-- 外推困难，对于超过序列最大长度的位置
-*** 自定义绝对位置编码
-- 二维函数 f(position, dimension)
-- 要求
-  + 函数随着position,dimension增长应该是有界的
-  + 足够的区分度，对position, dimension
-- 例子
-   
-   $\begin{aligned}
-   P_{i,2t} &= sin(k/10000^{2t/D}) &&\\
-   P_{i,2t+1} &= cos(k/10000^{2t/D})&&\\
-   \end{aligned}$
-
-   $t\in[0,1,\ldots,D/2-1], i\ge0$
-- 问题: 语义应该是和相对位置有关的，而不是绝对位置
-** 修改Attention
-- Attention
-   
-   $\begin{aligned}Q_{i} &= X_{i} W_{Q} \\
-   K_{i} &= X_{i} W_{K}\\
-   V_{i} &= X_{i} W_{V}\\
-   Y_{i} &= \sum_{j=1}^{N}sim(Q_i,K_{j}) V_j\\
-   sim(Q_{i},K_j) &= \frac{exp(\frac{Q_{i}K_{j}^{T}}{\sqrt{D}})}
-   {\sum_{j=1}^N exp(\frac{Q_iK_j^{T}}{\sqrt{D}})}\\
-   \end{aligned}$
-- 想法
-  + 可以从相似性入手，i和j之间的语义的相似性应该包含相对的距离信息
-  + 希望相似性计算只依赖向量还有相对距离,而不依赖于其绝对的位置。
-  + $Q_{i}K_j^T=g(X_{i},X_j,i-j)$
 * 旋转位置编码
 ** 二维空间中的motivation
 #+DOWNLOADED: screenshot @ 2024-03-15 23:23:30
