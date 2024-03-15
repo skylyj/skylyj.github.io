@@ -100,9 +100,6 @@
 - 在ROPE 论文是按照列向量来撰写的，表现为是用矩阵左乘以一个列向量
 - 本文中出现的向量全部用行向量来表达，和代码一致
 *** 关于旋转矩阵
-#+DOWNLOADED: screenshot @ 2024-03-08 11:42:35
-#+ATTR_HTML: :width 200px :align middle
-[[file:images/2024-03-08_11-42-35_screenshot.png]]
 - 在二维子空间的旋转矩阵
    
    $R(\theta)=
@@ -111,6 +108,10 @@
    -sin\theta& cos\theta
    \end{pmatrix}$
    
+#+DOWNLOADED: screenshot @ 2024-03-15 23:20:19
+#+ATTR_HTML: :width 200px :align middle
+[[file:images/2024-03-15_23-20-19_screenshot.png]]
+
 - 物理意义
   + $XR(\theta)$ 对$X$ 逆时针旋转$\theta$
   + 证明
@@ -221,16 +222,21 @@ $X_i^{'}=X_i+P_i$
   + $Q_{i}K_j^T=g(X_{i},X_j,i-j)$
 * 旋转位置编码
 ** 二维空间中的motivation
+#+DOWNLOADED: screenshot @ 2024-03-15 23:23:30
+#+ATTR_HTML: :width 400px :align middle
+[[file:images/2024-03-15_23-23-30_screenshot.png]]
+
 假设$Q_{i}, K_j$ 都是二维的向量，$i, j$ 是它们对应的position，
 这里$\eta_{i},\eta_{j}$ 是$Q_i, K_j$ 弧度表示.
 - 点积只和模长和夹角有关
-   + $Q_iK_j^T=\|Q_i\|\|K_j\| cos(\eta_{i}-\eta_j)$, 
-- 如果: 基于位置乘倍数旋转之后做点击
+  + $Q_iK_j^T=\|Q_i\|\|K_j\| cos(\eta_{j}-\eta_i)$,
+  + 如何在这里融入位置的信息？基于位置乘倍数旋转之后做点击
+- 做法：
   + 我们把两个向量各自旋转$i\theta,j\theta$ 后再来计算点积
   + 其中$\theta$ 是一个单位角度，
-  + 应该就只和$Q_i,Q_j,i-j$ 相关了，
-- 因为: 模长没有变，只是夹角变了，夹角增加了 $(i-j)\theta$.
-  + $Q_iR(i\theta)(K_jR(j\theta))^T=\|Q_i\|\|K_j\| cos(\eta_{i}-\eta_{j}+(i-j)\theta)$
+  + 新的向量的内积带上了位置信息，且他们的内积只和$Q_i,Q_j,i-j$ 相关
+- 因为: 模长没有变，只是夹角变了，夹角增加了 $(j-i)\theta$.
+  + $Q_iR(i\theta)(K_jR(j\theta))^T=\|Q_i\|\|K_j\| cos(\eta_{j}-\eta_{i}+(j-i)\theta)$
 ** 二维空间中的一个解
 *** 基于旋转矩阵的一个解
 \begin{equation*}
@@ -322,22 +328,26 @@ $\begin{tabular}{|c|c|c|c|c|c|}
   \end{tabular}$
   
 *** 随着位置的增大，位置编码是否会重复？
-- 位置$i$ 是从0开始计数的
 - 如果存在位置$i$和 0 位置的编码撞车了，
 - $\Theta$ 序列在 $2\pi$ 周期整数倍上撞车
-  + 那么对dimension的每个 $k$ 都存在着一个整数 $I_k$, 使得$i\theta_{k}=2\pi I_k$
-  +  不可能，$\theta_k=1/10000^{k/d}$ 和 $2\pi$ 不会扯上关系
+  + $\Theta$ 全部都是 $2\pi$的整数倍
+  + 对dimension的每个$k$, 存在着一个整数 $I_k$, 使得$i\theta_{k}=2\pi I_k$
+  + 不可能，$\theta_k=1/10000^{k/d}$ 和 $2\pi$ 不会扯上关系
+*** RoPE 可能的另外一个优势
+- 在多个block 前向传递的过程中position的信息不会丢失
+   + 每个block都会先做QKV的投影，然后QK投影之后会做位置旋转变换
+
 ** 再看下绝对位置编码
-*** 之前的公式
 $\begin{aligned}
    P_{i,2t} &= sin(i/10000^{2t/D}) &&\\
    P_{i,2t+1} &= cos(i/10000^{2t/D})&&\\
    \end{aligned}$
 
 $t\in[0,1,\ldots,D/2-1], i\ge0$
-*** structure
+
 如果记$d=D/2,B=1/10000^{1/d}$，
-那么$\theta_{k}=1/B^{k-1}$ $k\in[1,2,\ldots,d]$
+那么$\theta_{k}=1/B^{k-1}, k\in[1,2,\ldots,d]$
+*** structure
 - 有$d$ 个正交的二维子空间 $\mathcal{X}_1, \mathcal{X}_2, \dots, \mathcal{X}_{d}$
 - 每个子空间$\mathcal{X}_{k}$ 有一个基础角度 $\theta_{k}$，
   + 两个基底 $sin\theta_{k}, cos\thea_{k}$ ，记作$\text{Tri}(\theta_k)=(sin(\theta_k),   cos(\theta_k))$
@@ -371,7 +381,7 @@ T & 2\pi        & 2B\pi        & 2B^{2}\pi  & \ldots & 2B^{d}\pi \\
 $\{sin(\theta_k x), cos(\theta_{k} x)\}_{k=1}^{D}$ 很像对位置函数$f(x)$ 的一个fourier展开
 *** 同理，随着位置的增大，位置编码不会重复
 * 代码实现
-** 避开旋转矩阵的相乘
+** trick1: 避开旋转矩阵的相乘
 我们需要对每个$Q_{i}$ 乘以不同的旋转矩阵，也就是
 $QR=\begin{pmatrix}
 Q_1 R(1\Theta)\\
@@ -399,19 +409,20 @@ u_2 cos 2\theta-v_2 sin 2\theta, u_2 sin 2\theta + v_2 cos 2\theta\\
 u_N cos N\theta-v_N sin N\theta, u_N sin N \theta + v_N cos N\theta\\
 \end{pmatrix}\\
 &=(U * cos - V* sin, U*sin+V*cos) \\
-&= (U,V)cos +(V, -U) sin
+&= (U,V)cos +(-V, U) sin
 \end{aligned}$
 
 同样的，在高维空间，我们可以把$Q$ 拆分成$D/2$ 个列向量$U_1,V_1,U_2,V_2,\ldots,U_{D/2},V_{D/2}$
 
-** tricks
-- trick2：不需要做严格紧密相连的二维子空间序列，将整个空间分成两部分
-  + 第一个部分放的是每个子空间的第一维度，第二部分放置的是每个子空间的第二维度
-     #+begin_example
-     (x1,y1) 是一个子空间，(x2, y2)是一个子空间，(x3, y3)是一个子空间
-     before： [(x1,y1), (x2,y2), (x3,y3)]
-     after： [(x1,x2,x3), (y1, y2, y3)]
-     #+end_example
+** trick2: 将整个空间分成两部分
+不需要做严格紧密相连的二维子空间序列
+- 第一个部分放的是每个子空间的第一维度，
+- 第二部分放置的是每个子空间的第二维度
+#+begin_example
+(x1,y1) 是一个子空间，(x2, y2)是一个子空间，(x3, y3)是一个子空间
+before： [(x1,y1), (x2,y2), (x3,y3)]
+after： [(x1,x2,x3), (y1, y2, y3)]
+#+end_example
 ** code
 #+begin_src python  :results output
   import torch
@@ -435,20 +446,20 @@ u_N cos N\theta-v_N sin N\theta, u_N sin N \theta + v_N cos N\theta\\
           self.sin = full_thetas.sin()
 
       def rotate(self, x):
-          """ 
+          """ trick1
           x: [bs, num_attention_heads, seq_len, D]
           q: [bs, num_attention_heads, seq_len, D]
           cos: [seq_len, D]
-          [x,y] @ [[cos, sin], [-sin, cos]] = [x*cos+y*sin, ycos-x*sin] =[x,y]*cos+[y, -x]*sin
+          [x,y] @ [[cos, sin], [-sin, cos]] = [x*cos-y*sin, ycos+x*sin] =[x,y]*cos+[-y, x]*sin
           """
           return x * self.cos + Rotator.reverse_half(x) * self.sin
 
       @staticmethod
       def reverse_half(q):
-          """ q: [bs, num_attention_heads, seq_len, D] """
+          """ q: [bs, num_attention_heads, seq_len, D] trick2 """
           x = q[..., : q.shape[-1] // 2]
           y = q[..., q.shape[-1] // 2:]
-          return torch.cat((y, -x), dim=-1)
+          return torch.cat((-y, x), dim=-1)
 
 
   class SelfAttentionWithRoPE(nn.Module):
@@ -509,10 +520,10 @@ u_N cos N\theta-v_N sin N\theta, u_N sin N \theta + v_N cos N\theta\\
   \end{split}
   \end{equation*}
 
-- 结构
+- RoPE 结构
   + 有$d$ 个正交的二维子空间 $\mathcal{X}_1, \mathcal{X}_2, \dots, \mathcal{X}_{d}$
-  + 每个子空间$\mathcal{X}_{k}$ 有一个 $\theta_{k}$，旋转矩阵 $R(\theta_{k})$
-  + 对于每个位置$i$, 对应角度序列和旋转序列是 $i\Theta, R(i\Theta)$
+  + 每个子空间$\mathcal{X}_{k}$ 对应一个基础角度和基础矩阵 $\theta_{k}, R(\theta_{k})$
+  + 对于每个位置$i$, 对应一个角度序列和矩阵序列 $i\Theta, R(i\Theta)$
      
      $\begin{tabular}{|c|c|c|c|c|c|}  \hline
      \Theta & \theta_1 & \theta_{2} & \theta_3 & \ldots & \theta_{d}\\
@@ -522,4 +533,4 @@ u_N cos N\theta-v_N sin N\theta, u_N sin N \theta + v_N cos N\theta\\
      i\Theta & i\theta_1 & i\theta_{2} & i\theta_3 & \ldots & i\theta_{d}\\
      \hline
      \end{tabular}$
-
+- 绝对位置编码和RoPE 有相似的结构
