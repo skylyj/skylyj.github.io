@@ -5,9 +5,9 @@
   + attention设计原理解读
   + tranformer中的矩阵/行向量乘法
   + transformer的pytorch代码实现
+  + 计算量$O(N^2)$ 源于softmax的存在
   + 从kernel的角度来看attention
     + $\mathcal{A}(X_i) =  \dfrac{\sum_{j=1}^{N} sim(Q_i,K_j) V_j}{\sum_{j=1}^N sim(Q_i,K_j)}$
-    + 计算量$O(N^2)$ 源于softmax的存在
     + linear attention
 - 参考
   + 2017. Attention Is All You Need
@@ -389,28 +389,32 @@ Multi-head attention allows the model to jointly attend to information from diff
 
     def forward(self, x):
         B, N, F = x.size()
-        q, k, v = self.qkv_proj(x).split(3, dim=2)
+        q, k, v = self.qkv_proj(x).split(self.D, dim=2)
         # matmul 只能在最后两个维度相乘，需要对NxD的矩阵相乘，做1,2维度的交换
         k = k.view(B, N, self.H, self.D).transpose(1, 2)
         q = q.view(B, N, self.H, self.D).transpose(1, 2)
         v = v.view(B, N, self.H, self.D).transpose(1, 2)
-        # 一次把多个头的映射全部完成
+        # (B,H,N,D)
+        # 一次把多个头的映射全部完成, 对任意的(batch, head)
         att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
         att = F.softmax(att, dim=-1)
         y = att @ v
-        # 多头拼接
-        y = y.transpose(1, 2).contiguous().view(B, N, F)
+        # (B,H,N,D)
+        y = y.transpose(1, 2)
+        # (B,N,H,D)
+        # 最后两个维度合并
+        y = y.contiguous().view(B, N, F)
         y = self.out_proj(y)
         return y
 #+end_src
 *** 代码示意
 #+DOWNLOADED: screenshot @ 2024-01-31 11:11:07
 #+ATTR_HTML: :width 600px :align middle
-[[file:images/2024-01-31_11-11-07_screenshot.png]]q
+[[file:images/2024-01-31_11-11-07_screenshot.png]]
 
 ** 位置无关的全连接
 - 两层的全连接
-   $\mathcal{F}(X_i)=(g(X_iW_1)+b_1)W_2+b_2)$
+   $\mathcal{F}(X_i)=(g(X_iW_1)+b_1)W_2+b_2$
 *** 代码
 #+begin_src python :results output
   import torch

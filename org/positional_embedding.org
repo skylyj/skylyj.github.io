@@ -1,12 +1,140 @@
-#+TITLE: 旋转位置编码ROPE
+#+TITLE: 旋转位置编码
 * 背景
 ** 主要内容
 - 内容
-  + 旋转位置编码的来龙去脉
+  + 旋转位置编码
   + 代码实现
 - 参考：
   + 论文：2021. Enhanced Transformer with Rotary Position Embedding [[cite:&suRoFormerEnhancedTransformer2022]]
   + [[https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/modeling_llama.py][hugging face llama]]
+** 回顾矩阵的知识
+*** 关于行向量和矩阵
+- 定义线性算子 $\mathcal{A}$
+  + 可以作用到行向量  $\mathcal{A}(X_i) = X_{i} A$
+  + 也可以作用到矩阵  $\mathcal{A}(X) = XA$
+- 右乘矩阵等于对每个行向量逐个施加行变换
+   
+   $XA=\begin{pmatrix}
+   X_1\\
+   X_2\\
+   \vdots\\
+   X_N
+   \end{pmatrix}A=
+   \begin{pmatrix}
+   X_1 A\\
+   X_2 A\\
+   \vdots\\
+   X_N A
+   \end{pmatrix}=
+   \begin{pmatrix}
+   \mathcal{A}(X_1) \\
+   \mathcal{A}(X_2) \\
+   \vdots\\
+   \mathcal{A}(X_N) 
+   \end{pmatrix}=\mathcal{A}(X)$
+- 算子是对矩阵乘法的一种物理理解
+  + 旋转矩阵
+     
+     $R(\theta)=
+     \begin{pmatrix}
+     cos\theta& sin\theta\\
+     -sin\theta& cos\theta
+     \end{pmatrix}$
+  + 缩放变换
+     
+     $R(\lambda_1,\lambda_2)=\begin{pmatrix} \lambda_1 & \\
+        & \lambda_2 \\ \end{pmatrix}$
+*** 关于旋转矩阵
+#+DOWNLOADED: screenshot @ 2024-03-08 11:42:35
+#+ATTR_HTML: :width 200px :align middle
+[[file:images/2024-03-08_11-42-35_screenshot.png]]
+- 在二维子空间的旋转矩阵
+   
+   $R(\theta)=
+   \begin{pmatrix}
+   cos\theta& sin\theta\\
+   -sin\theta& cos\theta
+   \end{pmatrix}$
+   
+- 物理意义
+   
+  + $XR(\theta)$ 对语义向量$X$ 逆时针旋转$\theta$
+
+  + proof: 假设$X=\rho(cos\phi, sin\phi)$
+     
+     $\begin{aligned}
+     &XR(\theta)\\
+     =&\rho(cos \phi, sin \phi)
+     \begin{pmatrix}
+     cos\theta& sin\theta\\
+     -sin\theta& cos\theta
+     \end{pmatrix} \\
+     =& \rho(
+     cos\phi cos\theta - sin\phi sin\theta,
+     cos\phi sin\theta + sin\phi cos\theta
+     )\\
+     =& \rho(cos(\phi+\theta), sin(\phi+\theta))
+     \end{aligned}$
+- 性质
+  + $R(\theta)^T=R(-\theta)$
+  + $R(\theta_1)(\theta_2)=R(\theta_1+\theta_{2})$
+*** 在正交的子空间上独立的施加变换
+- 在正交的子空间上施加不同的变换
+   假如有两个正交的子空间，A,B 分别可以作用到这两个子空间上，设 $X= (X^1, X^2)$, 那么
+   
+   $(X^1,X^2)\begin{pmatrix}
+   A & 0 \\
+   0 & B
+   \end{pmatrix} = (X^1A, X^2 B)$
+- 在独立的二维子空间上做不同角度的旋转
+
+   $XR(\Theta)=(X^1, X^2)
+   \begin{pmatrix}
+   R(\theta_{1}) & 0 \\
+   0 & R(\theta_2)
+   \end{pmatrix}=(X^1R(\theta_1), X^2R(\theta_2))$
+
+- 性质: $R(\Theta)=\widehat{R}(\theta_1)\widehat{R}(\theta_2)\ldots\widehat{R}(\theta_{d/2})$ 其中 $\Theta=(\theta_{1},\theta_2,\ldots,\theta_{d/2})$
+   定义
+   $\widehat{R}(\theta_1)=
+  \begin{pmatrix}
+  R(\theta_{1}) & 0 \\
+  0 & 0 \\
+  \end{pmatrix}$
+   
+   $R(\theta)=\begin{pmatrix}
+  R(\theta_{1}) & 0 \\
+  0 & R(\theta_2) 
+  \end{pmatrix}=\begin{pmatrix}
+  R(\theta_{1}) & 0 \\
+  0 & 0 \\
+  \end{pmatrix}\begin{pmatrix}
+  0 & 0 \\
+  0 & R(\theta_2) 
+  \end{pmatrix}=\widehat{R}(\theta_1)\widehat{R}(\theta_2)$
+*** 独立施加变换
+$R(\theta)=
+   \begin{pmatrix}
+   cos \theta& sin \theta\\
+   -sin \theta& cos \theta
+   \end{pmatrix}$
+     
+$R(\Theta)=\begin{pmatrix}
+   cos\,\theta_{1} & sin\,\theta_1 & 0 & 0 & 0 & 0 &0\\
+   -sin\,\theta_{1} & cos\,\theta_1 & 0 & 0 & 0 & 0 &0 \\
+   0 & 0 & cos\,\theta_{2} & sin\,\theta_2 & 0 & 0 &0 \\
+   0 & 0 & -sin\,\theta_{2} & cos\,\theta_2& 0 & 0 &0  \\
+   0 & 0 & 0 & 0 & \ldots &0 & 0 \\
+   0 & 0 & 0 & 0 &\ldots & cos\,\theta_{d/2} & sin\,\theta_{d/2}  \\
+   0 & 0 & 0 & 0 &\ldots & -sin\,\theta_{d/2} & cos\,\theta_{d/2}
+   \end{pmatrix}$
+
+$R(\theta)=\begin{pmatrix}
+   R(\theta_{1}) & 0 &0 & 0\\
+   0 & R(\theta_2) & 0 &0 \\
+   0 & 0 &\ldots &0  \\
+   0 & 0 & 0 &R(\theta_{d/2})\\ 
+   \end{pmatrix}$  
 ** 回顾transformer
 - encoder: 低阶语义向量序列转化为高阶的语义向量序列
    
@@ -48,7 +176,7 @@
   $\mathcal{T}(X)=\mathcal{F}(\mathcal{A}(X))$
   - $\mathcal{F}$ 是位置无关的
   - 可以修改 $X$ 或者 $\mathcal{A}$
-** 1. 直接修改输入，加入绝对位置编码
+** 直接修改输入
 在$X_i \rightarrow Q_i, K_i, V_i$ 之前，直接加入位置的embedding
 $X_i^{'}=X_i+P_i$
 *** learned embedding
@@ -67,8 +195,9 @@ $X_i^{'}=X_i+P_i$
    \end{aligned}$
 *** 问题
 语义应该是和相对位置有关的，而不是绝对位置
-** 2. 修改Attention，加入相对位置信息
-*** 回顾Attention
+** 修改Attention
+旋转位置编码
+*** Attention
 $\begin{aligned}Q_{i} &= X_{i} W_{Q} \\
    K_{i} &= X_{i} W_{K}\\
    V_{i} &= X_{i} W_{V}\\
@@ -85,71 +214,15 @@ $Q_{i}K_j^T=g(X_{i},X_j,i-j)$
 * 旋转位置编码
 ** 在二维空间中看motivation
 假设$Q_{i}, K_j$ 都是二维的向量，$i, j$ 是它们对应的position，
-这里$\eta_{i},\eta_{j}$ 是$Q_i, K_j$向量的弧度表示对应的角度.
-- 点击只和模长和夹角有关
+这里$\eta_{i},\eta_{j}$ 是$Q_i, K_j$ 向量的弧度表示对应的角度.
+- 点积只和模长和夹角有关
    + $Q_iK_j^T=\|Q_i\|\|K_j\| cos(\eta_{i}-\eta_j)$, 
 - 如果: 基于位置乘倍数旋转之后做点击
-  + 我们把两个向量各自旋转$i\theta,j\theta$ 后再来计算点击
+  + 我们把两个向量各自旋转$i\theta,j\theta$ 后再来计算点积
   + 其中$\theta$ 是一个单位角度，
   + 应该就只和$Q_i,Q_j,i-j$ 相关了，
 - 因为: 模长没有变，只是夹角变了，夹角增加了 $(i-j)\theta$.
   + $Q_iR(i\theta)(K_jR(j\theta))^T=\|Q_i\|\|K_j\| cos(\eta_{i}-\eta_{j}+(i-j)\theta)$
-** 回顾矩阵的知识
-*** 关于行向量和矩阵
-- 定义线性算子 $\mathcal{A}$
-  + 可以作用到行向量  $\mathcal{A}(X_i) = X_{i} A$
-  + 也可以作用到矩阵  $\mathcal{A}(X) = XA$
-- 右乘矩阵等于对每个行向量逐个施加行变换
-   
-   $XA=\begin{pmatrix}
-   X_1\\
-   X_2\\
-   \vdots\\
-   X_N
-   \end{pmatrix}A=
-   \begin{pmatrix}
-   X_1 A\\
-   X_2 A\\
-   \vdots\\
-   X_N A
-   \end{pmatrix}=
-   \begin{pmatrix}
-   \mathcal{A}(X_1) \\
-   \mathcal{A}(X_2) \\
-   \vdots\\
-   \mathcal{A}(X_N) 
-   \end{pmatrix}=\mathcal{A}(X)$
-- 算子是对矩阵乘法的一种物理理解
-  + 旋转矩阵
-     
-     $R(\theta)=
-     \begin{pmatrix}
-     cos\theta& sin\theta\\
-     -sin\theta& cos\theta
-     \end{pmatrix}$
-  + 缩放变换
-     
-     $R(\lambda_1,\lambda_2)=\begin{pmatrix} \lambda_1 & \\
-        & \lambda_2 \\ \end{pmatrix}$
-*** 关于旋转矩阵
-- 旋转矩阵
-   
-   $R(\theta)=
-   \begin{pmatrix}
-   cos\theta& sin\theta\\
-   -sin\theta& cos\theta
-   \end{pmatrix}$
-   
-- 物理意义
-   
-   $X_iR(i\theta)$ 对位置在$i$ 的语义向量$X_i$ 逆时针旋转$i\theta$
-- 性质
-  + $R(\theta)^T=R(-\theta)$
-  + $R(\theta_1)(\theta_2)=R(\theta_1+\theta_{2})$
-#+DOWNLOADED: screenshot @ 2024-03-08 11:42:35
-#+ATTR_HTML: :width 200px :align middle
-[[file:images/2024-03-08_11-42-35_screenshot.png]]
-
 ** 二维空间的一个解
 *** 基于旋转矩阵的一个解
 \begin{equation*}
@@ -187,38 +260,6 @@ Q_{i}K_j^T &=X_{i}R(i\theta)W_QW_KR(j\theta)^{T}X_{j}^T\\
    R(i\theta_{1}) & 0 \\
    0 & R(i\theta_2) 
    \end{pmatrix}$
-*** 物理意义
-- 依次在独立的二维子空间上做旋转变换
-   
-   利用分块矩阵的乘法，我们观察一下, 把对应行向量$X_i$ 切分为两部分，用上角标来区分
-   
-   $X_i = (X_{i}^1, X_{i}^2)$
-   
-   $XR(i\Theta)=(X^1, X^2)\begin{pmatrix}
-   R(i\theta_{1}) & 0 \\
-   0 & R(i\theta_2) 
-   \end{pmatrix}=(X^1R(i\theta_1), X^2R(i\theta_2))$
-   
-   可以看出这个矩阵的变化的作用就是在各个独立的二维子空间上分别做独立的旋转变化，最后把变换后的向量拼接即可
-- 性质: $R(i\Theta)=\widehat{R}(i\theta_1)\widehat{R}(i\theta_2)\ldots\widehat{R}(i\theta_{d/2})$
-   
-   定义$\widehat{R}(i\theta_1)=
-   \begin{pmatrix}
-   R(i\theta_{1}) & 0 \\
-   0 & 0 \\
-   \end{pmatrix}$
-   
-   $R(i\Theta)=\begin{pmatrix}
-   R(i\theta_{1}) & 0 \\
-   0 & R(i\theta_2) 
-   \end{pmatrix}=\begin{pmatrix}
-   R(i\theta_{1}) & 0 \\
-   0 & 0 \\
-   \end{pmatrix}\begin{pmatrix}
-   0 & 0 \\
-   0 & R(i\theta_2) 
-   \end{pmatrix}=\widehat{R}(i\theta_1)\widehat{R}(i\theta_2)$
-- 在第一个二维空间按照 $\theta_{1}$ 来旋转，第二个 $\theta_{2}$ 来旋转
 *** ROPE在高维空间
 \begin{equation*}
 \begin{split}
@@ -243,56 +284,81 @@ R(i\Theta)R(j\Theta)^{T} &= \widehat{R}(i\theta_1)\widehat{R}(i\theta_2)\ldots\w
 
 
 其中$\theta_{k}$ 是超参数，$\theta_{k}=10000^{-2(k-1)/d}, k\in[1,2,\ldots,d/2]$
-** 总结旋转位置编码
-*** 总结
-- 旋转位置编码是针对$Q,K$ 的每个行向量做对应的位置旋转变换
-   
-   $Q_{i} = X_{i} W_{Q} R(i\Theta)$
-   
-   $K_{j} = X_{j} W_{K} R(j\Theta)$
-   
-- 位置旋转矩阵定义 $R(i\Theta)$
-   
-   其中 $\Theta=(\theta_{1},\theta_2,\ldots,\theta_{d/2})$, $\theta_{k}=10000^{-2(k-1)/d}, k\in[1,2,\ldots,d/2]$
-   那么
-   
-   $R(i\theta)=
-   \begin{pmatrix}
-   cos i\theta& sin i\theta\\
-   -sin i\theta& cos i\theta
-   \end{pmatrix}$
-        
-   $R(i \Theta)=\begin{pmatrix}
-   cos\,i\theta_{1} & sin\,i\theta_1 & 0 & 0 & 0 & 0 &0\\
-   -sin\,i\theta_{1} & cos\,i\theta_1 & 0 & 0 & 0 & 0 &0 \\
-   0 & 0 & cos\,i\theta_{2} & sin\,i\theta_2 & 0 & 0 &0 \\
-   0 & 0 & -sin\,i\theta_{2} & cos\,i\theta_2& 0 & 0 &0  \\
-   0 & 0 & 0 & 0 & \ldots &0 & 0 \\
-   0 & 0 & 0 & 0 &\ldots & cos\,i\theta_{d/2} & sin\,i\theta_{d/2}  \\
-   0 & 0 & 0 & 0 &\ldots & -sin\,i\theta_{d/2} & cos\,i\theta_{d/2}
-   \end{pmatrix}$
-   
-   $R(i\Theta)=\begin{pmatrix}
-   R(i\theta_{1}) & 0 &0 & 0\\
-   0 & R(i\theta_2) & 0 &0 \\
-   0 & 0 &\ldots &0  \\
-   0 & 0 & 0 &R(i\theta_{d/2})\\ 
-   \end{pmatrix}$  
-*** 再看下绝对位置编码
+** 整体看下
+- 空间是$D$ 维度，$d=D/2$ 维度
+- 有$d$ 个正交的二维子空间 $\mathcal{X}_1, \mathcal{X}_2, \dots, \mathcal{X}_{d}$
+- 每个子空间$\mathcal{X}_{k}$ 有一个旋转角度基准 $\theta_{k}$, 一个基准旋转矩阵 $R(\theta_{k})$
+   + 合并后的基准角度序列和旋转序列是 $\Theta, R(\Theta)$
+- 对于每个位置$i$ ,基准角度序列和旋转序列是 $i\Theta, R(i\Theta)$
+
+
+$\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+\omega & \theta_1 & \theta_{2} & \theta_3 & \ldots & \theta_{d}\\
+\hline
+R(\Theta) & R(\theta_1) & R(\theta_{2}) & R(\theta_3) & \ldots & R(\theta_{d})\\
+\hline
+\omega & 0        & 1/B        & 1/B^{2}  & \ldots & 1/B^{d} \\
+\hline
+T & 2\pi        & 2B\pi        & 2B^{2}\pi  & \ldots & 2B^{d}\pi \\
+\hline
+freq & 1        & \pi/2B        & \pi/2B^{2}  & \ldots & \pi/2B^{d} \\
+\hline
+\end{tabular}$
+*** 随着位置的增大，是否可能会有重复的可能？
+- 位置$i$ 是从0开始计数的
+- 弱存在位置$i$和 0 位置的编码撞车了，
+- 那么对每个$k$ 都存在着一个整数 $I_k$, 使得$i\theta_{k}=2\pi I_k$
+- 这个基本不可能
+
+** 再看下绝对位置编码
+
+*** 之前的公式
 $\begin{aligned}
-   P_{i,2t} &= sin(i/10000^{2t/d}) &&\\
-   P_{i,2t+1} &= cos(i/10000^{2t/d})&&\\
+   P_{i,2t} &= sin(i/10000^{2t/D}) &&\\
+   P_{i,2t+1} &= cos(i/10000^{2t/D})&&\\
    \end{aligned}$
+$k\in[1,2,\ldots,D/2], i\ge0$
+*** 新的表达
+换个表述的形式，记录$d=D/2,B=1/10000^{1/D}$
+$\theta_{k}=1/B^{k-1}$ $k\in[1,2,\ldots,d]$对应于一个几何级数的序列
 
-换个表述的形式，
+- 空间是$D$ 维度，$d=D/2$ 维度
+- 有$d$ 个正交的二维子空间 $\mathcal{X}_1, \mathcal{X}_2, \dots, \mathcal{X}_{d}$
+- 每个子空间$\mathcal{X}_{k}$ 有一个角度基准 $\theta_{k}$，
+  + 两个基准 $sin\theta_{k}, cos\thea_{k}$ ，记作$\text{Tri}(\theta_k)=(sin(\theta_k),   cos(\theta_k))$
+  + 合并后的基准角度序列和基底序列是 $\Theta, \text{Tri} (\Theta)$
+  + 由 $\theta$ 来决定各个子空间的不同
+  + 子空间内容由sin,cos 来区分
+- 对于每个位置$i$ ,基准角度序列和基底序列是 $i\Theta, \text{Tri}(i\Theta)$
 
-$P_{i}=\begin{pmatrix}
-   B_1, B_2, \ldots, B_{d/2}\end{pmatrix}$，   $B_{k}=\begin{pmatrix}
-   sin(i\theta_k),   cos(i\theta_k)
-   \end{pmatrix}$
-$\theta_{k}=10000^{-2(k-1)/d}, k\in[1,2,\ldots,d/2]$
-** 代码实现
-*** 避开旋转矩阵的相乘
+$\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+\omega & \theta_1 & \theta_{2} & \theta_3 & \ldots & \theta_{d}\\
+\hline
+\text{Tri}(\Theta) & \text{Tri}(\theta_1) & \text{Tri}(\theta_{2}) & \text{Tri}(\theta_3) & \ldots & \text{Tri}(\theta_{d})\\
+\hline
+\omega & 0        & 1/B        & 1/B^{2}  & \ldots & 1/B^{d} \\
+\hline
+T & 2\pi        & 2B\pi        & 2B^{2}\pi  & \ldots & 2B^{d}\pi \\
+\hline
+freq & 1        & \pi/2B        & \pi/2B^{2}  & \ldots & \pi/2B^{d} \\
+\hline
+\end{tabular}$
+*** 如果我们记录 $i=x$, 那么
+  + $sin(\omega_k x), cos(\ometa_{k})$
+  + 很像对位置函数$f(x)$的一个fourier展开，针对不同频率
+
+*** 随着位置的增大，是否可能会有重复的可能？
+- 位置$i$ 是从0开始计数的
+- 弱存在位置$i$和 0 位置的编码撞车了，
+- 那么对每个$k$ 都存在着一个整数 $I_k$, 使得$i\theta_{k}=2\pi I_k$
+- 这个基本不可能，$\theta_k$ 和 $2\pi$ 基本不会扯上关系。
+*** 和旋转编码的区别
+- 一个是 $Tri(\Theta) 做了基底
+-  一个是用 $R(\Theta) 做了旋转
+* 代码实现
+** 避开旋转矩阵的相乘
 我们需要对每个$Q_{i}$ 乘以不同的旋转矩阵，也就是
 $QR=\begin{pmatrix}
 Q_1 R(1\Theta)\\
@@ -325,7 +391,7 @@ u_N cos N\theta-v_N sin N\theta, u_N sin N \theta + v_N cos N\theta\\
 
 同样的，在高维空间，我们可以把$Q$ 拆分成$d/2$ 个列向量$U_1,V_1,U_2,V_2,\ldots,U_{d/2},V_{d/2}$
 
-*** tricks
+** tricks
 - trick2：不需要做严格紧密相连的二维子空间序列，将整个空间分成两部分
   + 第一个部分放的是每个子空间的第一维度，第二部分放置的是每个子空间的第二维度
      #+begin_example
@@ -333,7 +399,7 @@ u_N cos N\theta-v_N sin N\theta, u_N sin N \theta + v_N cos N\theta\\
      before： [(x1,y1), (x2,y2), (x3,y3)]
      after： [(x1,x2,x3), (y1, y2, y3)]
      #+end_example
-*** code   
+** code   
 #+begin_src python  :results output
   import torch
   import torch.nn as nn
@@ -385,7 +451,7 @@ u_N cos N\theta-v_N sin N\theta, u_N sin N \theta + v_N cos N\theta\\
       def forward(self, x, position_ids):
           # position_ids: [seq_len]
           B, N, _ = x.size()
-          q, k, v = self.qkv_proj(x).split(self.F, dim=-1)
+          q, k, v = self.qkv_proj(x).split(self.D, dim=-1)
           # matmul 只能在最后两个维度相乘，需要对NxD的矩阵相乘，做1,2维度的交换
           k = k.view(B, N, self.H, self.D).transpose(1, 2)
           q = q.view(B, N, self.H, self.D).transpose(1, 2)
@@ -410,3 +476,37 @@ u_N cos N\theta-v_N sin N\theta, u_N sin N \theta + v_N cos N\theta\\
   position_ids = torch.arange(config["seq_len"])
   y = attn(x, position_ids)
 #+end_src
+** 总结
+- 旋转位置编码是针对$Q,K$ 的每个行向量做对应的位置旋转变换
+   
+   $Q_{i} = X_{i} W_{Q} R(i\Theta)$
+   
+   $K_{j} = X_{j} W_{K} R(j\Theta)$
+   
+- 位置旋转矩阵定义 $R(i\Theta)$
+   
+   其中 $\Theta=(\theta_{1},\theta_2,\ldots,\theta_{d/2})$, $\theta_{k}=10000^{-2(k-1)/d}, k\in[1,2,\ldots,d/2]$
+   那么
+   
+   $R(i\theta)=
+   \begin{pmatrix}
+   cos i\theta& sin i\theta\\
+   -sin i\theta& cos i\theta
+   \end{pmatrix}$
+        
+   $R(i \Theta)=\begin{pmatrix}
+   cos\,i\theta_{1} & sin\,i\theta_1 & 0 & 0 & 0 & 0 &0\\
+   -sin\,i\theta_{1} & cos\,i\theta_1 & 0 & 0 & 0 & 0 &0 \\
+   0 & 0 & cos\,i\theta_{2} & sin\,i\theta_2 & 0 & 0 &0 \\
+   0 & 0 & -sin\,i\theta_{2} & cos\,i\theta_2& 0 & 0 &0  \\
+   0 & 0 & 0 & 0 & \ldots &0 & 0 \\
+   0 & 0 & 0 & 0 &\ldots & cos\,i\theta_{d/2} & sin\,i\theta_{d/2}  \\
+   0 & 0 & 0 & 0 &\ldots & -sin\,i\theta_{d/2} & cos\,i\theta_{d/2}
+   \end{pmatrix}$
+   
+   $R(i\Theta)=\begin{pmatrix}
+   R(i\theta_{1}) & 0 &0 & 0\\
+   0 & R(i\theta_2) & 0 &0 \\
+   0 & 0 &\ldots &0  \\
+   0 & 0 & 0 &R(i\theta_{d/2})\\ 
+   \end{pmatrix}$  
