@@ -6,8 +6,15 @@
   + meta llama
 - 内容
   + 旋转位置编码的来龙去脉
-  + 代码实现
-  + 绝对位置编码公式解读
+    + 把原空间切分成为一个个正交的二维子空间，在上面做独立的旋转。
+    + 从实数域上的矩阵变换来推导
+  + pytorch 代码实现 tricks
+  + 绝对位置编码理解，它和RoPE结构上的相似性
+     
+     $\begin{aligned}
+     P_{i,2t} &= sin(i/10000^{2t/D}) \\
+     P_{i,2t+1} &= cos(i/10000^{2t/D})
+     \end{aligned}$
 - 参考：
   + 2021. Enhanced Transformer with Rotary Position Embedding
      [[cite:&suRoFormerEnhancedTransformer2022]]
@@ -154,6 +161,7 @@ $X_i^{'}=X_i+P_i$
   + $R(\theta)^T=R(-\theta)$
   + $R(\theta_1)R(\theta_2)=R(\theta_1+\theta_{2})$
 *** 在高维空间中旋转
+假设空间是偶数维的，把原始的空间切分成为一个正交的二维子空间，在上面做独立的旋转。
 **** 定义
 $\Theta=(\theta_{1},\theta_2,\ldots,\theta_{D/2})$
      
@@ -202,7 +210,7 @@ $R(\Theta)=\begin{pmatrix}
   \end{pmatrix}=\widehat{R}(\theta_1)\widehat{R}(\theta_2)$
 
 * 旋转位置编码
-** 二维空间中的motivation
+** motivation
 #+DOWNLOADED: screenshot @ 2024-03-15 23:23:30
 #+ATTR_HTML: :width 400px :align middle
 [[file:images/2024-03-15_23-23-30_screenshot.png]]
@@ -500,7 +508,9 @@ after： [(x1,x2,x3), (y1, y2, y3)]
   &=g(X_i,X_j,i-j)\\
   \end{split}
   \end{equation*}
-
+- RoPE是什么？
+   
+   把原空间切分成为一个个正交的二维子空间，在上面做独立的旋转。
 - RoPE 结构
   + 有$d$ 个正交的二维子空间 $\mathcal{X}_1, \mathcal{X}_2, \dots, \mathcal{X}_{d}$
   + 每个子空间$\mathcal{X}_{k}$ 对应一个基础角度和基础矩阵 $\theta_{k}, R(\theta_{k})$
@@ -514,4 +524,5 @@ after： [(x1,x2,x3), (y1, y2, y3)]
      i\Theta & i\theta_1 & i\theta_{2} & i\theta_3 & \ldots & i\theta_{d}\\
      \hline
      \end{tabular}$
+
 - 绝对位置编码和RoPE 有相似的结构
