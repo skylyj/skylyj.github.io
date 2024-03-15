@@ -389,7 +389,7 @@ Multi-head attention allows the model to jointly attend to information from diff
 
     def forward(self, x):
         B, N, F = x.size()
-        q, k, v = self.qkv_proj(x).split(self.D, dim=2)
+        q, k, v = self.qkv_proj(x).split(self.F, dim=-1)
         # matmul 只能在最后两个维度相乘，需要对NxD的矩阵相乘，做1,2维度的交换
         k = k.view(B, N, self.H, self.D).transpose(1, 2)
         q = q.view(B, N, self.H, self.D).transpose(1, 2)
