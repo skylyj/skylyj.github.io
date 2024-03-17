@@ -30,3 +30,12 @@
 #+INCLUDE: "./positional_embedding.org" :minlevel 2 :lines "1-"
 ** 参考论文
 [[bibliography:/Users/lianyijiang/llm.bib]]
+* DONE Emacs配置文件                                                   :emacs:
+:PROPERTIES:
+:EXPORT_FILE_NAME: index
+:EXPORT_DATE: 2024-03-17
+:EXPORT_DESCRIPTION: Whole hugo blog in plain text!
+:EXPORT_HUGO_BUNDLE: 2024/configure_emacs
+:EXPORT_OPTIONS: author:nil
+:END:
+#+INCLUDE: "./configure_emacs.org" :minlevel 2 :lines "1-"
