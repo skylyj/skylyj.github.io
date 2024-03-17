@@ -204,34 +204,6 @@
 ### doc and pdf {#doc-and-pdf}
 
 ```emacs-lisp
-;; (use-package pdf-tools
-;;   :straight (pdf-tools :type git :host github :repo "vedang/pdf-tools")
-;;   :mode ("\\.pdf\\'" . pdf-view-mode)
-;;   :config
-;;   (pdf-tools-install)
-;;   ;; further customization for pdf-tools
-;;   )
-;; (use-package pdf-tools
-;;   :straight (pdf-tools :type git :host github :repo "dalanicolai/pdf-tools"
-;;                        :branch "pdf-roll"
-;;                        :files ("lisp/*.el" "README" "build/Makefile" "build/server")
-;;                        :exclude ("lisp/tablist.el" "lisp/tablist-filter.el"))
-;;  :mode ("\\.pdf\\'" . pdf-view-mode)
-;;  :config
-;;  (pdf-tools-install)
-;;   )
-;; (use-package image-roll
-;;   :straight (image-roll :type git :host github :repo "dalanicolai/image-roll.el")
-;;   :config
-;;   ;; Here you can configure how image-roll integrates with pdf-tools if necessary
-;;   )
-;; (use-package image-roll
-;;   :straight (image-roll :type git :host github :repo "dalanicolai/image-roll.el")
-;;   )
-  ;; (use-package image-roll
-  ;;   :straight (:host github :repo "dalanicolai/image-roll.el" :files ("dist" "*.el"))
-  ;;   :ensure t)
-  ;; (setq doc-view-continuous t)
 (use-package pdf-tools
 :ensure t
 :config
@@ -240,9 +212,6 @@
 (setq-default pdf-view-display-size 'fit-page)
 (add-to-list 'auto-mode-alist '("\\.pdf\\'" . pdf-view-mode)))
 
-  ;; (use-package pdf-continuous-scroll-mode
-  ;;   :straight (:host github :repo "dalanicolai/pdf-continuous-scroll-mode.el" :files ("dist" "*.el"))
-  ;;   :ensure t)
   (add-hook 'pdf-view-mode-hook (lambda () (display-line-numbers-mode -1)))
   (use-package org-noter
   :ensure t )
