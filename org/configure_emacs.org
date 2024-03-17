@@ -1573,29 +1573,10 @@ b               bookmark-in-project-jump-previous
     (define-key org-tree-slide-mode-map (kbd "C->") 'mc/mark-next-like-this)
     (define-key org-tree-slide-mode-map (kbd "C-<") 'mc/mark-previous-like-this)
     )
-  ;; (with-eval-after-load "org-tree-slide"
-  ;;   (defvar my-hide-org-meta-line-p nil)
-  ;;   (defun my-hide-org-meta-line ()
-  ;;     (interactive)
-  ;;     (setq my-hide-org-meta-line-p t)
-  ;;     (set-face-attribute 'org-meta-line nil
-  ;;                         :foreground (face-attribute 'default :background)))
-  ;;   (defun my-show-org-meta-line ()
-  ;;     (interactive)
-  ;;     (setq my-hide-org-meta-line-p nil)
-  ;;     (set-face-attribute 'org-meta-line nil :foreground nil))
-  ;;   (defun my-toggle-org-meta-line ()
-  ;;     (interactive)
-  ;;     (if my-hide-org-meta-line-p
-  ;;         (my-show-org-meta-line) (my-hide-org-meta-line)))
-  ;;   (add-hook 'org-tree-slide-play-hook #'my-hide-org-meta-line)
-  ;;   (add-hook 'org-tree-slide-stop-hook #'my-show-org-meta-line))
 #+end_src
 #+RESULTS:
 : mc/mark-previous-like-this
 *** org-present
-[[https://systemcrafters.net/emacs-tips/presentations-with-org-present/][参考]]
-| C-c a z | Hugo view |
 #+begin_src emacs-lisp :tangle ~/Github/PrivateHub/linux_confs/emacs_personal/org_conf.el  :comments link
   (use-package org-present
     :config
@@ -1919,7 +1900,6 @@ b               bookmark-in-project-jump-previous
           '((?D "\\mathbb" nil nil nil nil))))
 #+end_src
 ** encrypt
-[[https://coldnew.github.io/4bb1df06/][参考博客]]
 #+begin_src emacs-lisp :tangle ~/Github/PrivateHub/linux_confs/emacs_personal/org_conf.el  :comments link
   ;; brew install gpg
   (require 'org-crypt)
