@@ -1,5 +1,5 @@
 <!doctype html><html lang=zh-CN><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=robots content="noodp"><title>旋转位置编码 - 连义江的博客</title><meta name=Description content="Whole hugo blog in plain text!"><meta property="og:title" content="旋转位置编码">
-<meta property="og:description" content="Whole hugo blog in plain text!"><meta property="og:type" content="article"><meta property="og:url" content="https://skylyj.github.io/positional_embedding/"><meta property="og:image" content="https://skylyj.github.io/favicon-16x16.png"><meta property="article:section" content="posts"><meta property="article:published_time" content="2024-02-01T00:00:00+00:00"><meta property="article:modified_time" content="2024-03-12T20:55:02+08:00"><meta property="og:site_name" content="连义江的博客"><meta name=twitter:card content="summary_large_image"><meta name=twitter:image content="https://skylyj.github.io/favicon-16x16.png"><meta name=twitter:title content="旋转位置编码"><meta name=twitter:description content="Whole hugo blog in plain text!"><meta name=application-name content="AI"><meta name=apple-mobile-web-app-title content="AI"><meta name=theme-color content="#ffffff"><meta name=msapplication-TileColor content="#da532c"><link rel="shortcut icon" type=image/x-icon href=/favicon.ico><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><link rel=manifest href=/site.webmanifest><link rel=canonical href=https://skylyj.github.io/positional_embedding/><link rel=next href=https://skylyj.github.io/transformer/><link rel=stylesheet href=/css/style.min.css><link rel=preload href=https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.1.1/css/all.min.css as=style onload='this.onload=null,this.rel="stylesheet"'><noscript><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.1.1/css/all.min.css></noscript><link rel=preload href=https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css as=style onload='this.onload=null,this.rel="stylesheet"'><noscript><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css></noscript><script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","headline":"旋转位置编码","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/skylyj.github.io\/positional_embedding\/"},"image":["https:\/\/skylyj.github.io\/favicon-32x32.png"],"genre":"posts","keywords":"transformer, rope","wordcount":2801,"url":"https:\/\/skylyj.github.io\/positional_embedding\/","datePublished":"2024-02-01T00:00:00+00:00","dateModified":"2024-03-12T20:55:02+08:00","license":"This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher":{"@type":"Organization","name":"连义江","logo":"https:\/\/skylyj.github.io\/favicon-32x32.png"},"author":{"@type":"Person","name":"连义江"},"description":"Whole hugo blog in plain text!"}</script></head><body data-header-desktop=fixed data-header-mobile=auto><script type=text/javascript>(window.localStorage&&localStorage.getItem("theme")?localStorage.getItem("theme")==="dark":"auto"==="auto"?window.matchMedia("(prefers-color-scheme: dark)").matches:"auto"==="dark")&&document.body.setAttribute("theme","dark")</script><div id=mask></div><div class=wrapper><header class=desktop id=header-desktop><div class=header-wrapper><div class=header-title><a href=/ title=连义江的博客>连义江的博客</a></div><div class=menu><div class=menu-inner><a class=menu-item href=/posts/>所有文章 </a><a class=menu-item href=/tags/>标签 </a><a class=menu-item href=/categories/>分类 </a><a class=menu-item href=/categories/documentation/>文档 </a><a class=menu-item href=/about/>关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id=search-desktop>
+<meta property="og:description" content="Whole hugo blog in plain text!"><meta property="og:type" content="article"><meta property="og:url" content="https://skylyj.github.io/positional_embedding/"><meta property="og:image" content="https://skylyj.github.io/favicon-16x16.png"><meta property="article:section" content="posts"><meta property="article:published_time" content="2024-02-01T00:00:00+00:00"><meta property="article:modified_time" content="2024-03-17T19:23:32+08:00"><meta property="og:site_name" content="连义江的博客"><meta name=twitter:card content="summary_large_image"><meta name=twitter:image content="https://skylyj.github.io/favicon-16x16.png"><meta name=twitter:title content="旋转位置编码"><meta name=twitter:description content="Whole hugo blog in plain text!"><meta name=application-name content="AI"><meta name=apple-mobile-web-app-title content="AI"><meta name=theme-color content="#ffffff"><meta name=msapplication-TileColor content="#da532c"><link rel="shortcut icon" type=image/x-icon href=/favicon.ico><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><link rel=manifest href=/site.webmanifest><link rel=canonical href=https://skylyj.github.io/positional_embedding/><link rel=next href=https://skylyj.github.io/transformer/><link rel=stylesheet href=/css/style.min.css><link rel=preload href=https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.1.1/css/all.min.css as=style onload='this.onload=null,this.rel="stylesheet"'><noscript><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.1.1/css/all.min.css></noscript><link rel=preload href=https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css as=style onload='this.onload=null,this.rel="stylesheet"'><noscript><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css></noscript><script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","headline":"旋转位置编码","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/skylyj.github.io\/positional_embedding\/"},"image":["https:\/\/skylyj.github.io\/favicon-32x32.png"],"genre":"posts","keywords":"transformer, rope","wordcount":3902,"url":"https:\/\/skylyj.github.io\/positional_embedding\/","datePublished":"2024-02-01T00:00:00+00:00","dateModified":"2024-03-17T19:23:32+08:00","license":"This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher":{"@type":"Organization","name":"连义江","logo":"https:\/\/skylyj.github.io\/favicon-32x32.png"},"author":{"@type":"Person","name":"连义江"},"description":"Whole hugo blog in plain text!"}</script></head><body data-header-desktop=fixed data-header-mobile=auto><script type=text/javascript>(window.localStorage&&localStorage.getItem("theme")?localStorage.getItem("theme")==="dark":"auto"==="auto"?window.matchMedia("(prefers-color-scheme: dark)").matches:"auto"==="dark")&&document.body.setAttribute("theme","dark")</script><div id=mask></div><div class=wrapper><header class=desktop id=header-desktop><div class=header-wrapper><div class=header-title><a href=/ title=连义江的博客>连义江的博客</a></div><div class=menu><div class=menu-inner><a class=menu-item href=/posts/>所有文章 </a><a class=menu-item href=/tags/>标签 </a><a class=menu-item href=/categories/>分类 </a><a class=menu-item href=/categories/documentation/>文档 </a><a class=menu-item href=/about/>关于 </a><span class="menu-item delimiter"></span><span class="menu-item search" id=search-desktop>
 <input type=text placeholder=搜索文章标题或内容... id=search-input-desktop>
 <a href=javascript:void(0); class="search-button search-toggle" id=search-toggle-desktop title=搜索><i class="fas fa-search fa-fw" aria-hidden=true></i>
 </a><a href=javascript:void(0); class="search-button search-clear" id=search-clear-desktop title=清空><i class="fas fa-times-circle fa-fw" aria-hidden=true></i>
@@ -12,11 +12,16 @@
 </a><span class="search-button search-loading" id=search-loading-mobile><i class="fas fa-spinner fa-fw fa-spin" aria-hidden=true></i></span></div><a href=javascript:void(0); class=search-cancel id=search-cancel-mobile>取消</a></div><a class=menu-item href=/posts/ title>所有文章</a><a class=menu-item href=/tags/ title>标签</a><a class=menu-item href=/categories/ title>分类</a><a class=menu-item href=/categories/documentation/ title>文档</a><a class=menu-item href=/about/ title>关于</a><a href=javascript:void(0); class="menu-item theme-switch" title=切换主题>
 <i class="fas fa-adjust fa-fw" aria-hidden=true></i>
 </a><a href=javascript:void(0); class=menu-item title=选择语言><i class="fa fa-globe fa-fw" aria-hidden=true></i>
-<select class=language-select onchange="location=this.value"><option value=/positional_embedding/ selected>简体中文</option></select></a></div></div></header><div class="search-dropdown desktop"><div id=search-dropdown-desktop></div></div><div class="search-dropdown mobile"><div id=search-dropdown-mobile></div></div><main class=main><div class=container><div class=toc id=toc-auto><h2 class=toc-title>目录</h2><div class=toc-content id=toc-content-auto></div></div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">旋转位置编码</h1><div class=post-meta><div class=post-meta-line><span class=post-author><a href=/ title=Author rel=author class=author><i class="fas fa-user-circle fa-fw" aria-hidden=true></i>连义江</a></span></div><div class=post-meta-line><i class="far fa-calendar-alt fa-fw" aria-hidden=true></i>&nbsp;<time datetime=2024-02-01>2024-02-01</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden=true></i>&nbsp;约 2801 字&nbsp;
-<i class="far fa-clock fa-fw" aria-hidden=true></i>&nbsp;预计阅读 6 分钟&nbsp;<span id=/positional_embedding/ class=leancloud_visitors data-flag-title=旋转位置编码>
+<select class=language-select onchange="location=this.value"><option value=/positional_embedding/ selected>简体中文</option></select></a></div></div></header><div class="search-dropdown desktop"><div id=search-dropdown-desktop></div></div><div class="search-dropdown mobile"><div id=search-dropdown-mobile></div></div><main class=main><div class=container><div class=toc id=toc-auto><h2 class=toc-title>目录</h2><div class=toc-content id=toc-content-auto></div></div><article class="page single"><h1 class="single-title animate__animated animate__flipInX">旋转位置编码</h1><div class=post-meta><div class=post-meta-line><span class=post-author><a href=/ title=Author rel=author class=author><i class="fas fa-user-circle fa-fw" aria-hidden=true></i>连义江</a></span></div><div class=post-meta-line><i class="far fa-calendar-alt fa-fw" aria-hidden=true></i>&nbsp;<time datetime=2024-02-01>2024-02-01</time>&nbsp;<i class="fas fa-pencil-alt fa-fw" aria-hidden=true></i>&nbsp;约 3902 字&nbsp;
+<i class="far fa-clock fa-fw" aria-hidden=true></i>&nbsp;预计阅读 8 分钟&nbsp;<span id=/positional_embedding/ class=leancloud_visitors data-flag-title=旋转位置编码>
 <i class="far fa-eye fa-fw" aria-hidden=true></i>&nbsp;<span class=leancloud-visitors-count></span>&nbsp;次阅读
 </span>&nbsp;</div></div><div class="details toc" id=toc-static data-kept><div class="details-summary toc-title"><span>目录</span>
-<span><i class="details-icon fas fa-angle-right" aria-hidden=true></i></span></div><div class="details-content toc-content" id=toc-content-static><nav id=TableOfContents><ul><li><a href=#背景>背景</a><ul><li><a href=#主要内容>主要内容</a></li><li><a href=#回顾transformer>回顾transformer</a></li><li><a href=#为什么需要位置编码>为什么需要位置编码</a></li></ul></li><li><a href=#如何加入位置编码>如何加入位置编码</a><ul><li><a href=#1-dot-直接修改输入-加入绝对位置编码>1. 直接修改输入，加入绝对位置编码</a><ul><li><a href=#learned-embedding>learned embedding</a></li><li><a href=#自定义绝对位置编码>自定义绝对位置编码</a></li><li><a href=#问题>问题</a></li></ul></li><li><a href=#2-dot-修改attention-加入相对位置信息>2. 修改Attention，加入相对位置信息</a><ul><li><a href=#回顾attention>回顾Attention</a></li><li><a href=#希望>希望</a></li></ul></li></ul></li><li><a href=#旋转位置编码>旋转位置编码</a><ul><li><a href=#在二维空间中看motivation>在二维空间中看motivation</a></li><li><a href=#回顾矩阵的知识>回顾矩阵的知识</a><ul><li><a href=#关于行向量和矩阵>关于行向量和矩阵</a></li><li><a href=#关于旋转矩阵>关于旋转矩阵</a></li></ul></li><li><a href=#二维空间的一个解>二维空间的一个解</a><ul><li><a href=#基于旋转矩阵的一个解>基于旋转矩阵的一个解</a></li><li><a href=#为什么是在投影之后旋转-不在投影之前转>为什么是在投影之后旋转，不在投影之前转？</a></li></ul></li><li><a href=#推广到高纬的空间>推广到高纬的空间</a><ul><li><a href=#定义-r--i-theta>定义 \(R(i\Theta)\)</a></li><li><a href=#物理意义>物理意义</a></li><li><a href=#rope在高维空间>ROPE在高维空间</a></li></ul></li><li><a href=#总结旋转位置编码>总结旋转位置编码</a><ul><li><a href=#总结>总结</a></li><li><a href=#再看下绝对位置编码>再看下绝对位置编码</a></li></ul></li><li><a href=#代码实现>代码实现</a><ul><li><a href=#避开旋转矩阵的相乘>避开旋转矩阵的相乘</a></li><li><a href=#tricks>tricks</a></li><li><a href=#code>code</a></li></ul></li></ul></li><li><a href=#参考论文>参考论文</a></li></ul></nav></div></div><div class=content id=content><h2 id=背景>背景</h2><h3 id=主要内容>主要内容</h3><ul><li>内容<ul><li>旋转位置编码的来龙去脉</li><li>代码实现</li></ul></li><li>参考：<ul><li>论文：2021. Enhanced Transformer with Rotary Position Embedding (<a href=#citeproc_bib_item_1>Su et al. 2022</a>)</li><li><a href=https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/modeling_llama.py target=_blank rel="noopener noreffer">hugging face llama</a></li></ul></li></ul><h3 id=回顾transformer>回顾transformer</h3><ul><li><p>encoder: 低阶语义向量序列转化为高阶的语义向量序列</p><p>\(\mathcal{T}\begin{pmatrix}
+<span><i class="details-icon fas fa-angle-right" aria-hidden=true></i></span></div><div class="details-content toc-content" id=toc-content-static><nav id=TableOfContents><ul><li><a href=#背景>背景</a><ul><li><a href=#主要内容>主要内容</a></li><li><a href=#回顾transformer>回顾transformer</a></li><li><a href=#为什么需要位置编码>为什么需要位置编码</a></li></ul></li><li><a href=#如何加入位置编码>如何加入位置编码</a><ul><li><a href=#直接修改输入>直接修改输入</a><ul><li><a href=#learned-embedding>learned embedding</a></li><li><a href=#自定义绝对位置编码>自定义绝对位置编码</a></li></ul></li><li><a href=#修改attention>修改Attention</a></li><li><a href=#回顾矩阵的知识>回顾矩阵的知识</a><ul><li><a href=#关于行向量和矩阵>关于行向量和矩阵</a></li><li><a href=#关于旋转矩阵>关于旋转矩阵</a></li><li><a href=#在高维空间中旋转>在高维空间中旋转</a></li></ul></li></ul></li><li><a href=#旋转位置编码>旋转位置编码</a><ul><li><a href=#motivation>motivation</a></li><li><a href=#二维空间中的一个解>二维空间中的一个解</a><ul><li><a href=#基于旋转矩阵的一个解>基于旋转矩阵的一个解</a></li><li><a href=#为什么是在投影之后旋转-不在投影之前转>为什么是在投影之后旋转，不在投影之前转？</a></li></ul></li><li><a href=#推广到高维空间>推广到高维空间</a><ul><li><a href=#定义-r--i-theta>定义 \(R(i\Theta)\)</a></li><li><a href=#rope在高维空间>ROPE在高维空间</a></li></ul></li><li><a href=#整体看下>整体看下</a><ul><li><a href=#具体化>具体化</a></li><li><a href=#随着位置的增大-位置编码是否会重复>随着位置的增大，位置编码是否会重复？</a></li><li><a href=#rope-可能的另外一个优势>RoPE 可能的另外一个优势</a></li></ul></li><li><a href=#再看下绝对位置编码>再看下绝对位置编码</a><ul><li><a href=#structure>structure</a></li><li><a href=#同理-随着位置的增大-位置编码不会重复>同理，随着位置的增大，位置编码不会重复</a></li></ul></li></ul></li><li><a href=#代码实现>代码实现</a><ul><li><a href=#trick1-避开旋转矩阵的相乘>trick1: 避开旋转矩阵的相乘</a><ul><li><a href=#why>why？</a></li><li><a href=#how>how?</a></li></ul></li><li><a href=#trick2-将整个空间分成两部分>trick2: 将整个空间分成两部分</a></li><li><a href=#code>code</a></li><li><a href=#总结>总结</a></li></ul></li><li><a href=#参考论文>参考论文</a></li></ul></nav></div></div><div class=content id=content><h2 id=背景>背景</h2><h3 id=主要内容>主要内容</h3><ul><li>旋转位置编码在大模型中应用广泛<ul><li>google PaLM</li><li>meta llama</li></ul></li><li>内容<ul><li><p>旋转位置编码的来龙去脉</p><ul><li>基于实数域上的旋转变换来推演</li></ul></li><li><p>pytorch 代码实现 tricks</p></li><li><p>重新看解绝对位置编码</p><p>\(\begin{aligned}
+P_{i,2t} &= sin(i/10000^{2t/D}) \\
+P_{i,2t+1} &= cos(i/10000^{2t/D})
+\end{aligned}\)</p></li></ul></li><li>参考：<ul><li><ol start=2021><li>Enhanced Transformer with Rotary Position Embedding
+(<a href=#citeproc_bib_item_1>Su et al. 2022</a>)</li></ol></li><li><ol start=2017><li>Attention Is All You Need
+(<a href=#citeproc_bib_item_2>Vaswani et al. 2023</a>)</li></ol></li><li><a href=https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/modeling_llama.py target=_blank rel="noopener noreffer">hugging face llama</a></li></ul></li></ul><h3 id=回顾transformer>回顾transformer</h3><ul><li><p>encoder: 寻找算子\(\mathcal{T}\) 低阶语义向量序列转化为高阶的语义向量序列</p><p>\(\mathcal{T}\begin{pmatrix}
 X_1\\
 X_2\\
 \vdots\\
@@ -27,70 +32,100 @@ Y_1\\
 Y_2\\
 \vdots\\
 Y_N
-\end{pmatrix}\)</p></li><li><p>两个变换组成 \(Y=\mathcal{T}(X)=\mathcal{F}(\mathcal{A}(X))\)</p><ul><li>Attention \(\mathcal{A}\)</li><li>Feedforward \(\mathcal{F}\)</li></ul></li><li><p>详细</p><p>\(\begin{aligned}Q_{i} &= X_{i} W_{Q} \\
+\end{pmatrix}\)</p></li><li><p>\(Y=\mathcal{T}(X)=\mathcal{F}(\mathcal{A}(X))\)</p><ul><li>Attention \(\mathcal{A}\)</li><li>Feedforward \(\mathcal{F}\)</li></ul></li><li><p>Attention</p><p>\(\begin{aligned}Q_{i} &= X_{i} W_{Q} \\
 K_{i} &= X_{i} W_{K}\\
 V_{i} &= X_{i} W_{V}\\
 Y_{i} &= \sum_{j=1}^{N}sim(Q_i,K_{j}) V_j\\
-sim(Q_{i},K_j) = &= \frac{exp(\frac{Q_{i}K_{j}^{T}}{\sqrt{d}})}
-{\sum_{j=1}^N exp(\frac{Q_iK_j^{T}}{\sqrt{d}})}\\
-\end{aligned}\)</p></li></ul><h3 id=为什么需要位置编码>为什么需要位置编码</h3><ul><li>因为transformer结构本身是和距离无关的，
-\(Y=\mathcal{T}(X)=\mathcal{F}(\mathcal{A}(X))\)</li><li>高阶语义向量不仅仅是由周围token的语义向量组合表达而成<ul><li>还需要加上每个token所处的位置</li></ul></li><li>下面的cls token得到的语义向量是完全一样的。<ul><li>&lt;cls> 从 北京 到 上海 的 火车票</li><li>&lt;cls> 从 上海 到 北京 的 火车票</li></ul></li><li>其他的网络结构天然有序列的位置信息 RNN/CNN</li></ul><h2 id=如何加入位置编码>如何加入位置编码</h2><p>\(\mathcal{T}(X)=\mathcal{F}(\mathcal{A}(X))\)</p><ul><li>\(\mathcal{F}\) 是位置无关的</li><li>可以修改 \(X\) 或者 \(\mathcal{A}\)</li></ul><h3 id=1-dot-直接修改输入-加入绝对位置编码>1. 直接修改输入，加入绝对位置编码</h3><p>在\(X_i \rightarrow Q_i, K_i, V_i\) 之前，直接加入位置的embedding
-\(X_i^{&rsquo;}=X_i+P_i\)</p><h4 id=learned-embedding>learned embedding</h4><ul><li>优点简单，bert/GPT</li><li>外推困难，对于超过序列最大长度的位置</li></ul><h4 id=自定义绝对位置编码>自定义绝对位置编码</h4><ul><li><p>二维函数 f(position, dimension)</p></li><li><p>要求</p><ul><li>函数随着position,dimension增长应该是有界的</li><li>足够的区分度，对position, dimension</li></ul></li><li><p>例子</p><p>\(\begin{aligned}
-P_{i,2t} &= sin(k/10000^{2t/d}) &&\\
-P_{i,2t+1} &= cos(k/10000^{2t/d})&&\\
-\end{aligned}\)</p></li></ul><h4 id=问题>问题</h4><p>语义应该是和相对位置有关的，而不是绝对位置</p><h3 id=2-dot-修改attention-加入相对位置信息>2. 修改Attention，加入相对位置信息</h3><h4 id=回顾attention>回顾Attention</h4><p>\(\begin{aligned}Q_{i} &= X_{i} W_{Q} \\
+sim(Q_{i},K_j) = &= \frac{exp(\frac{Q_{i}K_{j}^{T}}{\sqrt{D}})}
+{\sum_{j=1}^N exp(\frac{Q_iK_j^{T}}{\sqrt{D}})}\\
+\end{aligned}\)</p></li></ul><h3 id=为什么需要位置编码>为什么需要位置编码</h3><ul><li>因为transformer结构本身是和位置无关的
+\(Y=\mathcal{T}(X)=\mathcal{F}(\mathcal{A}(X))\)</li><li>高阶语义向量不仅仅是由周围token的语义向量组合表达而成<ul><li>还需要加上每个token所处的位置</li></ul></li><li>下面的cls token得到的语义向量是完全一样的。<ul><li>&lt;cls> 从 北京 到 上海 的 火车票</li><li>&lt;cls> 从 上海 到 北京 的 火车票</li></ul></li><li>其他的网络结构天然有序列的位置信息 RNN/CNN</li></ul><h2 id=如何加入位置编码>如何加入位置编码</h2><p>\(\mathcal{T}(X)=\mathcal{F}(\mathcal{A}(X))\)</p><ul><li>\(\mathcal{F}\) 是位置无关的</li><li>可以修改 \(X\) 或者 \(\mathcal{A}\)</li></ul><h3 id=直接修改输入>直接修改输入</h3><p>在\(X_i \rightarrow Q_i, K_i, V_i\) 之前，直接加入位置的embedding
+\(X_i^{&rsquo;}=X_i+P_i\)</p><h4 id=learned-embedding>learned embedding</h4><ul><li>优点简单，bert/GPT</li><li>外推困难，对于超过序列最大长度的位置</li></ul><h4 id=自定义绝对位置编码>自定义绝对位置编码</h4><ul><li><p>二维函数 f(position, dimension)</p></li><li><p>要求</p><ul><li>函数随着position,dimension增长应该是有界的</li><li>足够的区分度，对每个position,对应的行向量应该是不同的</li></ul></li><li><p>例子</p><p>\(\begin{aligned}
+P_{i,2t} &= sin(k/10000^{2t/D}) &&\\
+P_{i,2t+1} &= cos(k/10000^{2t/D})&&\\
+\end{aligned}\)</p><p>\(t\in[0,1,\ldots,D/2-1], i\ge0\)</p></li><li><p>问题: 语义应该是和相对位置有关的，而不是绝对位置</p></li></ul><h3 id=修改attention>修改Attention</h3><ul><li><p>Attention</p><p>\(\begin{aligned}Q_{i} &= X_{i} W_{Q} \\
 K_{i} &= X_{i} W_{K}\\
 V_{i} &= X_{i} W_{V}\\
 Y_{i} &= \sum_{j=1}^{N}sim(Q_i,K_{j}) V_j\\
-sim(Q_{i},K_j) &= \frac{exp(\frac{Q_{i}K_{j}^{T}}{\sqrt{d}})}
-{\sum_{j=1}^N exp(\frac{Q_iK_j^{T}}{\sqrt{d}})}\\
-\end{aligned}\)</p><p>可以从相似性入手，让位置的相对关系反应到q，k的相似性中来。</p><h4 id=希望>希望</h4><p>相似性计算只依赖向量还有相对距离, 而不依赖于其绝对的位置。</p><p>\(Q_{i}K_j^T=g(X_{i},X_j,i-j)\)</p><h2 id=旋转位置编码>旋转位置编码</h2><h3 id=在二维空间中看motivation>在二维空间中看motivation</h3><p>假设\(Q_{i}, K_j\) 都是二维的向量，\(i, j\) 是它们对应的position，
-这里\(\eta_{i},\eta_{j}\) 是$Q_i, K_j$向量的弧度表示对应的角度.</p><ul><li>点击只和模长和夹角有关<ul><li>\(Q_iK_j^T=\|Q_i\|\|K_j\| cos(\eta_{i}-\eta_j)\),</li></ul></li><li>如果: 基于位置乘倍数旋转之后做点击<ul><li>我们把两个向量各自旋转\(i\theta,j\theta\) 后再来计算点击</li><li>其中\(\theta\) 是一个单位角度，</li><li>应该就只和\(Q_i,Q_j,i-j\) 相关了，</li></ul></li><li>因为: 模长没有变，只是夹角变了，夹角增加了 \((i-j)\theta\).<ul><li>\(Q_iR(i\theta)(K_jR(j\theta))^T=\|Q_i\|\|K_j\| cos(\eta_{i}-\eta_{j}+(i-j)\theta)\)</li></ul></li></ul><h3 id=回顾矩阵的知识>回顾矩阵的知识</h3><h4 id=关于行向量和矩阵>关于行向量和矩阵</h4><ul><li><p>定义线性算子 \(\mathcal{A}\)</p><ul><li>可以作用到行向量 \(\mathcal{A}(X_i) = X_{i} A\)</li><li>也可以作用到矩阵 \(\mathcal{A}(X) = XA\)</li></ul></li><li><p>右乘矩阵等于对每个行向量逐个施加行变换</p><p>\(XA=\begin{pmatrix}
-X_1\\
-X_2\\
-\vdots\\
-X_N
-\end{pmatrix}A=
-\begin{pmatrix}
-X_1 A\\
-X_2 A\\
-\vdots\\
-X_N A
-\end{pmatrix}=
-\begin{pmatrix}
-\mathcal{A}(X_1) \\
-\mathcal{A}(X_2) \\
-\vdots\\
-\mathcal{A}(X_N)
-\end{pmatrix}=\mathcal{A}(X)\)</p></li><li><p>算子是对矩阵乘法的一种物理理解</p><ul><li><p>旋转矩阵</p><p>\(R(\theta)=
+sim(Q_{i},K_j) &= \frac{exp(\frac{Q_{i}K_{j}^{T}}{\sqrt{D}})}
+{\sum_{j=1}^N exp(\frac{Q_iK_j^{T}}{\sqrt{D}})}\\
+\end{aligned}\)</p></li><li><p>想法</p><ul><li>可以从相似性入手，i和j之间的语义的相似性应该包含相对的距离信息</li><li>希望相似性计算只依赖向量还有相对距离,而不依赖于其绝对的位置。</li><li>\(Q_{i}K_j^T=g(X_{i},X_j,i-j)\)</li></ul></li></ul><h3 id=回顾矩阵的知识>回顾矩阵的知识</h3><h4 id=关于行向量和矩阵>关于行向量和矩阵</h4><ul><li><p>定义线性算子 \(\mathcal{A}\)</p><ul><li>可以作用到行向量 \(\mathcal{A}(X_i) = X_{i} A\)</li><li>也可以作用到矩阵 \(\mathcal{A}(X) = XA\)</li></ul></li><li><p>右乘矩阵等于对每个行向量逐个施加行变换</p></li><li><p>线性算子是对矩阵乘法的一种物理理解</p><ul><li><p>旋转变换</p><p>\(R(\theta)=
 \begin{pmatrix}
 cos\theta& sin\theta\\
 -sin\theta& cos\theta
 \end{pmatrix}\)</p></li><li><p>缩放变换</p><p>\(R(\lambda_1,\lambda_2)=\begin{pmatrix} \lambda_1 & \\
-& \lambda_2 \\ \end{pmatrix}\)</p></li></ul></li></ul><h4 id=关于旋转矩阵>关于旋转矩阵</h4><ul><li><p>旋转矩阵</p><p>\(R(\theta)=
+& \lambda_2 \\ \end{pmatrix}\)</p></li></ul></li><li><p>用对角阵在正交的子空间上施加不同的行变换
+假设有两个方阵A,B，设 \(X= (X^1, X^2)\), 那么</p><p>\((X^1,X^2)\begin{pmatrix}
+A & 0 \\
+0 & B
+\end{pmatrix} = (X^1A, X^2 B)\)</p></li></ul><ul><li><p>注：</p><ul><li>pytorch/tensorflow 中的矩阵相关代码都是按照行向量来组织的</li><li>在ROPE 论文是按照列向量来撰写的，表现为是用矩阵左乘以一个列向量</li><li>本文中出现的向量全部用行向量来表达，和代码一致</li></ul></li></ul><h4 id=关于旋转矩阵>关于旋转矩阵</h4><ul><li><p>在二维子空间的旋转矩阵</p><p>\(R(\theta)=
 \begin{pmatrix}
 cos\theta& sin\theta\\
 -sin\theta& cos\theta
-\end{pmatrix}\)</p></li><li><p>物理意义</p><p>\(X_iR(i\theta)\) 对位置在\(i\) 的语义向量\(X_i\) 逆时针旋转\(i\theta\)</p></li><li><p>性质</p><ul><li>\(R(\theta)^T=R(-\theta)\)</li><li>\(R(\theta_1)(\theta_2)=R(\theta_1+\theta_{2})\)</li></ul></li></ul><figure><img src=/positional_embedding/images/2024-03-08_11-42-35_screenshot.png width=200px></figure><h3 id=二维空间的一个解>二维空间的一个解</h3><h4 id=基于旋转矩阵的一个解>基于旋转矩阵的一个解</h4><p>\begin{equation*}
+\end{pmatrix}\)</p></li></ul><figure><img src=images/2024-03-15_23-20-19_screenshot.png width=200px></figure><ul><li>物理意义<ul><li><p>\(XR(\theta)\) 对\(X\) 逆时针旋转\(\theta\)</p></li><li><p>证明</p><p>\(X=\rho(cos\phi, sin\phi)\)</p><p>\(\begin{aligned}
+&amp;XR(\theta)\\
+=&\rho(cos \phi, sin \phi)
+\begin{pmatrix}
+cos\theta& sin\theta\\
+-sin\theta& cos\theta
+\end{pmatrix} \\
+=& \rho(
+cos\phi cos\theta - sin\phi sin\theta,
+cos\phi sin\theta + sin\phi cos\theta
+)\\
+=& \rho(cos(\phi+\theta), sin(\phi+\theta))
+\end{aligned}\)</p></li></ul></li><li>性质<ul><li>\(R(\theta)^T=R(-\theta)\)</li><li>\(R(\theta_1)R(\theta_2)=R(\theta_1+\theta_{2})\)</li></ul></li></ul><h4 id=在高维空间中旋转>在高维空间中旋转</h4><p>假设空间是偶数维的，把原始的空间切分成为一个正交的二维子空间，在上面做独立的旋转。</p><ul><li><p>定义</p><p>\(\Theta=(\theta_{1},\theta_2,\ldots,\theta_{D/2})\)</p><p>\(R(\Theta)=\begin{pmatrix}
+cos\,\theta_{1} & sin\,\theta_1 & 0 & 0 & 0 & 0 &amp;0\\
+-sin\,\theta_{1} & cos\,\theta_1 & 0 & 0 & 0 & 0 &amp;0 \\
+0 & 0 & cos\,\theta_{2} & sin\,\theta_2 & 0 & 0 &amp;0 \\
+0 & 0 & -sin\,\theta_{2} & cos\,\theta_2& 0 & 0 &amp;0 \\
+0 & 0 & 0 & 0 & \ldots &amp;0 & 0 \\
+0 & 0 & 0 & 0 &\ldots & cos\,\theta_{D/2} & sin\,\theta_{D/2} \\
+0 & 0 & 0 & 0 &\ldots & -sin\,\theta_{D/2} & cos\,\theta_{D/2}
+\end{pmatrix}\)</p><p>\(R(\Theta)=\begin{pmatrix}
+R(\theta_{1}) & 0 &amp;0 & 0\\
+0 & R(\theta_2) & 0 &amp;0 \\
+0 & 0 &\ldots &amp;0 \\
+0 & 0 & 0 &amp;R(\theta_{D/2})\\
+\end{pmatrix}\)</p></li></ul><ul><li><p>性质</p><ul><li><p>在独立的二维子空间上做不同角度的旋转</p><p>\(XR(\Theta)=(X^1, X^2)
+\begin{pmatrix}
+R(\theta_{1}) & 0 \\
+0 & R(\theta_2)
+\end{pmatrix}=(X^1R(\theta_1), X^2R(\theta_2))\)</p></li><li><p>\(R(\Theta)=\widehat{R}(\theta_1)\widehat{R}(\theta_2)\ldots\widehat{R}(\theta_{D/2})\) 逐个在不同的子空间上做旋转
+定义
+\(\widehat{R}(\theta)=
+\begin{pmatrix}
+R(\theta) & 0 \\
+0 & 1 \\
+\end{pmatrix}\)</p><p>\(R(\Theta)=\begin{pmatrix}
+R(\theta_{1}) & 0 \\
+0 & R(\theta_2)
+\end{pmatrix}=\begin{pmatrix}
+R(\theta_{1}) & 0 \\
+0 & 1 \\
+\end{pmatrix}\begin{pmatrix}
+1 & 0 \\
+0 & R(\theta_2)
+\end{pmatrix}=\widehat{R}(\theta_1)\widehat{R}(\theta_2)\)</p></li></ul></li></ul><h2 id=旋转位置编码>旋转位置编码</h2><h3 id=motivation>motivation</h3><figure><img src=images/2024-03-15_23-23-30_screenshot.png width=400px></figure><p>假设\(Q_{i}, K_j\) 都是二维的向量，\(i, j\) 是它们对应的position，
+这里\(\eta_{i},\eta_{j}\) 是\(Q_i, K_j\) 弧度表示.</p><ul><li>点积只和模长和夹角有关<ul><li>\(Q_iK_j^T=\|Q_i\|\|K_j\| cos(\eta_{j}-\eta_i)\),</li><li>如何在这里融入位置的信息？基于位置乘倍数旋转之后做点击</li></ul></li><li>做法：<ul><li>我们把两个向量各自旋转\(i\theta,j\theta\) 后再来计算点积</li><li>其中\(\theta\) 是一个单位角度，</li><li>新的向量的内积带上了位置信息，且他们的内积只和\(Q_i,Q_j,i-j\) 相关</li></ul></li><li>因为: 模长没有变，只是夹角变了，夹角增加了 \((j-i)\theta\).<ul><li>\(Q_iR(i\theta)(K_jR(j\theta))^T=\|Q_i\|\|K_j\| cos(\eta_{j}-\eta_{i}+(j-i)\theta)\)</li></ul></li></ul><h3 id=二维空间中的一个解>二维空间中的一个解</h3><h4 id=基于旋转矩阵的一个解>基于旋转矩阵的一个解</h4><p>\begin{equation*}
 \begin{split}
 Q_{i}&= X_{i} W_{Q} R(i\theta) \\
 K_{j}&= X_j W_{K} R(j\theta)\\
 Q_{i}K_j^T &=X_{i}W_QR(i\theta)R(j\theta)^{T}W_K^{T}X_{j}^T\\
-&=X_{i}W_QR(i\theta)R(j\theta)^{T}W_K^{T}X_{j}^T\\
 &=X_{i}W_QR(i\theta)R(-j\theta)W_K^{T}X_{j}^T\\
 &=X_{i}W_QR((i-j)\theta)W_K^{T}X_{j}^T\\
 & =g(X_i,X_j,i-j)\\
 \end{split}
 \end{equation*}</p><h4 id=为什么是在投影之后旋转-不在投影之前转>为什么是在投影之后旋转，不在投影之前转？</h4><p>\begin{equation*}
 \begin{split}
-Q_{i}&= f_{Q}(X_{i}, i) = X_{i} R(i\theta) W_{Q} \\
-K_{j}&= f_{K}(X_{j}, j) = X_j R(j\theta) W_{K} \\
+Q_{i}&= X_{i} R(i\theta) W_{Q} \\
+K_{j}&= X_j R(j\theta) W_{K} \\
 Q_{i}K_j^T &=X_{i}R(i\theta)W_QW_KR(j\theta)^{T}X_{j}^T\\
 &=?\\
 \end{split}
-\end{equation*}</p><h3 id=推广到高纬的空间>推广到高纬的空间</h3><p>整个空间分割成\(d/2\) 个子空间，在各个子空间上分别按照一个位置相关的角度旋转</p><h4 id=定义-r--i-theta>定义 \(R(i\Theta)\)</h4><ul><li>\(X_{i}R(i\Theta)\)
-表示对\(X_{i}\) 在各个子空间分别做角度为\(i\theta_1,i\theta_2,\ldots,i\theta_{d/2}\) 的旋转.
-\(\Theta=(\theta_{1},\theta_2,\ldots,\theta_{d/2})\)
+\end{equation*}</p><h3 id=推广到高维空间>推广到高维空间</h3><p>整个空间分割成\(D/2\) 个子空间，在各个子空间上分别按照一个位置相关的角度旋转</p><h4 id=定义-r--i-theta>定义 \(R(i\Theta)\)</h4><ul><li>\(X_{i}R(i\Theta)\)
+表示对\(X_{i}\) 在各个子空间分别做角度为\(i\theta_1,i\theta_2,\ldots,i\theta_{D/2}\) 的旋转.
+\(\Theta=(\theta_{1},\theta_2,\ldots,\theta_{D/2})\)
 \(R(i \Theta)=\begin{pmatrix}
 cos\,i\theta_{1} & sin\,i\theta_1 & 0 & 0 \\
 -sin\,i\theta_{1} & cos\,i\theta_1 & 0 & 0 \\
@@ -99,70 +134,32 @@ cos\,i\theta_{1} & sin\,i\theta_1 & 0 & 0 \\
 \end{pmatrix}=\begin{pmatrix}
 R(i\theta_{1}) & 0 \\
 0 & R(i\theta_2)
-\end{pmatrix}\)</li></ul><h4 id=物理意义>物理意义</h4><ul><li><p>依次在独立的二维子空间上做旋转变换</p><p>利用分块矩阵的乘法，我们观察一下, 把对应行向量\(X_i\) 切分为两部分，用上角标来区分</p><p>\(X_i = (X_{i}^1, X_{i}^2)\)</p><p>\(XR(i\Theta)=(X^1, X^2)\begin{pmatrix}
-R(i\theta_{1}) & 0 \\
-0 & R(i\theta_2)
-\end{pmatrix}=(X^1R(i\theta_1), X^2R(i\theta_2))\)</p><p>可以看出这个矩阵的变化的作用就是在各个独立的二维子空间上分别做独立的旋转变化，最后把变换后的向量拼接即可</p></li><li><p>性质: \(R(i\Theta)=\widehat{R}(i\theta_1)\widehat{R}(i\theta_2)\ldots\widehat{R}(i\theta_{d/2})\)</p><p>定义\(\widehat{R}(i\theta_1)=
-\begin{pmatrix}
-R(i\theta_{1}) & 0 \\
-0 & 0 \\
-\end{pmatrix}\)</p><p>\(R(i\Theta)=\begin{pmatrix}
-R(i\theta_{1}) & 0 \\
-0 & R(i\theta_2)
-\end{pmatrix}=\begin{pmatrix}
-R(i\theta_{1}) & 0 \\
-0 & 0 \\
-\end{pmatrix}\begin{pmatrix}
-0 & 0 \\
-0 & R(i\theta_2)
-\end{pmatrix}=\widehat{R}(i\theta_1)\widehat{R}(i\theta_2)\)</p></li><li><p>在第一个二维空间按照 \(\theta_{1}\) 来旋转，第二个 \(\theta_{2}\) 来旋转</p></li></ul><h4 id=rope在高维空间>ROPE在高维空间</h4><p>\begin{equation*}
+\end{pmatrix}\)</li></ul><h4 id=rope在高维空间>ROPE在高维空间</h4><p>\begin{equation*}
 \begin{split}
 Q_{i}& = X_{i} W_{Q} R(i\Theta) \\
 K_{j}& = X_j W_{K} R(j\Theta)\\
-Q_{i}K_j^T &=X_{i}W_QR(i\Theta)R(j\Theta)^{T}W_K^{T}X_{j}\\
-&=X_{i}W_QR(i\Theta)R(j\Theta)^{T}W_K^{T}X_{j}\\
-&=X_{i}W_QR((i-j)\Theta)W_K^{T}X_{j}\\
+Q_{i}K_j^T &=X_{i}W_QR(i\Theta)R(j\Theta)^{T}W_K^{T}X_{j}^{T}\\
+&=X_{i}W_QR(i\Theta)R(-j\Theta)W_K^{T}X_{j}^{T}\\
+&=X_{i}W_QR((i-j)\Theta)W_K^{T}X_{j}^{T}\\
 &=g(X_i,X_j,i-j)\\
 \end{split}
 \end{equation*}</p><p>其中</p><p>\begin{equation*}
 \begin{split}
-R(i\Theta)R(j\Theta)^{T} &= \widehat{R}(i\theta_1)\widehat{R}(i\theta_2)\ldots\widehat{R}(i\theta_{d/2})\widehat{R}(j\theta_{d/2})^{T}\ldots \widehat{R}(j\theta_{2})^{T} \widehat{R}(j\theta_{1})^{T} \\
-&= (\widehat{R}(i\theta_1)\widehat{R}(j\theta_1)^T)(\widehat{R}(i\theta_2)\widehat{R}(j\theta_2)^T)\ldots(\widehat{R}(i\theta_{d/2}\widehat{R}(j\theta_{d/2})^T)\\
-&= \widehat{R}((i-j)\theta_1)\widehat{R}((i-j)\theta_2)\ldots \widehat{R}((i-j)\theta_{d/2})\\
+R(i\Theta)R(j\Theta)^{T} &= \widehat{R}(i\theta_1)\widehat{R}(i\theta_2)\ldots\widehat{R}(i\theta_{D/2})\widehat{R}(j\theta_{D/2})^{T}\ldots \widehat{R}(j\theta_{2})^{T} \widehat{R}(j\theta_{1})^{T} \\
+&= (\widehat{R}(i\theta_1)\widehat{R}(j\theta_1)^T)(\widehat{R}(i\theta_2)\widehat{R}(j\theta_2)^T)\ldots(\widehat{R}(i\theta_{D/2}\widehat{R}(j\theta_{D/2})^T)\\
+&= \widehat{R}((i-j)\theta_1)\widehat{R}((i-j)\theta_2)\ldots \widehat{R}((i-j)\theta_{D/2})\\
 &= R((i-j)\Theta)\\
 \end{split}
-\end{equation*}</p><p>其中\(\theta_{k}\) 是超参数，\(\theta_{k}=10000^{-2(k-1)/d}, k\in[1,2,\ldots,d/2]\)</p><h3 id=总结旋转位置编码>总结旋转位置编码</h3><h4 id=总结>总结</h4><ul><li><p>旋转位置编码是针对\(Q,K\) 的每个行向量做对应的位置旋转变换</p><p>\(Q_{i} = X_{i} W_{Q} R(i\Theta)\)</p><p>\(K_{j} = X_{j} W_{K} R(j\Theta)\)</p></li><li><p>位置旋转矩阵定义 \(R(i\Theta)\)</p><p>其中 \(\Theta=(\theta_{1},\theta_2,\ldots,\theta_{d/2})\), \(\theta_{k}=10000^{-2(k-1)/d}, k\in[1,2,\ldots,d/2]\)
-那么</p><p>\(R(i\theta)=
-\begin{pmatrix}
-cos i\theta& sin i\theta\\
--sin i\theta& cos i\theta
-\end{pmatrix}\)</p><p>\(R(i \Theta)=\begin{pmatrix}
-cos\,i\theta_{1} & sin\,i\theta_1 & 0 & 0 & 0 & 0 &amp;0\\
--sin\,i\theta_{1} & cos\,i\theta_1 & 0 & 0 & 0 & 0 &amp;0 \\
-0 & 0 & cos\,i\theta_{2} & sin\,i\theta_2 & 0 & 0 &amp;0 \\
-0 & 0 & -sin\,i\theta_{2} & cos\,i\theta_2& 0 & 0 &amp;0 \\
-0 & 0 & 0 & 0 & \ldots &amp;0 & 0 \\
-0 & 0 & 0 & 0 &\ldots & cos\,i\theta_{d/2} & sin\,i\theta_{d/2} \\
-0 & 0 & 0 & 0 &\ldots & -sin\,i\theta_{d/2} & cos\,i\theta_{d/2}
-\end{pmatrix}\)</p><p>\(R(i\Theta)=\begin{pmatrix}
-R(i\theta_{1}) & 0 &amp;0 & 0\\
-0 & R(i\theta_2) & 0 &amp;0 \\
-0 & 0 &\ldots &amp;0 \\
-0 & 0 & 0 &amp;R(i\theta_{d/2})\\
-\end{pmatrix}\)</p></li></ul><h4 id=再看下绝对位置编码>再看下绝对位置编码</h4><p>\(\begin{aligned}
-P_{i,2t} &= sin(i/10000^{2t/d}) &&\\
-P_{i,2t+1} &= cos(i/10000^{2t/d})&&\\
-\end{aligned}\)</p><p>换个表述的形式，</p><p>\(P_{i}=\begin{pmatrix}
-B_1, B_2, \ldots, B_{d/2}\end{pmatrix}\)， \(B_{k}=\begin{pmatrix}
-sin(i\theta_k), cos(i\theta_k)
-\end{pmatrix}\)
-\(\theta_{k}=10000^{-2(k-1)/d}, k\in[1,2,\ldots,d/2]\)</p><h3 id=代码实现>代码实现</h3><h4 id=避开旋转矩阵的相乘>避开旋转矩阵的相乘</h4><p>我们需要对每个\(Q_{i}\) 乘以不同的旋转矩阵，也就是
-\(QR=\begin{pmatrix}
+\end{equation*}</p><h3 id=整体看下>整体看下</h3><ul><li>空间是\(D\) 维度，\(d=D/2\)</li><li>有\(d\) 个正交的二维子空间 \(\mathcal{X}_1, \mathcal{X}_2, \dots, \mathcal{X}_{d}\)</li><li>每个子空间\(\mathcal{X}_{k}\) 有一个旋转角度基准 \(\theta_{k}\), 一个基准旋转矩阵 \(R(\theta_{k})\)<ul><li>合并后的基准角度序列和旋转序列是 \(\Theta, R(\Theta)\)</li><li>每个子空间对应于三角函数中的一个周期 \(2\pi/\theta_{k}\)</li></ul></li><li>对于每个位置\(i\), 角度序列和旋转序列是 \(i\Theta, R(i\Theta)\)<table><thead><tr><th></th><th></th><th></th><th></th><th></th><th></th></tr></thead><tbody><tr><td>\(\Theta\)</td><td>\(\theta_1\)</td><td>\(\theta_2\)</td><td>\(\theta_3\)</td><td>\(\ldots\)</td><td>\(\theta_{d}\)</td></tr><tr><td>\(R(\Theta)\)</td><td>\(R(\theta_1)\)</td><td>\(R(\theta_{2})\)</td><td>\(R(\theta_3)\)</td><td>\(\ldots\)</td><td>\(R(\theta_{d})\)</td></tr><tr><td>\(i\Theta\)</td><td>\(i\theta_1\)</td><td>\(i\theta_{2}\)</td><td>\(i\theta_3\)</td><td>\(\ldots\)</td><td>\(i\theta_{d}\)</td></tr></tbody></table></li></ul><h4 id=具体化>具体化</h4><ul><li><p>\(\theta_{k}\) 是超参数</p><ul><li>\(\theta_{k}=10000^{-2(k-1)/D}, k\in[1,2,\ldots,D/2]\)，记\(B=10000^{1/d}\)</li><li>\(\theta_{k}=1/B^{k-1}\) 是一个几何级数</li><li>周期随着维度\(k\) 逐渐增大</li></ul><table><thead><tr><th>\(\Theta\)</th><th>\(1\)</th><th>\(1/B\)</th><th>\(1/B^{2}\)</th><th>\(\ldots\)</th><th>\(1/B^{d-1}\)</th></tr></thead><tbody><tr><td>\(T\)</td><td>\(2\pi\)</td><td>\(2B\pi\)</td><td>\(2B^{2}\pi\)</td><td>\(\ldots\)</td><td>\(2B^{d-1}\pi\)</td></tr></tbody></table></li></ul><h4 id=随着位置的增大-位置编码是否会重复>随着位置的增大，位置编码是否会重复？</h4><ul><li>如果存在位置$i$和 0 位置的编码撞车了，</li><li>\(\Theta\) 序列在 \(2\pi\) 周期整数倍上撞车<ul><li>\(\Theta\) 全部都是 $2π$的整数倍</li><li>对dimension的每个\(k\), 存在着一个整数 \(I_k\), 使得\(i\theta_{k}=2\pi I_k\)</li><li>不可能，\(\theta_k=1/10000^{k/d}\) 和 \(2\pi\) 不会扯上关系</li></ul></li></ul><h4 id=rope-可能的另外一个优势>RoPE 可能的另外一个优势</h4><ul><li>在多个block 前向传递的过程中position的信息不会丢失<ul><li>每个block都会先做QKV的投影，然后QK投影之后会做位置旋转变换</li></ul></li></ul><h3 id=再看下绝对位置编码>再看下绝对位置编码</h3><p>\(\begin{aligned}
+P_{i,2t} &= sin(i/10000^{2t/D}) &&\\
+P_{i,2t+1} &= cos(i/10000^{2t/D})&&\\
+\end{aligned}\)</p><p>\(t\in[0,1,\ldots,D/2-1], i\ge0\)</p><p>如果记\(d=D/2,B=1/10000^{1/d}\)，
+那么\(\theta_{k}=1/B^{k-1}, k\in[1,2,\ldots,d]\)</p><h4 id=structure>structure</h4><ul><li>有\(d\) 个正交的二维子空间 \(\mathcal{X}_1, \mathcal{X}_2, \dots, \mathcal{X}_{d}\)</li><li>每个子空间\(\mathcal{X}_{k}\) 有一个基础角度 \(\theta_{k}\)，<ul><li>两个基底 \(sin\theta_{k}, cos\theta_{k}\) ，记作\(\text{Tri}(\theta_k)=(sin(\theta_k), cos(\theta_k))\)</li><li>合并后的基准角度序列和基底序列是 \(\Theta, \text{Tri} (\Theta)\)</li><li>由 \(\theta_{k}\) 来决定各个子空间的不同</li><li>子空间内部由sin,cos 来区分</li></ul></li><li>对于每个位置\(i\), 基准角度序列和基底序列是 \(i\Theta, \text{Tri}(i\Theta)\)</li></ul><table><thead><tr><th>\(\Theta\)</th><th>\(\theta_1\)</th><th>\(\theta_{2}\)</th><th>\(\theta_3\)</th><th>\(\ldots\)</th><th>\(\theta_{d}\)</th></tr></thead><tbody><tr><td>\(\text{Tri}(\Theta)\)</td><td>\(\text{Tri}(\theta_1)\)</td><td>\(\text{Tri}(\theta_{2})\)</td><td>\(\text{Tri}(\theta_3)\)</td><td>\(\ldots\)</td><td>\(\text{Tri}(\theta_{d})\)</td></tr><tr><td>\(i\Theta\)</td><td>\(i\theta_1\)</td><td>\(i\theta_{2}\)</td><td>\(i\theta_3\)</td><td>\(\ldots\)</td><td>\(i\theta_{d}\)</td></tr></tbody></table><ul><li><p>具体化</p><ul><li>\(\theta_{k}=1/B^{k-1}\) 是一个几何级数序列</li><li>周期随着维度\(k\) 逐渐增大</li></ul><table><thead><tr><th>\(\Theta\)</th><th>\(0\)</th><th>\(1/B\)</th><th>\(1/B^{2}\)</th><th>\(\ldots\)</th><th>\(1/B^{d}\)</th></tr></thead><tbody><tr><td>\(T\)</td><td>\(2\pi\)</td><td>\(2B\pi\)</td><td>\(2B^{2}\pi\)</td><td>\(\ldots\)</td><td>\(2B^{d}\pi\)</td></tr></tbody></table></li></ul><ul><li><p>如果我们记录 \(i=x\)</p><p>\(\{sin(\theta_k x), cos(\theta_{k} x)\}_{k=1}^{D}\) 很像对位置函数\(f(x)\) 的一个fourier展开</p></li></ul><h4 id=同理-随着位置的增大-位置编码不会重复>同理，随着位置的增大，位置编码不会重复</h4><h2 id=代码实现>代码实现</h2><h3 id=trick1-避开旋转矩阵的相乘>trick1: 避开旋转矩阵的相乘</h3><h4 id=why>why？</h4><p>我们需要对每个\(Q_{i}\) 乘以不同的旋转矩阵，也就是</p><p>\(QR=\begin{pmatrix}
 Q_1 R(1\Theta)\\
 Q_2 R(2\Theta)\\
 \ldots \\
 Q_N R(N\Theta)\\
-\end{pmatrix}\)</p><p>假设是二维空间，把\(Q\) 拆分成两个列向量\(U,V\), 记录</p><p>\(cos=\begin{pmatrix}cos1\theta \\
+\end{pmatrix}\)</p><p>而每个\(R(i\Theta)\) 是一个稀疏矩阵，直接matmul代价太大</p><h4 id=how>how?</h4><p>假设是二维空间，把\(Q\) 拆分成两个列向量\(U,V\), 记录</p><p>\(cos=\begin{pmatrix}cos1\theta \\
 cos 2\theta\\ \ldots,\\ cos N\theta
 \end{pmatrix},
 sin=\begin{pmatrix}sin 1\theta \\
@@ -175,14 +172,14 @@ u_2 cos 2\theta-v_2 sin 2\theta, u_2 sin 2\theta + v_2 cos 2\theta\\
 u_N cos N\theta-v_N sin N\theta, u_N sin N \theta + v_N cos N\theta\\
 \end{pmatrix}\\
 &=(U * cos - V* sin, U*sin+V*cos) \\
-&= (U,V)cos +(V, -U) sin
-\end{aligned}\)</p><p>同样的，在高维空间，我们可以把\(Q\) 拆分成\(d/2\) 个列向量\(U_1,V_1,U_2,V_2,\ldots,U_{d/2},V_{d/2}\)</p><h4 id=tricks>tricks</h4><ul><li>trick2：不需要做严格紧密相连的二维子空间序列，将整个空间分成两部分<ul><li>第一个部分放的是每个子空间的第一维度，第二部分放置的是每个子空间的第二维度<div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+&= (U,V)cos +(-V, U) sin
+\end{aligned}\)</p><p>同样的，在高维空间，我们可以把\(Q\) 拆分成\(D/2\) 个列向量\(U_1,V_1,U_2,V_2,\ldots,U_{D/2},V_{D/2}\)</p><h3 id=trick2-将整个空间分成两部分>trick2: 将整个空间分成两部分</h3><p>不需要做严格紧密相连的二维子空间序列</p><ul><li>第一个部分放的是每个子空间的第一维度，</li><li>第二部分放置的是每个子空间的第二维度</li></ul><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
 </span><span class=lnt>2
 </span><span class=lnt>3
 </span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-text data-lang=text><span class=line><span class=cl>(x1,y1) 是一个子空间，(x2, y2)是一个子空间，(x3, y3)是一个子空间
 </span></span><span class=line><span class=cl>before： [(x1,y1), (x2,y2), (x3,y3)]
 </span></span><span class=line><span class=cl>after： [(x1,x2,x3), (y1, y2, y3)]
-</span></span></code></pre></td></tr></table></div></div></li></ul></li></ul><h4 id=code>code</h4><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span></span></code></pre></td></tr></table></div></div><h3 id=code>code</h3><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
 </span><span class=lnt> 2
 </span><span class=lnt> 3
 </span><span class=lnt> 4
@@ -256,6 +253,8 @@ u_N cos N\theta-v_N sin N\theta, u_N sin N \theta + v_N cos N\theta\\
 </span><span class=lnt>72
 </span><span class=lnt>73
 </span><span class=lnt>74
+</span><span class=lnt>75
+</span><span class=lnt>76
 </span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-python data-lang=python><span class=line><span class=cl><span class=kn>import</span> <span class=nn>torch</span>
 </span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>torch.nn</span> <span class=k>as</span> <span class=nn>nn</span>
 </span></span><span class=line><span class=cl><span class=kn>import</span> <span class=nn>math</span>
@@ -265,27 +264,29 @@ u_N cos N\theta-v_N sin N\theta, u_N sin N \theta + v_N cos N\theta\\
 </span></span></span><span class=line><span class=cl><span class=s2>    分割到了前后两部分，分别进行旋转，然后拼接起来
 </span></span></span><span class=line><span class=cl><span class=s2>    &#34;&#34;&#34;</span>
 </span></span><span class=line><span class=cl>
-</span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=fm>__init__</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>dim</span><span class=p>,</span> <span class=n>position_ids</span><span class=p>):</span>
-</span></span><span class=line><span class=cl>        <span class=s2>&#34;&#34;&#34; position_ids: [seq_len], dim 和单个头的hidden_dim对应 &#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=fm>__init__</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>D</span><span class=p>,</span> <span class=n>position_ids</span><span class=p>):</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;&#34;&#34; position_ids: [seq_len], D 和单个头的hidden_dim对应 &#34;&#34;&#34;</span>
 </span></span><span class=line><span class=cl>        <span class=n>base</span> <span class=o>=</span> <span class=mi>10000</span>
-</span></span><span class=line><span class=cl>        <span class=n>theta_base</span> <span class=o>=</span> <span class=mf>1.0</span> <span class=o>/</span> <span class=p>(</span><span class=n>base</span> <span class=o>**</span> <span class=p>(</span><span class=n>torch</span><span class=o>.</span><span class=n>arange</span><span class=p>(</span><span class=mi>0</span><span class=p>,</span> <span class=n>dim</span><span class=p>,</span> <span class=mi>2</span><span class=p>,</span> <span class=n>dtype</span><span class=o>=</span><span class=n>torch</span><span class=o>.</span><span class=n>int64</span><span class=p>)</span><span class=o>.</span><span class=n>float</span><span class=p>()</span> <span class=o>/</span> <span class=n>dim</span><span class=p>))</span>
+</span></span><span class=line><span class=cl>        <span class=n>d</span> <span class=o>=</span> <span class=n>D</span> <span class=o>/</span> <span class=mi>2</span>
+</span></span><span class=line><span class=cl>        <span class=n>B</span> <span class=o>=</span> <span class=n>base</span> <span class=o>**</span> <span class=p>(</span><span class=mi>1</span><span class=o>/</span><span class=n>d</span><span class=p>)</span>
+</span></span><span class=line><span class=cl>        <span class=n>theta_base</span> <span class=o>=</span> <span class=mf>1.0</span> <span class=o>/</span> <span class=p>(</span><span class=n>B</span> <span class=o>**</span> <span class=p>(</span><span class=n>torch</span><span class=o>.</span><span class=n>arange</span><span class=p>(</span><span class=mi>0</span><span class=p>,</span> <span class=n>d</span><span class=p>)))</span>    <span class=c1># 几何级数序列</span>
 </span></span><span class=line><span class=cl>        <span class=n>thetas</span> <span class=o>=</span> <span class=n>position_ids</span><span class=o>.</span><span class=n>outer</span><span class=p>(</span><span class=n>theta_base</span><span class=p>)</span>  <span class=c1># [seq_len, D/2]</span>
 </span></span><span class=line><span class=cl>        <span class=n>full_thetas</span> <span class=o>=</span> <span class=n>torch</span><span class=o>.</span><span class=n>cat</span><span class=p>((</span><span class=n>thetas</span><span class=p>,</span> <span class=n>thetas</span><span class=p>),</span> <span class=n>dim</span><span class=o>=-</span><span class=mi>1</span><span class=p>)</span>  <span class=c1># [seq_len, D]</span>
 </span></span><span class=line><span class=cl>        <span class=bp>self</span><span class=o>.</span><span class=n>cos</span> <span class=o>=</span> <span class=n>full_thetas</span><span class=o>.</span><span class=n>cos</span><span class=p>()</span>
 </span></span><span class=line><span class=cl>        <span class=bp>self</span><span class=o>.</span><span class=n>sin</span> <span class=o>=</span> <span class=n>full_thetas</span><span class=o>.</span><span class=n>sin</span><span class=p>()</span>
 </span></span><span class=line><span class=cl>
 </span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=nf>rotate</span><span class=p>(</span><span class=bp>self</span><span class=p>,</span> <span class=n>x</span><span class=p>):</span>
-</span></span><span class=line><span class=cl>        <span class=s2>&#34;&#34;&#34;
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;&#34;&#34; trick1
 </span></span></span><span class=line><span class=cl><span class=s2>        x: [bs, num_attention_heads, seq_len, D]
 </span></span></span><span class=line><span class=cl><span class=s2>        q: [bs, num_attention_heads, seq_len, D]
 </span></span></span><span class=line><span class=cl><span class=s2>        cos: [seq_len, D]
-</span></span></span><span class=line><span class=cl><span class=s2>        [x,y] @ [[cos, sin], [-sin, cos]] = [x*cos+y*sin, ycos-x*sin] =[x,y]*cos+[y, -x]*sin
+</span></span></span><span class=line><span class=cl><span class=s2>        [x,y] @ [[cos, sin], [-sin, cos]] = [x*cos-y*sin, ycos+x*sin] =[x,y]*cos+[-y, x]*sin
 </span></span></span><span class=line><span class=cl><span class=s2>        &#34;&#34;&#34;</span>
 </span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>x</span> <span class=o>*</span> <span class=bp>self</span><span class=o>.</span><span class=n>cos</span> <span class=o>+</span> <span class=n>Rotator</span><span class=o>.</span><span class=n>reverse_half</span><span class=p>(</span><span class=n>x</span><span class=p>)</span> <span class=o>*</span> <span class=bp>self</span><span class=o>.</span><span class=n>sin</span>
 </span></span><span class=line><span class=cl>
 </span></span><span class=line><span class=cl>    <span class=nd>@staticmethod</span>
 </span></span><span class=line><span class=cl>    <span class=k>def</span> <span class=nf>reverse_half</span><span class=p>(</span><span class=n>q</span><span class=p>):</span>
-</span></span><span class=line><span class=cl>        <span class=s2>&#34;&#34;&#34; q: [bs, num_attention_heads, seq_len, D] &#34;&#34;&#34;</span>
+</span></span><span class=line><span class=cl>        <span class=s2>&#34;&#34;&#34; q: [bs, num_attention_heads, seq_len, D] trick2 &#34;&#34;&#34;</span>
 </span></span><span class=line><span class=cl>        <span class=n>x</span> <span class=o>=</span> <span class=n>q</span><span class=p>[</span><span class=o>...</span><span class=p>,</span> <span class=p>:</span> <span class=n>q</span><span class=o>.</span><span class=n>shape</span><span class=p>[</span><span class=o>-</span><span class=mi>1</span><span class=p>]</span> <span class=o>//</span> <span class=mi>2</span><span class=p>]</span>
 </span></span><span class=line><span class=cl>        <span class=n>y</span> <span class=o>=</span> <span class=n>q</span><span class=p>[</span><span class=o>...</span><span class=p>,</span> <span class=n>q</span><span class=o>.</span><span class=n>shape</span><span class=p>[</span><span class=o>-</span><span class=mi>1</span><span class=p>]</span> <span class=o>//</span> <span class=mi>2</span><span class=p>:]</span>
 </span></span><span class=line><span class=cl>        <span class=k>return</span> <span class=n>torch</span><span class=o>.</span><span class=n>cat</span><span class=p>((</span><span class=o>-</span><span class=n>y</span><span class=p>,</span> <span class=n>x</span><span class=p>),</span> <span class=n>dim</span><span class=o>=-</span><span class=mi>1</span><span class=p>)</span>
@@ -330,5 +331,14 @@ u_N cos N\theta-v_N sin N\theta, u_N sin N \theta + v_N cos N\theta\\
 </span></span><span class=line><span class=cl><span class=n>x</span> <span class=o>=</span> <span class=n>torch</span><span class=o>.</span><span class=n>rand</span><span class=p>(</span><span class=n>config</span><span class=p>[</span><span class=s2>&#34;batch_size&#34;</span><span class=p>],</span> <span class=n>config</span><span class=p>[</span><span class=s2>&#34;seq_len&#34;</span><span class=p>],</span> <span class=n>config</span><span class=p>[</span><span class=s2>&#34;hidden_dim&#34;</span><span class=p>])</span>
 </span></span><span class=line><span class=cl><span class=n>position_ids</span> <span class=o>=</span> <span class=n>torch</span><span class=o>.</span><span class=n>arange</span><span class=p>(</span><span class=n>config</span><span class=p>[</span><span class=s2>&#34;seq_len&#34;</span><span class=p>])</span>
 </span></span><span class=line><span class=cl><span class=n>y</span> <span class=o>=</span> <span class=n>attn</span><span class=p>(</span><span class=n>x</span><span class=p>,</span> <span class=n>position_ids</span><span class=p>)</span>
-</span></span></code></pre></td></tr></table></div></div><h2 id=参考论文>参考论文</h2><style>.csl-entry{text-indent:-1.5em;margin-left:1.5em}</style><div class=csl-bib-body><div class=csl-entry><a id=citeproc_bib_item_1></a>Su, Jianlin, Yu Lu, Shengfeng Pan, Ahmed Murtadha, Bo Wen, and Yunfeng Liu. 2022. “RoFormer: Enhanced Transformer with Rotary Position Embedding.” arXiv. <a href=https://arxiv.org/abs/2104.09864>https://arxiv.org/abs/2104.09864</a>.</div></div></div><div class=post-footer id=post-footer><div class=post-info><div class=post-info-line><div class=post-info-mod><span>更新于 2024-03-12</span></div></div><div class=post-info-line><div class=post-info-md><span><a class=link-to-markdown href=/positional_embedding/index.md target=_blank>阅读原始文档</a></span></div><div class=post-info-share><span><a href=javascript:void(0); title="分享到 Twitter" data-sharer=twitter data-url=https://skylyj.github.io/positional_embedding/ data-title=旋转位置编码 data-hashtags=transformer,rope><i class="fab fa-twitter fa-fw" aria-hidden=true></i></a><a href=javascript:void(0); title="分享到 Facebook" data-sharer=facebook data-url=https://skylyj.github.io/positional_embedding/ data-hashtag=transformer><i class="fab fa-facebook-square fa-fw" aria-hidden=true></i></a><a href=javascript:void(0); title="分享到 Hacker News" data-sharer=hackernews data-url=https://skylyj.github.io/positional_embedding/ data-title=旋转位置编码><i class="fab fa-hacker-news fa-fw" aria-hidden=true></i></a><a href=javascript:void(0); title="分享到 Line" data-sharer=line data-url=https://skylyj.github.io/positional_embedding/ data-title=旋转位置编码><i data-svg-src=https://cdn.jsdelivr.net/npm/simple-icons@7.3.0/icons/line.svg aria-hidden=true></i></a><a href=javascript:void(0); title="分享到 微博" data-sharer=weibo data-url=https://skylyj.github.io/positional_embedding/ data-title=旋转位置编码 data-ralateuid=xxxx><i class="fab fa-weibo fa-fw" aria-hidden=true></i></a></span></div></div></div><div class=post-info-more><section class=post-tags><i class="fas fa-tags fa-fw" aria-hidden=true></i>&nbsp;<a href=/tags/transformer/>Transformer</a>,&nbsp;<a href=/tags/rope/>Rope</a></section><section><span><a href=javascript:void(0); onclick=window.history.back()>返回</a></span>&nbsp;|&nbsp;<span><a href=/>主页</a></span></section></div><div class=post-nav><a href=/transformer/ class=next rel=next title=深入理解transformer>深入理解transformer<i class="fas fa-angle-right fa-fw" aria-hidden=true></i></a></div></div><div id=comments><div id=valine class=comment></div><noscript>Please enable JavaScript to view the comments powered by <a href=https://valine.js.org/>Valine</a>.</noscript><div id=giscus class=comment></div><noscript>Please enable JavaScript to view the comments powered by <a href=https://giscus.app>Giscus</a>.</noscript></div></article></div></main><footer class=footer><div class=footer-container><div class=footer-line>由 <a href=https://gohugo.io/ target=_blank rel="noopener noreffer" title="Hugo 0.124.0">Hugo</a> 强力驱动</div><div class=footer-line itemscope itemtype=http://schema.org/CreativeWork></div></div></footer></div><div id=fixed-buttons><a href=# id=back-to-top class=fixed-button title=回到顶部><i class="fas fa-arrow-up fa-fw" aria-hidden=true></i>
+</span></span></code></pre></td></tr></table></div></div><h3 id=总结>总结</h3><ul><li><p>RoPE的motivation：</p><ul><li>希望相似性只依赖于向量本身和其相对位置的距离</li><li>通过对\(Q_i,K_i\) 施加 $R(iΘ)$变换做到</li></ul><p>\begin{equation*}
+\begin{split}
+Q_{i}& = X_{i} W_{Q} R(i\Theta) \\
+K_{j}& = X_j W_{K} R(j\Theta)\\
+Q_{i}K_j^T &=X_{i}W_QR(i\Theta)R(j\Theta)^{T}W_K^{T}X_{j}^{T}\\
+&=X_{i}W_QR(i\Theta)R(-j\Theta)W_K^{T}X_{j}^{T}\\
+&=X_{i}W_QR((i-j)\Theta)W_K^{T}X_{j}^{T}\\
+&=g(X_i,X_j,i-j)\\
+\end{split}
+\end{equation*}</p></li><li><p>RoPE是什么？</p><p>把原空间切分成为一个个正交的二维子空间，在上面做独立的旋转。</p></li><li><p>RoPE 结构</p><ul><li>有\(d\) 个正交的二维子空间 \(\mathcal{X}_1, \mathcal{X}_2, \dots, \mathcal{X}_{d}\)</li><li>每个子空间\(\mathcal{X}_{k}\) 对应一个基础角度和基础矩阵 \(\theta_{k}, R(\theta_{k})\)</li><li>对于每个位置\(i\), 对应一个角度序列和矩阵序列 \(i\Theta, R(i\Theta)\)<table><thead><tr><th>\(\Theta\)</th><th>\(\theta_1\)</th><th>\(\theta_2\)</th><th>\(\theta_3\)</th><th>\(\ldots\)</th><th>\(\theta_{d}\)</th></tr></thead><tbody><tr><td>\(R(\Theta)\)</td><td>\(R(\theta_1)\)</td><td>\(R(\theta_{2})\)</td><td>\(R(\theta_3)\)</td><td>\(\ldots\)</td><td>\(R(\theta_{d})\)</td></tr><tr><td>\(i\Theta\)</td><td>\(i\theta_1\)</td><td>\(i\theta_{2}\)</td><td>\(i\theta_3\)</td><td>\(\ldots\)</td><td>\(i\theta_{d}\)</td></tr></tbody></table></li></ul></li><li><p>绝对位置编码和RoPE 有相似的结构</p></li></ul><h2 id=参考论文>参考论文</h2><style>.csl-entry{text-indent:-1.5em;margin-left:1.5em}</style><div class=csl-bib-body><div class=csl-entry><a id=citeproc_bib_item_1></a>Su, Jianlin, Yu Lu, Shengfeng Pan, Ahmed Murtadha, Bo Wen, and Yunfeng Liu. 2022. “RoFormer: Enhanced Transformer with Rotary Position Embedding.” arXiv. <a href=https://arxiv.org/abs/2104.09864>https://arxiv.org/abs/2104.09864</a>.</div><div class=csl-entry><a id=citeproc_bib_item_2></a>Vaswani, Ashish, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Lukasz Kaiser, and Illia Polosukhin. 2023. “Attention Is All You Need.” arXiv. <a href=https://arxiv.org/abs/1706.03762>https://arxiv.org/abs/1706.03762</a>.</div></div></div><div class=post-footer id=post-footer><div class=post-info><div class=post-info-line><div class=post-info-mod><span>更新于 2024-03-17</span></div></div><div class=post-info-line><div class=post-info-md><span><a class=link-to-markdown href=/positional_embedding/index.md target=_blank>阅读原始文档</a></span></div><div class=post-info-share><span><a href=javascript:void(0); title="分享到 Twitter" data-sharer=twitter data-url=https://skylyj.github.io/positional_embedding/ data-title=旋转位置编码 data-hashtags=transformer,rope><i class="fab fa-twitter fa-fw" aria-hidden=true></i></a><a href=javascript:void(0); title="分享到 Facebook" data-sharer=facebook data-url=https://skylyj.github.io/positional_embedding/ data-hashtag=transformer><i class="fab fa-facebook-square fa-fw" aria-hidden=true></i></a><a href=javascript:void(0); title="分享到 Hacker News" data-sharer=hackernews data-url=https://skylyj.github.io/positional_embedding/ data-title=旋转位置编码><i class="fab fa-hacker-news fa-fw" aria-hidden=true></i></a><a href=javascript:void(0); title="分享到 Line" data-sharer=line data-url=https://skylyj.github.io/positional_embedding/ data-title=旋转位置编码><i data-svg-src=https://cdn.jsdelivr.net/npm/simple-icons@7.3.0/icons/line.svg aria-hidden=true></i></a><a href=javascript:void(0); title="分享到 微博" data-sharer=weibo data-url=https://skylyj.github.io/positional_embedding/ data-title=旋转位置编码 data-ralateuid=xxxx><i class="fab fa-weibo fa-fw" aria-hidden=true></i></a></span></div></div></div><div class=post-info-more><section class=post-tags><i class="fas fa-tags fa-fw" aria-hidden=true></i>&nbsp;<a href=/tags/transformer/>Transformer</a>,&nbsp;<a href=/tags/rope/>Rope</a></section><section><span><a href=javascript:void(0); onclick=window.history.back()>返回</a></span>&nbsp;|&nbsp;<span><a href=/>主页</a></span></section></div><div class=post-nav><a href=/transformer/ class=next rel=next title=深入理解transformer>深入理解transformer<i class="fas fa-angle-right fa-fw" aria-hidden=true></i></a></div></div><div id=comments><div id=valine class=comment></div><noscript>Please enable JavaScript to view the comments powered by <a href=https://valine.js.org/>Valine</a>.</noscript><div id=giscus class=comment></div><noscript>Please enable JavaScript to view the comments powered by <a href=https://giscus.app>Giscus</a>.</noscript></div></article></div></main><footer class=footer><div class=footer-container><div class=footer-line>由 <a href=https://gohugo.io/ target=_blank rel="noopener noreffer" title="Hugo 0.124.0">Hugo</a> 强力驱动</div><div class=footer-line itemscope itemtype=http://schema.org/CreativeWork></div></div></footer></div><div id=fixed-buttons><a href=# id=back-to-top class=fixed-button title=回到顶部><i class="fas fa-arrow-up fa-fw" aria-hidden=true></i>
 </a><a href=# id=view-comments class=fixed-button title=查看评论><i class="fas fa-comment fa-fw" aria-hidden=true></i></a></div><link rel=stylesheet href=/lib/valine/valine.min.css><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css><script type=text/javascript src=https://cdn.jsdelivr.net/npm/valine@1.5.0/dist/Valine.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/autocomplete.js@0.38.1/dist/autocomplete.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/algoliasearch@4.13.1/dist/algoliasearch-lite.umd.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/lazysizes@5.3.2/lazysizes.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/sharer.js@0.5.1/sharer.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/auto-render.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/copy-tex.min.js></script><script type=text/javascript src=https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/contrib/mhchem.min.js></script><script type=text/javascript>window.config={code:{copyTitle:"复制到剪贴板",maxShownLines:50},comment:{giscus:{category:"General",categoryId:"DIC_kwDOLM9Aus4Cc5HY",darkTheme:"dark_dimmed",emitMetadata:"0",inputPosition:"bottom",lang:"zh-CN",lazyLoading:!1,lightTheme:"light",mapping:"pathname",reactionsEnabled:"1",repo:"skylyj/Giscus",repoId:"R_kgDOLM9Aug"},valine:{appId:"QGzwQXOqs5JOhN4RGPOkR2mR-MdYXbMMI",appKey:"WBmoGyJtbqUswvfLh6L8iEBr",avatar:"mp",el:"#valine",emojiCDN:"https://cdn.jsdelivr.net/npm/emoji-datasource-google@14.0.0/img/google/64/",emojiMaps:{100:"1f4af.png",alien:"1f47d.png",anger:"1f4a2.png",angry:"1f620.png",anguished:"1f627.png",astonished:"1f632.png",black_heart:"1f5a4.png",blue_heart:"1f499.png",blush:"1f60a.png",bomb:"1f4a3.png",boom:"1f4a5.png",broken_heart:"1f494.png",brown_heart:"1f90e.png",clown_face:"1f921.png",cold_face:"1f976.png",cold_sweat:"1f630.png",confounded:"1f616.png",confused:"1f615.png",cry:"1f622.png",crying_cat_face:"1f63f.png",cupid:"1f498.png",dash:"1f4a8.png",disappointed:"1f61e.png",disappointed_relieved:"1f625.png",dizzy:"1f4ab.png",dizzy_face:"1f635.png",drooling_face:"1f924.png",exploding_head:"1f92f.png",expressionless:"1f611.png",face_vomiting:"1f92e.png",face_with_cowboy_hat:"1f920.png",face_with_hand_over_mouth:"1f92d.png",face_with_head_bandage:"1f915.png",face_with_monocle:"1f9d0.png",face_with_raised_eyebrow:"1f928.png",face_with_rolling_eyes:"1f644.png",face_with_symbols_on_mouth:"1f92c.png",face_with_thermometer:"1f912.png",fearful:"1f628.png",flushed:"1f633.png",frowning:"1f626.png",ghost:"1f47b.png",gift_heart:"1f49d.png",green_heart:"1f49a.png",grimacing:"1f62c.png",grin:"1f601.png",grinning:"1f600.png",hankey:"1f4a9.png",hear_no_evil:"1f649.png",heart:"2764-fe0f.png",heart_decoration:"1f49f.png",heart_eyes:"1f60d.png",heart_eyes_cat:"1f63b.png",heartbeat:"1f493.png",heartpulse:"1f497.png",heavy_heart_exclamation_mark_ornament:"2763-fe0f.png",hole:"1f573-fe0f.png",hot_face:"1f975.png",hugging_face:"1f917.png",hushed:"1f62f.png",imp:"1f47f.png",innocent:"1f607.png",japanese_goblin:"1f47a.png",japanese_ogre:"1f479.png",joy:"1f602.png",joy_cat:"1f639.png",kiss:"1f48b.png",kissing:"1f617.png",kissing_cat:"1f63d.png",kissing_closed_eyes:"1f61a.png",kissing_heart:"1f618.png",kissing_smiling_eyes:"1f619.png",laughing:"1f606.png",left_speech_bubble:"1f5e8-fe0f.png",love_letter:"1f48c.png",lying_face:"1f925.png",mask:"1f637.png",money_mouth_face:"1f911.png",nauseated_face:"1f922.png",nerd_face:"1f913.png",neutral_face:"1f610.png",no_mouth:"1f636.png",open_mouth:"1f62e.png",orange_heart:"1f9e1.png",partying_face:"1f973.png",pensive:"1f614.png",persevere:"1f623.png",pleading_face:"1f97a.png",pouting_cat:"1f63e.png",purple_heart:"1f49c.png",rage:"1f621.png",relaxed:"263a-fe0f.png",relieved:"1f60c.png",revolving_hearts:"1f49e.png",right_anger_bubble:"1f5ef-fe0f.png",robot_face:"1f916.png",rolling_on_the_floor_laughing:"1f923.png",scream:"1f631.png",scream_cat:"1f640.png",see_no_evil:"1f648.png",shushing_face:"1f92b.png",skull:"1f480.png",skull_and_crossbones:"2620-fe0f.png",sleeping:"1f634.png",sleepy:"1f62a.png",slightly_frowning_face:"1f641.png",slightly_smiling_face:"1f642.png",smile:"1f604.png",smile_cat:"1f638.png",smiley:"1f603.png",smiley_cat:"1f63a.png",smiling_face_with_3_hearts:"1f970.png",smiling_imp:"1f608.png",smirk:"1f60f.png",smirk_cat:"1f63c.png",sneezing_face:"1f927.png",sob:"1f62d.png",space_invader:"1f47e.png",sparkling_heart:"1f496.png",speak_no_evil:"1f64a.png",speech_balloon:"1f4ac.png","star-struck":"1f929.png",stuck_out_tongue:"1f61b.png",stuck_out_tongue_closed_eyes:"1f61d.png",stuck_out_tongue_winking_eye:"1f61c.png",sunglasses:"1f60e.png",sweat:"1f613.png",sweat_drops:"1f4a6.png",sweat_smile:"1f605.png",thinking_face:"1f914.png",thought_balloon:"1f4ad.png",tired_face:"1f62b.png",triumph:"1f624.png",two_hearts:"1f495.png",unamused:"1f612.png",upside_down_face:"1f643.png",weary:"1f629.png",white_frowning_face:"2639-fe0f.png",white_heart:"1f90d.png",wink:"1f609.png",woozy_face:"1f974.png",worried:"1f61f.png",yawning_face:"1f971.png",yellow_heart:"1f49b.png",yum:"1f60b.png",zany_face:"1f92a.png",zipper_mouth_face:"1f910.png",zzz:"1f4a4.png"},enableQQ:!1,highlight:!0,lang:"zh-CN",pageSize:10,placeholder:"你的评论 ...",recordIP:!0,serverURLs:"https://leancloud.hugoloveit.com",visitor:!0}},math:{delimiters:[{display:!0,left:"$$",right:"$$"},{display:!0,left:"\\[",right:"\\]"},{display:!0,left:"\\begin{equation}",right:"\\end{equation}"},{display:!0,left:"\\begin{equation*}",right:"\\end{equation*}"},{display:!0,left:"\\begin{align}",right:"\\end{align}"},{display:!0,left:"\\begin{align*}",right:"\\end{align*}"},{display:!0,left:"\\begin{alignat}",right:"\\end{alignat}"},{display:!0,left:"\\begin{alignat*}",right:"\\end{alignat*}"},{display:!0,left:"\\begin{gather}",right:"\\end{gather}"},{display:!0,left:"\\begin{CD}",right:"\\end{CD}"},{display:!1,left:"$",right:"$"},{display:!1,left:"\\(",right:"\\)"}],strict:!1},search:{algoliaAppID:"PASDMWALPK",algoliaIndex:"index.zh-cn",algoliaSearchKey:"b42948e51daaa93df92381c8e2ac0f93",highlightTag:"em",maxResultLength:10,noResultsFound:"没有找到结果",snippetLength:50,type:"algolia"}}</script><script type=text/javascript src=/js/theme.min.js></script></body></html>

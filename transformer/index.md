@@ -7,14 +7,13 @@
 ### 主要内容 {#主要内容}
 
 -   主要内容
-    -   从高阶语义向量的组合表达来看attention
-
-        \\(\mathcal{A}(X\_i) =  \dfrac{\sum\_{j=1}^{N} sim(Q\_i,K\_j) V\_j}{\sum\_{j=1}^N sim(Q\_i,K\_j)}\\)
-    -   提供transformer 的代码讲解
+    -   attention设计原理解读
+    -   tranformer中的矩阵/行向量乘法
+    -   transformer的pytorch代码实现
+    -   计算量\\(O(N^2)\\) 源于softmax的存在
     -   从kernel的角度来看attention
-
-        计算量\\(O(N^2)\\) 源于softmax的存在
-    -   linear attention
+        -   \\(\mathcal{A}(X\_i) =  \dfrac{\sum\_{j=1}^{N} sim(Q\_i,K\_j) V\_j}{\sum\_{j=1}^N sim(Q\_i,K\_j)}\\)
+        -   linear attention
 -   参考
     -   2017. Attention Is All You Need
         (<a href="#citeproc_bib_item_2">Vaswani et al. 2023</a>)
@@ -23,12 +22,12 @@
     -   [mingpt by karpathy](https://github.com/karpathy/minGPT/tree/master/mingpt)
 
 
-### 矩阵知识 {#矩阵知识}
+### 回顾线性代数的知识 {#回顾线性代数的知识}
 
 
 #### why {#why}
 
--   原文直接用矩阵来表达
+-   原文比较晦涩
     \\[\begin{aligned}\mathrm{Attention}(Q,K,V)=\mathrm{softmax}(\dfrac{QK^T}{\sqrt{d\_k}})V \\\ \mathrm{MultiHead}(Q,K,V)=\mathrm{Concat}(\mathrm{head}\_1,\ldots,\mathrm{head}\_h)W^{O} \\\\
        \mathrm{head}\_i=\mathrm{Attention}(QW\_i^Q, KW^{K}\_i,VW^V\_i)
        \end{aligned}\\]
@@ -54,7 +53,7 @@
        \vdots\\\\
        X\_N
        \end{pmatrix}\\)
--   nn.Embedding 按照行向量来组织数据
+-   比如nn.Embedding 按照行向量来组织数据
 
 <!--listend-->
 
@@ -63,7 +62,7 @@ import torch
 import torch.nn as nn
 N = 3
 F = 8
-embed = nn.Embedding(30, F)
+embed = nn.Embedding(N, F)
 idx = torch.tensor([1,2,3])
 X = embed(idx)
 print(X.shape)
@@ -135,9 +134,10 @@ print(linear(X).shape)
 -   pytorch/tensorflow中的代码都是按照作用于行向量来组织的
 
 
-#### transformer中的\\(QK^{T}V\\) {#transformer中的-qk-t-v}
+#### 从分块矩阵的乘法来看\\(QK^{T}V\\) {#从分块矩阵的乘法来看-qk-t-v}
 
 -   \\(S=QK^T\\) 行向量两两计算点积相似性
+
     \\(\begin{pmatrix}
        Q\_{1}\\\\
        Q\_{2}\\\\
@@ -148,6 +148,7 @@ print(linear(X).shape)
        K\_{1}^T, K\_2^T,\ldots,K\_N^T\\\\
        \end{pmatrix}=(Q\_{i}K\_j^T)\_{ij}=S\\)
 -   \\(SV\\) = 对行向量做加权求和
+
     \\(\begin{pmatrix}
        S\_{11},S\_{12},\ldots, S\_{1N}\\\\
        S\_{21},S\_{22},\ldots, S\_{2N}\\\\
@@ -155,17 +156,20 @@ print(linear(X).shape)
        S\_{N1},S\_{N2},\ldots, S\_{NN}\\\\
        \end{pmatrix}
        \begin{pmatrix}
-       Q\_{1}\\\\
-       Q\_{2}\\\\
+       V\_{1}\\\\
+       V\_{2}\\\\
        \vdots\\\\
-       Q\_N
+       V\_N
        \end{pmatrix}=
        \begin{pmatrix}
-       S\_{1j}Q\_j\\\\
-       S\_{2j}Q\_j\\\\
+       \sum\limits\_{j}S\_{1j}V\_j\\\\
+       \sum\limits\_{j}S\_{2j}V\_j\\\\
        \vdots\\\\
-       S\_{Nj}Q\_j
+       \sum\limits\_{j}S\_{Nj}V\_j
        \end{pmatrix}\\)
+
+-   基于Q,K计算相似性，然后基于V来加权求和
+-   \\(QK^{T}V\\) 的每个行向量都是\\(V\\) 行向量的一个加权求和
 
 
 #### 注 {#注}
@@ -187,7 +191,7 @@ print(linear(X).shape)
     -   一般组织为多层的网络的形式
         -   第一层：基础语义向量序列
             \\((x\_{1}, x\_2,\ldots, x\_N)\rightarrow (X\_{1}, X\_2,\ldots, X\_N)\\)
-        -   其它层：高阶语义向量序列
+        -   其它层：从低阶语义向量转化为高阶语义向量序列
             \\((X\_{1}, X\_2,\ldots, X\_N)\rightarrow (Y\_{1}, Y\_2,\ldots, Y\_N)\\)
 -   decoder
     基于\\((Y\_{1}, Y\_2, \ldots, Y\_N)\\) 自回归式的逐个token解码
@@ -197,7 +201,7 @@ focus到 encoder部分来理解transformer
 
 ### 低阶到高阶语义向量的转换 {#低阶到高阶语义向量的转换}
 
-寻找算子 \\(\mathcal{T}\\) 将低阶的语义向量序列变换为高阶的语义向量序列
+encoder的主要工作是寻找算子\\(\mathcal{T}\\) 将低阶的语义向量序列变换为高阶的语义向量序列
   \\(\mathcal{T}\begin{pmatrix}
    X\_1\\\\
    X\_2\\\\
@@ -238,7 +242,7 @@ focus到 encoder部分来理解transformer
 如何设计 \\(Y\_{i}=f(X\_{1}, X\_2, \ldots, X\_{N})\\)
 
 -   \\(Y\_{1}, \ldots, Y\_N\\) 能否并行得到
--   \\(Y\_{i}\\) 能否高效的建立起远程的依赖
+-   \\(Y\_{i}\\) 能否高效的建立起对周围token的远程依赖
 
 
 #### RNN {#rnn}
@@ -249,7 +253,7 @@ focus到 encoder部分来理解transformer
 -   \\(Y\_{i}=tanh(X\_{i}W + Y\_{i-1}U)\\)
 -   串行
 -   单方向的依赖关系
-    \\(Y\_{3}\\) 直接依赖于\\(Y\_{2}, X\_{2}\\), 间接依赖于\\(X\_1\\)
+    \\(Y\_{3}\\) 直接依赖于\\(Y\_{2}, X\_{3}\\), 间接依赖于\\(X\_1\\)
 
 
 #### CNN {#cnn}
@@ -290,12 +294,6 @@ focus到 encoder部分来理解transformer
 \\[\begin{aligned}\mathcal{A}(X\_i) &=  \frac{\sum\_{j=1}^{N} sim(X\_i,X\_j) X\_j}{\sum\_{j=1}^N sim(X\_i,X\_j)} \end{aligned}\\]
 
 
-#### 如何来定义相似性 {#如何来定义相似性}
-
--   \\(sim(X\_{i}, X\_j)= \mathrm{exp}(\dfrac{X\_i X\_{j}^T}{\sqrt{D}})\\)
--   \\(sim(X\_{i}, X\_j)= X\_i X\_{j}^T\\)
-
-
 #### 直接计算相似性？ {#直接计算相似性}
 
 -   参数太少
@@ -333,7 +331,7 @@ focus到 encoder部分来理解transformer
            sim(Q\_i,K\_N)V\_N
            \end{pmatrix}\Rightarrow\sum\_{j=1}^N sim(Q\_i,K\_j)V\_j\\)
     3.  \\(\begin{aligned}\mathcal{A}(X\_i) &=  \frac{\sum\_{j=1}^{N} sim(Q\_i,K\_j) V\_j}{\sum\_{j=1}^N sim(Q\_i,K\_j)} \end{aligned}\\)
--   参数： 对应于\\(Q,K,V\\) 产生了三个投影矩阵矩阵 \\(W\_{Q}, W\_K,W\_V\\)
+-   参数： 对应于\\(Q,K,V\\) 产生了三个投影矩阵 \\(W\_{Q}, W\_K,W\_V\\)
 
 
 ### 在一个低维空间做attention {#在一个低维空间做attention}
@@ -399,7 +397,7 @@ class SingleHeadAttention(nn.Module):
 
   def __init__(self, config):
       super().__init__()
-      self.F = config["fea_size"] #F
+      self.F = config["hidden_dim"] #F
       self.D = config["subspace_dim"] #D
       self.q_proj = nn.Linear(self.F, self.D)
       self.k_proj = nn.Linear(self.F, self.D)
@@ -460,26 +458,30 @@ class SelfAttention(nn.Module):
   def __init__(self, config):
       super().__init__()
       self.H = config["n_head"]
-      self.F = config["fea_size"] #F
-      self.D = self.fea_size // self.n_head #D
+      self.F = config["hidden_dim"] #F
+      self.D = self.F // self.H #D
       # 一次把qkv 全部映射完成，对应W_Q, W_K, W_V
-      self.qkv_proj = nn.Linear(self.fea_size, 3 * self.fea_size)
+      self.qkv_proj = nn.Linear(self.F, 3 * self.F)
       # 最后的投影，对应于 $W_O$
-      self.out_proj = nn.Linear(self.fea_size, self.fea_size)
+      self.out_proj = nn.Linear(self.F, self.F)
 
   def forward(self, x):
-      B, N, fea_size = x.size()
-      q, k, v = self.qkv_proj(x).split(3, dim=2)
+      B, N, F = x.size()
+      q, k, v = self.qkv_proj(x).split(self.F, dim=-1)
       # matmul 只能在最后两个维度相乘，需要对NxD的矩阵相乘，做1,2维度的交换
       k = k.view(B, N, self.H, self.D).transpose(1, 2)
       q = q.view(B, N, self.H, self.D).transpose(1, 2)
       v = v.view(B, N, self.H, self.D).transpose(1, 2)
-      # 一次把多个头的映射全部完成
+      # (B,H,N,D)
+      # 一次把多个头的映射全部完成, 对任意的(batch, head)
       att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
       att = F.softmax(att, dim=-1)
       y = att @ v
-      # 多头拼接
-      y = y.transpose(1, 2).contiguous().view(B, N, F)
+      # (B,H,N,D)
+      y = y.transpose(1, 2)
+      # (B,N,H,D)
+      # 最后两个维度合并
+      y = y.contiguous().view(B, N, F)
       y = self.out_proj(y)
       return y
 ```
@@ -493,7 +495,7 @@ class SelfAttention(nn.Module):
 ### 位置无关的全连接 {#位置无关的全连接}
 
 -   两层的全连接
-    \\(\mathcal{F}(X\_i)=(g(X\_iW\_1)+b\_1)W\_2+b\_2)\\)
+    \\(\mathcal{F}(X\_i)=(g(X\_iW\_1)+b\_1)W\_2+b\_2\\)
 
 
 #### 代码 {#代码}
@@ -504,9 +506,9 @@ import torch.nn as nn
 class PWiseFeedForward(nn.Module):
     def __init__(self, config):
         super().__init__()
-        self.fea_size = config["fea_size"]
-        self.proj_wide = nn.Linear(self.fea_size, 4 * self.fea_size)
-        self.proj_narrow = nn.Linear(4 * self.fea_size, self.fea_size)
+        self.F = config["F"]
+        self.proj_wide = nn.Linear(self.F, 4 * self.F)
+        self.proj_narrow = nn.Linear(4 * self.F, self.F)
         self.act = nn.ReLU()
     def forward(self, x):
         return self.proj_narrow(self.act(self.proj_wide(x)))
@@ -525,25 +527,6 @@ class PWiseFeedForward(nn.Module):
 可以看成是作用在行向量上的算子
 
 
-#### 输入矩阵例子 {#输入矩阵例子}
-
-\\(\begin{pmatrix}
-  \text{hello} \\\\
-  \text{world} \\\\
-  \text{pad} \\\\
-  \text{pad} \\\\
-  \text{pad}
-  \end{pmatrix}
-  \rightarrow X=
-  \begin{pmatrix}
-  [0.59, 0.20, 0.04, 0.96] \\\\
-  [0.96, 0.30, 0.16, 0.63] \\\\
-  [0.02, 0.19, 0.34, 0.25] \\\\
-  [0.02, 0.19, 0.34, 0.25] \\\\
-  [0.02, 0.19, 0.34, 0.25]
-  \end{pmatrix}\\)
-
-
 #### 行归一化 or 列归一化 {#行归一化-or-列归一化}
 
 -   在NLP的序列建模里面，Layer Normalization
@@ -555,6 +538,26 @@ class PWiseFeedForward(nn.Module):
 -   padding的影响
     不同batch中&lt;pad&gt;个数不同，沿着token方向做归一化没有意义
 -   每个位置做独立的归一化更有意义
+
+<!--list-separator-->
+
+-  输入矩阵例子
+
+    \\(\begin{pmatrix}
+      \text{hello} \\\\
+      \text{world} \\\\
+      \text{pad} \\\\
+      \text{pad} \\\\
+      \text{pad}
+      \end{pmatrix}
+      \rightarrow X=
+      \begin{pmatrix}
+      [0.59, 0.20, 0.04, 0.96] \\\\
+      [0.96, 0.30, 0.16, 0.63] \\\\
+      [0.02, 0.19, 0.34, 0.25] \\\\
+      [0.02, 0.19, 0.34, 0.25] \\\\
+      [0.02, 0.19, 0.34, 0.25]
+      \end{pmatrix}\\)
 
 
 #### 其他的可能选择 {#其他的可能选择}
@@ -597,9 +600,9 @@ class Block(nn.Module):
 
     def __init__(self, config):
         super().__init__()
-        self.layer_norm_1 = nn.LayerNorm(config.fea_size)
+        self.layer_norm_1 = nn.LayerNorm(config["hiden_dim"])
         self.attn = SelfAttention(config)
-        self.layer_norm_2 = nn.LayerNorm(config.fea_size)
+        self.layer_norm_2 = nn.LayerNorm(config["hidden_dim"])
         self.mlp = PWiseFeedForward(config)
 
     def forward(self, x):
@@ -614,11 +617,13 @@ class Block(nn.Module):
 
 ### 关于参数量 {#关于参数量}
 
--   我们需要一种模型能够方便的去增加模型的复杂度
-    -   比如增加深度，增加宽度
-    -   增加token的embedding size
+-   一般的模型增加复杂度的方式
+    -   增加深度，增加宽度
+    -   增加embedding的维度
     -   增加词典的大小
--   transformer模型可以在此之外非常有效的提升模型的参数量
+-   各种dnn主要的参数位置
+    -   cnn: \\(Y\_{i}=(X\_{i-1},X\_i, X\_{i+1}) W\\)
+    -   rnn: \\(Y\_{i}=tanh(X\_{i}W + Y\_{i-1}U)\\)
 
 
 ### 参数的分布 {#参数的分布}
@@ -629,7 +634,7 @@ class Block(nn.Module):
 -   每个头有
     -   3个投影矩阵 \\(W\_Q, W\_K, W\_V\\)
     -   1个投影concat结果的矩阵 \\(W\_O\\)
--   参数量: 假设投射到的子空间维度是\\(D\\), $H$个子空间，\\(D\times H = F\\)
+-   参数量: 假设投射到的子空间维度是\\(D\\), \\(H\\) 个子空间，\\(D\times H = F\\)
     -   \\(F\times D \times 3 \times H = 3F^{2}\\)
     -   \\(F^{2}\\)
 
@@ -668,7 +673,7 @@ class Block(nn.Module):
 
 #### softmax 导致了\\(O(N^2)\\) {#softmax-导致了-o--n-2}
 
-核心的计算量在这三个矩阵的相乘上，\\(QK^{T}V\\)
+核心的计算量在这三个矩阵的相乘上，\\(QK^{T}V\\), 乘法的计算量密切依赖于矩阵组合的方式
 
 -   有softmax的存在的话
     只能先计算\\(H=QK^{T}\\), 对\\(H\\) 做softmax 变换后，再计算\\(HV\\)
@@ -681,7 +686,8 @@ class Block(nn.Module):
 
 -   如果没有softmax的话
     可以先计算后两个矩阵相乘\\(H=K^TV\\), 再计算\\(QH\\)
-    计算量可以是\\(O(N)\\), 因为\\(K^TV\\) 可以提前算出来缓存，大致如下面这个表达所示
+    乘法的计算量是 \\(NDM+DMN=2NDM\\)，当\\(N\gg D\\) 的时候,
+    计算量可以是\\(O(N)\\), \\(K^TV\\) 提前算出来缓存，大致如下面这个表达所示
     \\(Q(K^TV)=\begin{pmatrix}
        Q\_1 \\\\
        Q\_2 \\\\
@@ -710,49 +716,40 @@ class Block(nn.Module):
        \end{aligned}
        \\]
     -   \\(\sum\_{j=1}^{N}\phi(K\_j)^T V, \sum\_{j=1}^N \phi(K\_j)^T\\) 可以提前算好
-    -   去掉归一化来看 \\[(\phi(Q)\phi(K)^{T})V=\phi(Q)(\phi(K)^{T}V)\\]
-
-        \\[\begin{aligned}     \begin{pmatrix}
-             \phi(Q\_1)\sum\_{j=1}^{N} \phi(K\_j)^{T} V\_j \\\\
-             \vdots \\\\
-             \phi(Q\_N)\sum\_{j=1}^{N} \phi(K\_j)^T V\_j \\\\
-             \end{pmatrix}& =\begin{pmatrix}
-                \phi(Q\_1)\phi(K)^{T}V\\\\
-                 \vdots \\\\
-                  \phi(Q\_N)\phi(K)^{T}V \\\\
-                  \end{pmatrix} \\\\
-                  &=
-                  \begin{pmatrix}
-                  \phi(Q\_{1})\\\\
-                  \vdots\\\\
-                  \phi(Q\_N)
-                  \end{pmatrix}\phi(K)^TV \\\\
-                  &=\phi(Q)\phi(K)^TV
-                  \end{aligned}\\]
-
     -   \\(O(N)\\) 复杂度，Linear Transformer
     -   \\(\phi(x)=\mathrm{elu}(x)+1\\)
 
 
-### 优缺点 {#优缺点}
+### 总结 {#总结}
 
-
-#### 优点 {#优点}
-
--   并行
--   长距离依赖
--   可解释性
-
-
-#### 缺点 {#缺点}
-
--   本身对顺序无感，操作是在集合层次上的，需要额外加入位置编码
-
-    下面的cls token得到的语义向量是完全一样的。
-
-    -   &lt;cls&gt; 从 北京 到 上海 的 火车票
-    -   &lt;cls&gt; 从 上海 到 北京 的 火车票
--   计算的复杂度是序列长度平方
+-   attention的设计原理解读
+    -   从低阶语义向量到高阶语义向量的转化
+        \\(\mathcal{T}\begin{pmatrix}
+             X\_1\\\\
+             X\_2\\\\
+             \vdots\\\\
+             X\_N
+             \end{pmatrix}
+             \rightarrow\begin{pmatrix}
+             Y\_1\\\\
+             Y\_2\\\\
+             \vdots\\\\
+             Y\_N
+             \end{pmatrix}\\)
+    -   \\(\begin{aligned}\mathcal{A}(X\_i) &=  \frac{\sum\_{j=1}^{N} sim(X\_i,X\_j) X\_j}{\sum\_{j=1}^N sim(X\_i,X\_j)} \end{aligned}\\)
+    -   \\(\mathcal{A}(X\_i)=\dfrac{\sum\_{j=1}^{N} sim(X\_iW\_Q,X\_jW\_{K}) X\_jW\_{V}}{\sum\_{j=1}^N sim(X\_iW\_Q,X\_jW\_K)}\\)
+    -   \\(\begin{aligned}\mathcal{A}(X\_i) &=  \frac{\sum\_{j=1}^{N} sim(Q\_i,K\_j) V\_j}{\sum\_{j=1}^N sim(Q\_i,K\_j)} \end{aligned}\\)
+-   transformer的核心两次变换
+    -   \\(Y=\mathcal{F}\circ \mathcal{A}(X)\\) 做两次矩阵的变换
+-   核心的计算量在这三个矩阵的相乘上，\\(QK^{T}V\\)
+    -   \\((QK^T)V\\) 计算量 \\(O(N^2)\\)
+    -   \\(Q(K^TV)\\) 计算量 \\(O(N)\\)
+-   linear transformer
+    \\[\begin{aligned}\mathcal{A}(X\_i) &=  \frac{\sum\_{j=1}^{N} sim(Q\_i,K\_j) V\_j}{\sum\_{j=1}^N sim(Q\_i,K\_j)} \\\\
+       &=\frac{\sum\_{j=1}^{N} \phi(Q\_i)\phi(K\_j)^T V\_j}{\sum\_{j=1}^N \phi(Q\_i)\phi(K\_j)^T} \\\\
+       &=\frac{ \phi(Q\_i) \sum\_{j=1}^{N}\phi(K\_j)^T V\_j}{\phi(Q\_i)\sum\_{j=1}^N \phi(K\_j)^T}
+       \end{aligned}
+       \\]
 
 
 ## 参考论文 {#参考论文}
