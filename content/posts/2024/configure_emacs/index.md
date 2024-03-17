@@ -2,7 +2,7 @@
 title: "Emacs配置文件"
 description: "Whole hugo blog in plain text!"
 date: 2024-03-17
-lastmod: 2024-03-17T21:55:01+08:00
+lastmod: 2024-03-17T21:56:49+08:00
 tags: ["emacs"]
 draft: false
 weight: 1003
