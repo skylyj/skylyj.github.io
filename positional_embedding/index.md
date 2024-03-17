@@ -413,7 +413,7 @@ R(i\Theta)R(j\Theta)^{T} &= \widehat{R}(i\theta\_1)\widehat{R}(i\theta\_2)\ldots
 
 -   有\\(d\\) 个正交的二维子空间 \\(\mathcal{X}\_1, \mathcal{X}\_2, \dots, \mathcal{X}\_{d}\\)
 -   每个子空间\\(\mathcal{X}\_{k}\\) 有一个基础角度 \\(\theta\_{k}\\)，
-    -   两个基底 \\(sin\theta\_{k}, cos\theta\_{k}\\) ，记作\\(\text{Tri}(\theta\_k)=(sin(\theta\_k),   cos(\theta\_k))\\)
+    -   两个基底, 记作\\(\text{Tri}(\theta\_k)=(sin(\theta\_k),   cos(\theta\_k))\\)
     -   合并后的基准角度序列和基底序列是 \\(\Theta, \text{Tri} (\Theta)\\)
     -   由 \\(\theta\_{k}\\) 来决定各个子空间的不同
     -   子空间内部由sin,cos 来区分
