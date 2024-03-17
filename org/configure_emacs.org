@@ -1,17 +1,4 @@
 #+TITLE: Emacs配置文件
-* init
-#+begin_src emacs-lisp :tangle ~/.emacs.d/init.el  :comments link
-  (load "~/Github/PrivateHub/linux_confs/emacs_personal/basic_conf.el")
-  (load "~/Github/PrivateHub/linux_confs/emacs_personal/edit_conf.el")
-  (load "~/Github/PrivateHub/linux_confs/emacs_personal/appearance_conf.el")
-  (load "~/Github/PrivateHub/linux_confs/emacs_personal/program_conf.el")
-  (load "~/Github/PrivateHub/linux_confs/emacs_personal/org_conf.el")
-  (load "~/Github/PrivateHub/linux_confs/emacs_personal/keybindings.el")
-  (load "~/Github/PrivateHub/linux_confs/emacs_personal/ifuns.el")
-  (load "~/Github/PrivateHub/linux_confs/emacs_personal/secret_conf.el")
-  (load "~/Github/PrivateHub/linux_confs/emacs_personal/final_conf.el")
-  (put 'dired-find-alternate-file 'disabled nil)
-#+end_src
 * 基础配置
 ** straight
 #+begin_src emacs-lisp :tangle ~/Github/PrivateHub/linux_confs/emacs_personal/basic_conf.el  :comments link
