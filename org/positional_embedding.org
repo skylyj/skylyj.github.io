@@ -2,18 +2,14 @@
 * 背景
 ** 主要内容
 - 旋转位置编码在大模型中应用广泛
-  + google PaLM
   + meta llama
+  + xAI Grok
+  + google PaLM
 - 内容
   + 旋转位置编码的来龙去脉
     + 基于实数域上的旋转变换来推演
-  + pytorch 代码实现 tricks
-  + 重新看解绝对位置编码
-       
-     $\begin{aligned}
-     P_{i,2t} &= sin(i/10000^{2t/D}) \\
-     P_{i,2t+1} &= cos(i/10000^{2t/D})
-     \end{aligned}$
+    + 代码实现
+  + 理解 sinusoidal positional encoding
 - 参考：
   + 2021. Enhanced Transformer with Rotary Position Embedding
      [[cite:&suRoFormerEnhancedTransformer2022]]
@@ -216,15 +212,17 @@ $R(\Theta)=\begin{pmatrix}
 
 假设$Q_{i}, K_j$ 都是二维的向量，$i, j$ 是它们对应的position，
 这里$\eta_{i},\eta_{j}$ 是$Q_i, K_j$ 弧度表示.
-- 点积只和模长和夹角有关
+- 基于:
+  + 点积只和模长和夹角有关
   + $Q_iK_j^T=\|Q_i\|\|K_j\| cos(\eta_{j}-\eta_i)$,
-  + 如何在这里融入位置的信息？基于位置乘倍数旋转之后做点击
-- 做法：
-  + 我们把两个向量各自旋转$i\theta,j\theta$ 后再来计算点积
-  + 其中$\theta$ 是一个单位角度，
-  + 新的向量的内积带上了位置信息，且他们的内积只和$Q_i,Q_j,i-j$ 相关
-- 因为: 模长没有变，只是夹角变了，夹角增加了 $(j-i)\theta$.
-  + $Q_iR(i\theta)(K_jR(j\theta))^T=\|Q_i\|\|K_j\| cos(\eta_{j}-\eta_{i}+(j-i)\theta)$
+  + 如何在这里融入位置的信息？
+- 思路:
+  + 把两个向量各自按照$i,j$角度来旋转后再来计算点积
+  + $Q_iR(i)(K_jR(j))^T$
+  + 新的向量的内积带上了位置信息
+- 观察新的内积:
+  + 模长没有变，夹角增加了 $(j-i)$.
+  + $Q_iR(i)(K_jR(j))^T=\|Q_i\|\|K_j\| cos(\eta_{j}-\eta_{i}+(j-i))$
 ** 二维空间中的一个解
 *** 基于旋转矩阵的一个解
 \begin{equation*}
@@ -237,7 +235,7 @@ Q_{i}K_j^T &=X_{i}W_QR(i\theta)R(j\theta)^{T}W_K^{T}X_{j}^T\\
 & =g(X_i,X_j,i-j)\\
      \end{split}
      \end{equation*}
-*** 为什么是在投影之后旋转，不在投影之前转？
+*** 为什么不在投影之前做旋转？
 \begin{equation*}
 \begin{split}
 Q_{i}&= X_{i} R(i\theta) W_{Q} \\
@@ -247,20 +245,29 @@ Q_{i}K_j^T &=X_{i}R(i\theta)W_QW_KR(j\theta)^{T}X_{j}^T\\
      \end{split}
      \end{equation*}
 ** 推广到高维空间
-整个空间分割成$D/2$ 个子空间，在各个子空间上分别按照一个位置相关的角度旋转
+假设空间是偶数维的, 把整个空间分割成$d=D/2$ 个子空间，在各个子空间上分别按照独立的角度来旋转
 *** 定义 $R(i\Theta)$
-- $X_{i}R(i\Theta)$
-   表示对$X_{i}$ 在各个子空间分别做角度为$i\theta_1,i\theta_2,\ldots,i\theta_{D/2}$ 的旋转.
-   $\Theta=(\theta_{1},\theta_2,\ldots,\theta_{D/2})$
-   $R(i \Theta)=\begin{pmatrix}
-   cos\,i\theta_{1} & sin\,i\theta_1 & 0 & 0 \\
-   -sin\,i\theta_{1} & cos\,i\theta_1 & 0 & 0 \\
-   0 & 0 & cos\,i\theta_{2} & sin\,i\theta_2 \\
-   0 & 0 & -sin\,i\theta_{2} & cos\,i\theta_2 \\
-   \end{pmatrix}=\begin{pmatrix}
-   R(i\theta_{1}) & 0 \\
-   0 & R(i\theta_2) 
+- 基础旋转角度序列 $\Theta=(\theta_{1},\theta_2,\ldots,\theta_{d})$
+- $i$ 位置的旋转角度序列 $i\Theta=(i\theta_{1},i\theta_2,\ldots,i\theta_{d})$
+- $X_{i}R(i\Theta)$ 表示对$X_{i}$ 在各个子空间分别做角度为$i\theta_1,i\theta_2,\ldots,i\theta_{d}$.
+   
+$R(i\Theta)=\begin{pmatrix}
+   cos\,i\theta_{1} & sin\,i\theta_1 & 0 & 0 & 0 & 0 &0\\
+   -sin\,i\theta_{1} & cos\,i\theta_1 & 0 & 0 & 0 & 0 &0 \\
+   0 & 0 & cos\,i\theta_{2} & sin\,i\theta_2 & 0 & 0 &0 \\
+   0 & 0 & -sin\,i\theta_{2} & cos\,i\theta_2& 0 & 0 &0  \\
+   0 & 0 & 0 & 0 & \ldots &0 & 0 \\
+   0 & 0 & 0 & 0 &\ldots & cos\,i\theta_{D/2} & sin\,i\theta_{D/2}  \\
+   0 & 0 & 0 & 0 &\ldots & -sin\,i\theta_{D/2} & cos\,i\theta_{D/2}
    \end{pmatrix}$
+
+$R(i\Theta)=\begin{pmatrix}
+   R(i\theta_{1}) & 0 &0 & 0\\
+   0 & R(i\theta_2) & 0 &0 \\
+   0 & 0 &\ldots &0  \\
+   0 & 0 & 0 &R(i\theta_{D/2})\\ 
+   \end{pmatrix}$  
+
 *** ROPE在高维空间
 \begin{equation*}
 \begin{split}
@@ -290,6 +297,8 @@ R(i\Theta)R(j\Theta)^{T} &= \widehat{R}(i\theta_1)\widehat{R}(i\theta_2)\ldots\w
   + 合并后的基准角度序列和旋转序列是 $\Theta, R(\Theta)$
   + 每个子空间对应于三角函数中的一个周期 $2\pi/\theta_{k}$
 - 对于每个位置$i$, 角度序列和旋转序列是 $i\Theta, R(i\Theta)$
+*** table
+   
   |             |               |                 |               |          |                 |
   |-------------+---------------+-----------------+---------------+----------+-----------------|
   | $\Theta$    | $\theta_1$    | $\theta_2$      | $\theta_3$    | $\ldots$ | $\theta_{d}$    |
@@ -300,48 +309,58 @@ R(i\Theta)R(j\Theta)^{T} &= \widehat{R}(i\theta_1)\widehat{R}(i\theta_2)\ldots\w
   |-------------+---------------+-----------------+---------------+----------+-----------------|
   
 *** 具体化
-- $\theta_{k}$ 是超参数
-  + $\theta_{k}=10000^{-2(k-1)/D}, k\in[1,2,\ldots,D/2]$，记$B=10000^{1/d}$
-  + $\theta_{k}=1/B^{k-1}$ 是一个几何级数
-  + 周期随着维度$k$ 逐渐增大
+- $\theta_{k}=10000^{-k/d}, k\in[1,2,\ldots,d]$，
+- 记$B=10000^{1/d}$, 那么$\theta_{k}=1/B^{k-1}$ 是一个等比数列
+- $B>1, k\rightarrow \infty, \theta_{k}\rightarrow 0, T\rightarrow\infty$ 
+   
      
-  |----------+--------+---------+-------------+----------+---------------|
-  | $\Theta$ | $1$    | $1/B$   | $1/B^{2}$   | $\ldots$ | $1/B^{d-1}$   |
-  |----------+--------+---------+-------------+----------+---------------|
-  | $T$      | $2\pi$ | $2B\pi$ | $2B^{2}\pi$ | $\ldots$ | $2B^{d-1}\pi$ |
-  |----------+--------+---------+-------------+----------+---------------|
+|----------+--------+---------+-------------+----------+---------------|
+| $\Theta$ | $1$    | $1/B$   | $1/B^{2}$   | $\ldots$ | $1/B^{d-1}$   |
+|----------+--------+---------+-------------+----------+---------------|
+| $T$      | $2\pi$ | $2B\pi$ | $2B^{2}\pi$ | $\ldots$ | $2B^{d-1}\pi$ |
+|----------+--------+---------+-------------+----------+---------------|
 
   
-*** 随着位置的增大，位置编码是否会重复？
-- 如果存在位置$i$和 0 位置的编码撞车了，
-- $\Theta$ 序列在 $2\pi$ 周期整数倍上撞车
-  + $\Theta$ 全部都是 $2\pi$的整数倍
-  + 对dimension的每个$k$, 存在着一个整数 $I_k$, 使得$i\theta_{k}=2\pi I_k$
-  + 不可能，$\theta_k=1/10000^{k/d}$ 和 $2\pi$ 不会扯上关系
-*** RoPE 可能的另外一个优势
+*** 区分度
+随着位置的增大，旋转角度是否会重复？
+- 在任意第$k$ 个子空间, 只要$\theta_{k}$ 公式中不含有$\pi$, 那么旋转角度序列$\{i\theta_{k}\}_{i}$ 都不会出现周期性重复.
+  + proof:
+     假设存在$i,j$ 位置,使得 $j\theta_{k}- i\theta_{k}=2m\pi$,
+     $m$ 是一个整数,那么 $\theta_{k}=\dfrac{2m\pi}{j-i}$
+  + 实际中更不会重复了. 我们的定义是 $\theta_{k} = 1/10000^{k/D}$,
+- 所以在$\theta_{k} = 1/10000^{k/D}$ 之外, 还有很多其他的选择
+- 每个子空间都不会周期性重复, 整体更不会重复
+*** 可能的另外一个优势
 - 在多个block 前向传递的过程中position的信息不会丢失
    + 每个block都会先做QKV的投影，然后QK投影之后会做位置旋转变换
 
-** 再看下绝对位置编码
+** 再看绝对位置编码
+*** 问题的定义
+- 对于无穷个位置需要有个编码策略,用 D维的向量来编码
+- 约束:
+  + 有界性: 希望编码应该是有界的,
+  + 区分度: 同时每个位置的编码应该是不同的
+*** 公式重写
 $\begin{aligned}
-   P_{i,2t} &= sin(i/10000^{2t/D}) &&\\
-   P_{i,2t+1} &= cos(i/10000^{2t/D})&&\\
+   P_{i,2k} &= sin(i/10000^{2(k-1)/D}) &&\\
+   P_{i,2k+1} &= cos(i/10000^{2(k-1)/D})&&\\
    \end{aligned}$
 
-$t\in[0,1,\ldots,D/2-1], i\ge0$
+$k\in[1,\ldots,D/2], i\ge0$
 
-如果记$d=D/2,B=1/10000^{1/d}$，
-那么$\theta_{k}=1/B^{k-1}, k\in[1,2,\ldots,d]$
-*** structure
+如果记$d=D/2,B=10000^{1/d}$，$\theta_{k}=1/B^{k-1}, k\in[1,2,\ldots,d]$,
+第$i$ 个位置的编码表达变成了$d$ 个pair, $(sin(i\theta_k),   cos(i\theta_k))$
+*** 重新理解
 - 有$d$ 个正交的二维子空间 $\mathcal{X}_1, \mathcal{X}_2, \dots, \mathcal{X}_{d}$
 - 每个子空间$\mathcal{X}_{k}$ 有一个基础角度 $\theta_{k}$，
-  + 两个基底, 记作$\text{Tri}(\theta_k)=(sin(\theta_k),   cos(\theta_k))$
-  + 合并后的基准角度序列和基底序列是 $\Theta, \text{Tri} (\Theta)$
+  + 两个基底, 记作$\text{Tri}(\theta_k)=(sin(\theta_k),   cos(\theta_k))$ (有界性)
+  + 基础角度序列和基底序列是 $\Theta, \text{Tri} (\Theta)$
+- 对于每个位置$i$, 基准角度序列和基底序列是 $i\Theta, \text{Tri}(i\Theta)$
+- 位置编码的区分度:
+  + $i\Theta$ 角度序列的独特性
   + 由 $\theta_{k}$ 来决定各个子空间的不同
   + 子空间内部由sin,cos 来区分
-- 对于每个位置$i$, 基准角度序列和基底序列是 $i\Theta, \text{Tri}(i\Theta)$
-   
-
+**** table
   |----------------------+------------------------+--------------------------+------------------------+----------+--------------------------|
   | $\Theta$             | $\theta_1$             | $\theta_{2}$             | $\theta_3$             | $\ldots$ | $\theta_{d}$             |
   |----------------------+------------------------+--------------------------+------------------------+----------+--------------------------|
@@ -350,9 +369,22 @@ $t\in[0,1,\ldots,D/2-1], i\ge0$
   | $i\Theta$            | $i\theta_1$            | $i\theta_{2}$            | $i\theta_3$            | $\ldots$ | $i\theta_{d}$            |
   |----------------------+------------------------+--------------------------+------------------------+----------+--------------------------|
 
-**** 具体化
-- $\theta_{k}=1/B^{k-1}$ 是一个几何级数序列
-- 周期随着维度$k$ 逐渐增大
+**** 区分度:
+随着位置的增大，位置编码会不会重复?
+- 在任意的一个子空间内, 位置编码都是唯一的,不会重复的, why?
+- proof
+  + $(sin x, cos x)$ 组成的向量pair周期是 $4\pi$
+  + 假设在第$k$ 个子空间里面, 存在$i,j$ 位置发生了重复,
+  + 那么存在整数$m$, 使得$j\theta_{k}- i\theta_{k}=4m\pi$,
+  + 那么 $\theta_{k}=\dfrac{2m\pi}{j-i}$
+- 在任意第$k$ 个子空间, 只要$\theta_{k}$ 公式中不含有$\pi$, 那么旋转角度序列$\{i\theta_{k}\}_{i}$ 都不会出现周期性重复.
+**** 如果我们记录 $i=x$
+$\{sin(\theta_k x), cos(\theta_{k} x)\}_{k=1}^{D}$ 很像对位置函数$f(x)$ 的一个fourier展开, $\theta_{k}$ 对应于不同的频率
+*** 具体化
+- $\theta_{k}=10000^{-k/d}, k\in[1,2,\ldots,d]$，
+- 记$B=10000^{1/d}$, 那么$\theta_{k}=1/B^{k-1}$ 是一个等比数列
+- $B>1, k\rightarrow \infty, \theta_{k}\rightarrow 0, T\rightarrow\infty$ 
+
 
 |----------+--------+---------+-------------+----------+-------------|
 | $\Theta$ | $0$    | $1/B$   | $1/B^{2}$   | $\ldots$ | $1/B^{d}$   |
@@ -360,16 +392,12 @@ $t\in[0,1,\ldots,D/2-1], i\ge0$
 | $T$      | $2\pi$ | $2B\pi$ | $2B^{2}\pi$ | $\ldots$ | $2B^{d}\pi$ |
 |----------+--------+---------+-------------+----------+-------------|
 
-
-**** 如果我们记录 $i=x$
-$\{sin(\theta_k x), cos(\theta_{k} x)\}_{k=1}^{D}$ 很像对位置函数$f(x)$ 的一个fourier展开
-*** 同理，随着位置的增大，位置编码不会重复
 * 代码实现
 ** trick1: 避开旋转矩阵的相乘
 *** why？
 我们需要对每个$Q_{i}$ 乘以不同的旋转矩阵，也就是
 
-$QR=\begin{pmatrix}
+$\mathcal{R}(Q)=\begin{pmatrix}
 Q_1 R(1\Theta)\\
 Q_2 R(2\Theta)\\
 \ldots \\
@@ -390,7 +418,7 @@ sin 2\theta\\ \ldots,\\ sin N\theta
 那么
 
 $\begin{aligned}
-QR&=\begin{pmatrix}
+\mathcal{R}(U,V)&=\begin{pmatrix}
 u_1 cos 1\theta-v_1 sin 1\theta, u_1 sin 1\theta + v_1 cos 1\theta\\
 u_2 cos 2\theta-v_2 sin 2\theta, u_2 sin 2\theta + v_2 cos 2\theta\\
 \ldots\\
@@ -401,7 +429,6 @@ u_N cos N\theta-v_N sin N\theta, u_N sin N \theta + v_N cos N\theta\\
 \end{aligned}$
 
 同样的，在高维空间，我们可以把$Q$ 拆分成$D/2$ 个列向量$U_1,V_1,U_2,V_2,\ldots,U_{D/2},V_{D/2}$
-
 ** trick2: 将整个空间分成两部分
 不需要做严格紧密相连的二维子空间序列
 - 第一个部分放的是每个子空间的第一维度，
@@ -421,7 +448,6 @@ after： [(x1,x2,x3), (y1, y2, y3)]
       """根据hidden_dim，和position_ids 生成对应的旋转位置编码, 和论文中定义略有不同，一个个二维的子空间被
       分割到了前后两部分，分别进行旋转，然后拼接起来
       """
-
       def __init__(self, D, position_ids):
           """ position_ids: [seq_len], D 和单个头的hidden_dim对应 """
           base = 10000
