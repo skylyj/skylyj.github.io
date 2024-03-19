@@ -16,6 +16,15 @@
   + 2017. Attention Is All You Need
      [[cite:&vaswaniAttentionAllYou2023]]
   + [[https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/modeling_llama.py][hugging face llama]]
+*** 题外话
+- 线性代数很有用
+- 周鸿祎驳斥“程序员将不再存在”言论
+   #+begin_quote
+最近我唯一后悔的事情是我大学期间没有认真学线性代数，当时没有人告诉我线性代数有什么用，
+我也想不通为什么一个个矩阵乘来乘去有什么用。过来二三十年后我才发现，原来线性代数藏在
+大模型的并行计算里面。所以，AI时代来临意味着更多计算机人才，数学人才的缺口。
+   #+end_quote
+
 ** 回顾transformer
 - encoder: 寻找算子$\mathcal{T}$ 低阶语义向量序列转化为高阶的语义向量序列
    
@@ -88,8 +97,7 @@ $X_i^{'}=X_i+P_i$
    {\sum_{j=1}^N exp(\frac{Q_iK_j^{T}}{\sqrt{D}})}\\
    \end{aligned}$
 - 想法
-  + 可以从相似性入手，i和j之间的语义的相似性应该包含相对的距离信息
-  + 希望相似性计算只依赖向量还有相对距离,而不依赖于其绝对的位置。
+  + 从相似性入手：i和j之间的语义的相似性应该包含相对的距离信息
   + $Q_{i}K_j^T=g(X_{i},X_j,i-j)$
 ** 回顾矩阵的知识
 *** 关于行向量和矩阵
@@ -187,12 +195,16 @@ $R(\Theta)=\begin{pmatrix}
 
 - $R(\Theta)=\widehat{R}(\theta_1)\widehat{R}(\theta_2)\ldots\widehat{R}(\theta_{D/2})$ 逐个在不同的子空间上做旋转
    定义
-   $\widehat{R}(\theta)=
+   $\widehat{R}(\theta_k)=
   \begin{pmatrix}
-  R(\theta) & 0 \\
-  0 & 1 \\
-  \end{pmatrix}$
-   
+  1 & 0 & 0 & 0 &0\\
+  0 & \ddots & 0 &0 & 0\\
+  0 & 0 & R(\theta_{k}) &0 & 0 \\
+  0  & 0 &0 & \ddots & 0\\
+  0 & 0 &0 &0 &1 \\
+  \end{pmatrix}$ 表示只对第k个子空间做旋转，其他子空间不动。
+
+  
    $R(\Theta)=\begin{pmatrix}
   R(\theta_{1}) & 0 \\
   0 & R(\theta_2) 
@@ -206,18 +218,21 @@ $R(\Theta)=\begin{pmatrix}
 
 * 旋转位置编码
 ** motivation
-#+DOWNLOADED: screenshot @ 2024-03-15 23:23:30
-#+ATTR_HTML: :width 400px :align middle
-[[file:images/2024-03-15_23-23-30_screenshot.png]]
-
-假设$Q_{i}, K_j$ 都是二维的向量，$i, j$ 是它们对应的position，
-这里$\eta_{i},\eta_{j}$ 是$Q_i, K_j$ 弧度表示.
+- 希望
+  + $Q_{i}K_j^T=g(X_{i},X_j,i-j)$
+- 假设
+  + $Q_{i}, K_j$ 都是二维的向量，
+  + $i, j$ 是它们对应的position，这里$\eta_{i},\eta_{j}$ 是$Q_i, K_j$ 弧度表示.
 - 基于:
   + 点积只和模长和夹角有关
   + $Q_iK_j^T=\|Q_i\|\|K_j\| cos(\eta_{j}-\eta_i)$,
   + 如何在这里融入位置的信息？
+#+DOWNLOADED: screenshot @ 2024-03-18 19:47:35
+#+ATTR_HTML: :width 400px :align middle
+[[file:images/2024-03-18_19-47-35_screenshot.png]]
+   
 - 思路:
-  + 把两个向量各自按照$i,j$角度来旋转后再来计算点积
+  + 把两个向量各自按照$i,j$ 角度来旋转后再来计算点积
   + $Q_iR(i)(K_jR(j))^T$
   + 新的向量的内积带上了位置信息
 - 观察新的内积:
@@ -257,15 +272,15 @@ $R(i\Theta)=\begin{pmatrix}
    0 & 0 & cos\,i\theta_{2} & sin\,i\theta_2 & 0 & 0 &0 \\
    0 & 0 & -sin\,i\theta_{2} & cos\,i\theta_2& 0 & 0 &0  \\
    0 & 0 & 0 & 0 & \ldots &0 & 0 \\
-   0 & 0 & 0 & 0 &\ldots & cos\,i\theta_{D/2} & sin\,i\theta_{D/2}  \\
-   0 & 0 & 0 & 0 &\ldots & -sin\,i\theta_{D/2} & cos\,i\theta_{D/2}
+   0 & 0 & 0 & 0 &\ldots & cos\,i\theta_{d} & sin\,i\theta_{d}  \\
+   0 & 0 & 0 & 0 &\ldots & -sin\,i\theta_{d} & cos\,i\theta_{d}
    \end{pmatrix}$
 
 $R(i\Theta)=\begin{pmatrix}
    R(i\theta_{1}) & 0 &0 & 0\\
    0 & R(i\theta_2) & 0 &0 \\
    0 & 0 &\ldots &0  \\
-   0 & 0 & 0 &R(i\theta_{D/2})\\ 
+   0 & 0 & 0 &R(i\theta_{d})\\ 
    \end{pmatrix}$  
 
 *** ROPE在高维空间
@@ -283,9 +298,9 @@ Q_{i}K_j^T &=X_{i}W_QR(i\Theta)R(j\Theta)^{T}W_K^{T}X_{j}^{T}\\
 其中
 \begin{equation*}
 \begin{split}
-R(i\Theta)R(j\Theta)^{T} &= \widehat{R}(i\theta_1)\widehat{R}(i\theta_2)\ldots\widehat{R}(i\theta_{D/2})\widehat{R}(j\theta_{D/2})^{T}\ldots \widehat{R}(j\theta_{2})^{T} \widehat{R}(j\theta_{1})^{T} \\
-&= (\widehat{R}(i\theta_1)\widehat{R}(j\theta_1)^T)(\widehat{R}(i\theta_2)\widehat{R}(j\theta_2)^T)\ldots(\widehat{R}(i\theta_{D/2}\widehat{R}(j\theta_{D/2})^T)\\
-&= \widehat{R}((i-j)\theta_1)\widehat{R}((i-j)\theta_2)\ldots \widehat{R}((i-j)\theta_{D/2})\\
+R(i\Theta)R(j\Theta)^{T} &= \widehat{R}(i\theta_1)\widehat{R}(i\theta_2)\ldots\widehat{R}(i\theta_{d})\widehat{R}(j\theta_{d})^{T}\ldots \widehat{R}(j\theta_{2})^{T} \widehat{R}(j\theta_{1})^{T} \\
+&= (\widehat{R}(i\theta_1)\widehat{R}(j\theta_1)^T)(\widehat{R}(i\theta_2)\widehat{R}(j\theta_2)^T)\ldots(\widehat{R}(i\theta_{d})\widehat{R}(j\theta_{d})^T)\\
+&= \widehat{R}((i-j)\theta_1)\widehat{R}((i-j)\theta_2)\ldots \widehat{R}((i-j)\theta_{d})\\
 &= R((i-j)\Theta)\\
 \end{split}
 \end{equation*}
@@ -298,28 +313,26 @@ R(i\Theta)R(j\Theta)^{T} &= \widehat{R}(i\theta_1)\widehat{R}(i\theta_2)\ldots\w
   + 每个子空间对应于三角函数中的一个周期 $2\pi/\theta_{k}$
 - 对于每个位置$i$, 角度序列和旋转序列是 $i\Theta, R(i\Theta)$
 *** table
-   
-  |             |               |                 |               |          |                 |
-  |-------------+---------------+-----------------+---------------+----------+-----------------|
-  | $\Theta$    | $\theta_1$    | $\theta_2$      | $\theta_3$    | $\ldots$ | $\theta_{d}$    |
-  |-------------+---------------+-----------------+---------------+----------+-----------------|
-  | $R(\Theta)$ | $R(\theta_1)$ | $R(\theta_{2})$ | $R(\theta_3)$ | $\ldots$ | $R(\theta_{d})$ |
-  |-------------+---------------+-----------------+---------------+----------+-----------------|
-  | $i\Theta$   | $i\theta_1$   | $i\theta_{2}$   | $i\theta_3$   | $\ldots$ | $i\theta_{d}$   |
-  |-------------+---------------+-----------------+---------------+----------+-----------------|
-  
+     $\begin{tabular}{|c|c|c|c|c|c|}  \hline
+     \Theta & \theta_1 & \theta_{2} & \theta_3 & \ldots & \theta_{d}\\
+     \hline
+     R(\Theta) & R(\theta_1) & R(\theta_{2}) & R(\theta_3) & \ldots & R(\theta_{d})\\
+     \hline
+     i\Theta & i\theta_1 & i\theta_{2} & i\theta_3 & \ldots & i\theta_{d}\\
+     \hline
+     \end{tabular}$
 *** 具体化
 - $\theta_{k}=10000^{-k/d}, k\in[1,2,\ldots,d]$，
 - 记$B=10000^{1/d}$, 那么$\theta_{k}=1/B^{k-1}$ 是一个等比数列
-- $B>1, k\rightarrow \infty, \theta_{k}\rightarrow 0, T\rightarrow\infty$ 
+- $B>1, k\rightarrow \infty, \theta_{k}\rightarrow 0, T\rightarrow\infty$
    
-     
-|----------+--------+---------+-------------+----------+---------------|
-| $\Theta$ | $1$    | $1/B$   | $1/B^{2}$   | $\ldots$ | $1/B^{d-1}$   |
-|----------+--------+---------+-------------+----------+---------------|
-| $T$      | $2\pi$ | $2B\pi$ | $2B^{2}\pi$ | $\ldots$ | $2B^{d-1}\pi$ |
-|----------+--------+---------+-------------+----------+---------------|
-
+$\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+\Theta & 0        & 1/B        & 1/B^{2}  & \ldots & 1/B^{d-1} \\
+\hline
+T & 2\pi        & 2B\pi        & 2B^{2}\pi  & \ldots & 2B^{d-1}\pi \\
+\hline
+\end{tabular}$
 *** 区分度
 随着位置的增大，旋转角度是否会重复？
 - 在任意第$k$ 个子空间, 只要$\theta_{k}$ 公式中不含有$\pi$, 那么旋转角度序列$\{i\theta_{k}\}_{i}$ 都不会出现周期性重复.
@@ -364,13 +377,14 @@ $k\in[1,\ldots,D/2], i\ge0$
   + 由 $\theta_{k}$ 来决定各个子空间的不同
   + 子空间内部由sin,cos 来区分
 **** table
-  |----------------------+------------------------+--------------------------+------------------------+----------+--------------------------|
-  | $\Theta$             | $\theta_1$             | $\theta_{2}$             | $\theta_3$             | $\ldots$ | $\theta_{d}$             |
-  |----------------------+------------------------+--------------------------+------------------------+----------+--------------------------|
-  | $\text{Tri}(\Theta)$ | $\text{Tri}(\theta_1)$ | $\text{Tri}(\theta_{2})$ | $\text{Tri}(\theta_3)$ | $\ldots$ | $\text{Tri}(\theta_{d})$ |
-  |----------------------+------------------------+--------------------------+------------------------+----------+--------------------------|
-  | $i\Theta$            | $i\theta_1$            | $i\theta_{2}$            | $i\theta_3$            | $\ldots$ | $i\theta_{d}$            |
-  |----------------------+------------------------+--------------------------+------------------------+----------+--------------------------|
+     $\begin{tabular}{|c|c|c|c|c|c|}  \hline
+     \Theta & \theta_1 & \theta_{2} & \theta_3 & \ldots & \theta_{d}\\
+     \hline
+     \text{Tri}(\Theta) & \text{Tri}(\theta_1) & \text{Tri}(\theta_{2}) & \text{Tri}(\theta_3) & \ldots & \text{Tri}(\theta_{d})\\
+     \hline
+     i\Theta & i\theta_1 & i\theta_{2} & i\theta_3 & \ldots & i\theta_{d}\\
+     \hline
+     \end{tabular}$
 
 **** 区分度:
 随着位置的增大，位置编码会不会重复?
@@ -387,18 +401,19 @@ $\{sin(\theta_k x), cos(\theta_{k} x)\}_{k=1}^{D}$ 很像对位置函数$f(x)$ �
 - $\theta_{k}=10000^{-k/d}, k\in[1,2,\ldots,d]$，
 - 记$B=10000^{1/d}$, 那么$\theta_{k}=1/B^{k-1}$ 是一个等比数列
 - $B>1, k\rightarrow \infty, \theta_{k}\rightarrow 0, T\rightarrow\infty$ 
-
-
-|----------+--------+---------+-------------+----------+-------------|
-| $\Theta$ | $0$    | $1/B$   | $1/B^{2}$   | $\ldots$ | $1/B^{d}$   |
-|----------+--------+---------+-------------+----------+-------------|
-| $T$      | $2\pi$ | $2B\pi$ | $2B^{2}\pi$ | $\ldots$ | $2B^{d}\pi$ |
-|----------+--------+---------+-------------+----------+-------------|
+   
+$\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+\Theta & 0        & 1/B        & 1/B^{2}  & \ldots & 1/B^{d-1} \\
+\hline
+T & 2\pi        & 2B\pi        & 2B^{2}\pi  & \ldots & 2B^{d-1}\pi \\
+\hline
+\end{tabular}$
 *** 开放性的问题
 - 是否需要在这么多的子空间做sin/cos,如果在一个二维空间里面已经可以做出区分度来了
 - 位置编码本身维度是1
 * 代码实现
-** trick1: 避开旋转矩阵的相乘
+** 避开旋转矩阵的相乘
 *** why？
 我们需要对每个$Q_{i}$ 乘以不同的旋转矩阵，也就是
 
@@ -410,8 +425,8 @@ Q_N R(N\Theta)\\
 \end{pmatrix}$
 
 而每个$R(i\Theta)$ 是一个稀疏矩阵，直接matmul代价太大
-*** how?
-假设是二维空间，把$Q$ 拆分成两个列向量$U,V$, 记录
+*** 在二维空间中求解
+假设是二维空间，$Q=(U,V)$, 记录
 
 $cos=\begin{pmatrix}cos1\theta \\
 cos 2\theta\\ \ldots,\\ cos N\theta
@@ -430,19 +445,57 @@ u_2 cos 2\theta-v_2 sin 2\theta, u_2 sin 2\theta + v_2 cos 2\theta\\
 u_N cos N\theta-v_N sin N\theta, u_N sin N \theta + v_N cos N\theta\\
 \end{pmatrix}\\
 &=(U * cos - V* sin, U*sin+V*cos) \\
-&= (U,V)cos +(-V, U) sin
+&= (U,V)*cos +(-V, U) *sin
 \end{aligned}$
 
 同样的，在高维空间，我们可以把$Q$ 拆分成$D/2$ 个列向量$U_1,V_1,U_2,V_2,\ldots,U_{D/2},V_{D/2}$
-** trick2: 将整个空间分成两部分
-不需要做严格紧密相连的二维子空间序列
-- 第一个部分放的是每个子空间的第一维度，
-- 第二部分放置的是每个子空间的第二维度
-#+begin_example
-(x1,y1) 是一个子空间，(x2, y2)是一个子空间，(x3, y3)是一个子空间
-before： [(x1,y1), (x2,y2), (x3,y3)]
-after： [(x1,x2,x3), (y1, y2, y3)]
-#+end_example
+*** 进一步
+在各个子空间中，如果第$k$ 个子空间$\mathcal{X}_{d}$ 的两个列向量为$(U_{k}, V_{k})$, 我们有对应的旋转结果
+$(U_{1},V_1)*cos +(-V_1, U_{1}) *sin$
+$(U_{2},V_2)*cos +(-V_2, U_{2}) *sin$
+$(U_{d},V_d)*cos +(-V_d, U_{d}) *sin$
+
+我们可以做拼接
+记$\hat{U}=(U_1, U_2, \ldots, U_d)$, $\hat{V}=(V_1, V_2, \ldots, V_d)$
+$(\hat{U},\hat{V})*cos +(-\hat{V}, \hat{U})*sin$
+*** code
+#+begin_src python  :results output
+  import torch
+  import torch.nn as nn
+  import math
+  from torch.nn import functional as F
+  class Rotator:
+      """根据hidden_dim，和position_ids 生成对应的旋转位置编码, 和论文中定义略有不同，一个个二维的子空间被
+      分割到了前后两部分，分别进行旋转，然后拼接起来
+      """
+      def __init__(self, D, position_ids):
+          """ position_ids: [seq_len], D 和单个头的hidden_dim对应 """
+          base = 10000
+          d = D / 2
+          B = base ** (1/d)
+          theta_base = 1.0 / (B ** (torch.arange(0, d)))    # 等比数列， $\Theta$
+          thetas = position_ids.outer(theta_base)  # [seq_len, D/2]
+          full_thetas = torch.cat((thetas, thetas), dim=-1)  # [seq_len, D]
+          self.cos = full_thetas.cos()
+          self.sin = full_thetas.sin()
+
+      def rotate(self, x):
+          """
+          x: [bs, num_attention_heads, seq_len, D]
+          q: [bs, num_attention_heads, seq_len, D]
+          cos: [seq_len, D]
+          [x,y] @ [[cos, sin], [-sin, cos]] = [x*cos-y*sin, ycos+x*sin] =[x,y]*cos+[-y, x]*sin
+          """
+          return x * self.cos + Rotator.reverse_half(x) * self.sin
+
+      @staticmethod
+      def reverse_half(q):
+          """ q: [bs, num_attention_heads, seq_len, D] trick2 """
+          u = q[..., : q.shape[-1] // 2] # 认为是各个二维子空间的第一维的向量集结
+          v = q[..., q.shape[-1] // 2:]# 认为是各个二维子空间的第二维的向量集结
+          return torch.cat((-v, u), dim=-1)
+#+end_src
+#+RESULTS:
 ** code
 #+begin_src python  :results output
   import torch
@@ -458,7 +511,7 @@ after： [(x1,x2,x3), (y1, y2, y3)]
           base = 10000
           d = D / 2
           B = base ** (1/d)
-          theta_base = 1.0 / (B ** (torch.arange(0, d)))    # 几何级数序列
+          theta_base = 1.0 / (B ** (torch.arange(0, d)))    # 等比数列， $\Theta$
           thetas = position_ids.outer(theta_base)  # [seq_len, D/2]
           full_thetas = torch.cat((thetas, thetas), dim=-1)  # [seq_len, D]
           self.cos = full_thetas.cos()
@@ -476,9 +529,9 @@ after： [(x1,x2,x3), (y1, y2, y3)]
       @staticmethod
       def reverse_half(q):
           """ q: [bs, num_attention_heads, seq_len, D] trick2 """
-          x = q[..., : q.shape[-1] // 2]
-          y = q[..., q.shape[-1] // 2:]
-          return torch.cat((-y, x), dim=-1)
+          u = q[..., : q.shape[-1] // 2]
+          v = q[..., q.shape[-1] // 2:]
+          return torch.cat((-v, u), dim=-1)
 
 
   class SelfAttentionWithRoPE(nn.Module):
@@ -526,7 +579,7 @@ after： [(x1,x2,x3), (y1, y2, y3)]
 ** 总结
 - RoPE的motivation：
   + 希望相似性只依赖于向量本身和其相对位置的距离
-  + 通过对$Q_i,K_i$ 施加 $R(i\Theta)$变换做到
+  + 通过对$Q_i,K_i$ 施加 $R(i\Theta)$ 变换做到
    
   \begin{equation*}
   \begin{split}
@@ -540,18 +593,16 @@ after： [(x1,x2,x3), (y1, y2, y3)]
   \end{equation*}
 - RoPE是什么？
    
-   把原空间切分成为一个个正交的二维子空间，在上面做独立的旋转。
-- RoPE 结构
-  + 有$d$ 个正交的二维子空间 $\mathcal{X}_1, \mathcal{X}_2, \dots, \mathcal{X}_{d}$
-  + 每个子空间$\mathcal{X}_{k}$ 对应一个基础角度和基础矩阵 $\theta_{k}, R(\theta_{k})$
-  + 对于每个位置$i$, 对应一个角度序列和矩阵序列 $i\Theta, R(i\Theta)$
+    $\begin{tabular}{|c|c|c|c|c|c|}  \hline
+    \Theta & \theta_1 & \theta_{2} & \theta_3 & \ldots & \theta_{d}\\
+    \hline
+    R(\Theta) & R(\theta_1) & R(\theta_{2}) & R(\theta_3) & \ldots & R(\theta_{d})\\
+    \hline
+    i\Theta & i\theta_1 & i\theta_{2} & i\theta_3 & \ldots & i\theta_{d}\\
+    \hline
+    \end{tabular}$
 
-       |-------------+---------------+-----------------+---------------+----------+-----------------|
-       | $\Theta$    | $\theta_1$    | $\theta_2$      | $\theta_3$    | $\ldots$ | $\theta_{d}$    |
-       |-------------+---------------+-----------------+---------------+----------+-----------------|
-       | $R(\Theta)$ | $R(\theta_1)$ | $R(\theta_{2})$ | $R(\theta_3)$ | $\ldots$ | $R(\theta_{d})$ |
-       |-------------+---------------+-----------------+---------------+----------+-----------------|
-       | $i\Theta$   | $i\theta_1$   | $i\theta_{2}$   | $i\theta_3$   | $\ldots$ | $i\theta_{d}$   |
-       |-------------+---------------+-----------------+---------------+----------+-----------------|
-
+  + 把原空间切分成为一个个正交的二维子空间，在上面做独立的旋转。
+  + 在每个子空间上角度不会发生周期性重复
 - 绝对位置编码和RoPE 有相似的结构
+  + 在每个子空间上编码都不会发生周期性重复
