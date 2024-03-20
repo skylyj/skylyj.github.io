@@ -1435,11 +1435,11 @@ respectively."
 #### table 中文 {#table-中文}
 
 ```emacs-lisp
-(use-package valign
-  :hook (org-mode . valign-mode)
-  :config
-  (setq valign-fancy-bar t)
-  )
+;; (use-package valign
+;;   :hook (org-mode . valign-mode)
+;;   :config
+;;   (setq valign-fancy-bar t)
+;;   )
 ```
 
 
