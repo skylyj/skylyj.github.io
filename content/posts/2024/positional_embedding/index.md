@@ -1,8 +1,8 @@
 ---
-title: "旋转位置编码"
-description: "Whole hugo blog in plain text!"
+title: "解密旋转位置编码"
+description: "解密旋转位置编码"
 date: 2024-03-15
-lastmod: 2024-03-20T23:16:58+08:00
+lastmod: 2024-03-21T00:02:19+08:00
 tags: ["transformer", "rope"]
 draft: false
 weight: 1002

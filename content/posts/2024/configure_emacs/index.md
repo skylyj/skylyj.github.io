@@ -1,8 +1,8 @@
 ---
 title: "Emacs配置文件"
-description: "Whole hugo blog in plain text!"
+description: "关于emacs的配置文件"
 date: 2024-03-17
-lastmod: 2024-03-20T23:16:58+08:00
+lastmod: 2024-03-21T00:02:20+08:00
 tags: ["emacs"]
 draft: false
 weight: 1003

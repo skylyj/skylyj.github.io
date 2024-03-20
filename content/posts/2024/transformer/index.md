@@ -1,8 +1,8 @@
 ---
 title: "深入理解transformer"
-description: "Whole hugo blog in plain text!"
+description: "深入理解transformer"
 date: 2024-02-01
-lastmod: 2024-03-20T23:16:57+08:00
+lastmod: 2024-03-21T00:02:18+08:00
 tags: ["transformer"]
 draft: false
 weight: 1001

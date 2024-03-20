@@ -12,18 +12,18 @@
 :PROPERTIES:
 :EXPORT_FILE_NAME: index
 :EXPORT_DATE: 2024-02-01
-:EXPORT_DESCRIPTION: Whole hugo blog in plain text!
+:EXPORT_DESCRIPTION: 深入理解transformer
 :EXPORT_HUGO_BUNDLE: 2024/transformer
 :EXPORT_OPTIONS: author:nil
 :END:
 #+INCLUDE: "./transformer.org" :minlevel 2 :lines "1-"
 ** 参考论文
 [[bibliography:/Users/lianyijiang/llm.bib]]
-* DONE 旋转位置编码                                         :transformer:rope:
+* DONE 解密旋转位置编码                                     :transformer:rope:
 :PROPERTIES:
 :EXPORT_FILE_NAME: index
 :EXPORT_DATE: 2024-03-15
-:EXPORT_DESCRIPTION: Whole hugo blog in plain text!
+:EXPORT_DESCRIPTION: 解密旋转位置编码
 :EXPORT_HUGO_BUNDLE: 2024/positional_embedding
 :EXPORT_OPTIONS: author:nil
 :END:
@@ -34,7 +34,7 @@
 :PROPERTIES:
 :EXPORT_FILE_NAME: index
 :EXPORT_DATE: 2024-03-17
-:EXPORT_DESCRIPTION: Whole hugo blog in plain text!
+:EXPORT_DESCRIPTION: 关于emacs的配置文件
 :EXPORT_HUGO_BUNDLE: 2024/configure_emacs
 :EXPORT_OPTIONS: author:nil
 :END:
