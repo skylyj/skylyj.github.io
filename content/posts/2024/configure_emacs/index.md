@@ -2,7 +2,7 @@
 title: "Emacs配置文件"
 description: "Whole hugo blog in plain text!"
 date: 2024-03-17
-lastmod: 2024-03-17T22:10:06+08:00
+lastmod: 2024-03-20T23:16:58+08:00
 tags: ["emacs"]
 draft: false
 weight: 1003
@@ -1443,11 +1443,11 @@ respectively."
 #### table 中文 {#table-中文}
 
 ```emacs-lisp
-(use-package valign
-  :hook (org-mode . valign-mode)
-  :config
-  (setq valign-fancy-bar t)
-  )
+;; (use-package valign
+;;   :hook (org-mode . valign-mode)
+;;   :config
+;;   (setq valign-fancy-bar t)
+;;   )
 ```
 
 

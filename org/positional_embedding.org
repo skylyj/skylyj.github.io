@@ -3,8 +3,8 @@
 ** 主要内容
 - 旋转位置编码在大模型中应用广泛
   + meta llama
-  + xAI Grok
   + google PaLM
+  + xAI Grok
 - 内容
   + 旋转位置编码的来龙去脉
     + 基于实数域上的旋转变换来推演
@@ -17,7 +17,7 @@
      [[cite:&vaswaniAttentionAllYou2023]]
   + [[https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/modeling_llama.py][hugging face llama]]
 *** 题外话
-- 线性代数很有用
+- 系列讲座会偏数学
 - 周鸿祎驳斥“程序员将不再存在”言论
    #+begin_quote
 最近我唯一后悔的事情是我大学期间没有认真学线性代数，当时没有人告诉我线性代数有什么用，
@@ -164,7 +164,7 @@ $X_i^{'}=X_i+P_i$
   + $R(\theta)^T=R(-\theta)$
   + $R(\theta_1)R(\theta_2)=R(\theta_1+\theta_{2})$
 *** 在高维空间中旋转
-假设空间是偶数维的，把原始的空间切分成为一个正交的二维子空间，在上面做独立的旋转。
+假设空间是偶数维的，把原始的空间切分成为一个个独立正交的二维子空间，在上面做独立的旋转。
 **** 定义
 $\Theta=(\theta_{1},\theta_2,\ldots,\theta_{D/2})$
      
@@ -185,7 +185,7 @@ $R(\Theta)=\begin{pmatrix}
    0 & 0 & 0 &R(\theta_{D/2})\\ 
    \end{pmatrix}$  
 **** 性质
-- 在独立的二维子空间上做不同角度的旋转
+- 物理意义：在独立的二维子空间上做不同角度的旋转
 
    $XR(\Theta)=(X^1, X^2)
    \begin{pmatrix}

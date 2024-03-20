@@ -1301,11 +1301,11 @@ b               bookmark-in-project-jump-previous
 #+end_src
 *** table 中文
 #+begin_src emacs-lisp :tangle ~/Github/PrivateHub/linux_confs/emacs_personal/org_conf.el  :comments link
-  (use-package valign
-    :hook (org-mode . valign-mode)
-    :config
-    (setq valign-fancy-bar t)
-    )
+  ;; (use-package valign
+  ;;   :hook (org-mode . valign-mode)
+  ;;   :config
+  ;;   (setq valign-fancy-bar t)
+  ;;   )
 #+end_src
 *** 页面宽度 (visual-fill-column)
 #+begin_src emacs-lisp :tangle ~/Github/PrivateHub/linux_confs/emacs_personal/org_conf.el  :comments link
