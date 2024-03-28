@@ -66,8 +66,10 @@
 - sample 的效率：高维空间中的sample效率会很低
 - 你的建模需要能建模出来像素之间的依赖性
 - 直接来建模pdf是一个非常困难的事情
+** 符号的标记
+用大写字母来表示随机变量 $X$ 
 * Generative Model
-** 换个一种思路：先验分布+确定性函数来建模
+** 换个思路建模密度：先验分布+确定性函数来建模
 *** 先验分布+确定性函数来建模
 - prior z:
   + 没有需要学习的参数
@@ -115,36 +117,105 @@ sample $X$ 可以分两步走
 $P(x)$
 *** latent variable
 - 我们看到的世界可能是高维空间到低维子空间的一个投影
-- 每个$x$
-*** 建模
-- latent variable space $\mathcal{Z}$, pdf $p(z)$
-- $z\in\mathcal{Z}$ 是一个随机变量
-- deterministic function: $f:\mathcal{Z} \times {\Theta} \rightarrow \mathcal{X}$
-- $f(z,\theta)$ 是一个随机变量
-  + 希望$f$ 描述了这个数据的分布
-- 优化的难点，在于随机变量的一个引入。
-*** 建模两步
-- sample z from $P(z)$
-- sample x from $P(z|x)$
-** 优化
+- 每个样本$X$ 对应一个latent variable $Z$
+*** 在线生成的过程
+- 首先采样$Z$ 基于 $P(Z)$
+- 然后再采样$X$ 基于 $P(X|Z)$
+*** 一些假设
+- $P(X|Z)$ 是参数化的
+- $P(Z)$ 是无参数的
+** 生成模型的优化
 *** 优化的目标：
-$P(X)=\int P(X|z)P(z) dz$
+$P(X)=\int_Z P(X|Z)P(Z) dZ$
 *** 积分的存在，导致无法直接优化
 *** 需要使用蒙特卡洛方法
-$P(X)= E\limits_{z\sim P(z)} P(X|z)$
-- sample $z_1, z_2, \ldots, z_n$
-- $P(X) \approx \dfrac{1}{n} \sum_{i} P(X|z_i)$
+$P(X)= E\limits_{Z\sim P(Z)} P(X|Z)$
+- sample $Z_1, Z_2, \ldots, Z_n$
+- $P(X) \approx \dfrac{1}{n} \sum_{i} P(X|Z_i)$
 - 再做梯度下降
 - 问题：
   + 维度灾难的问题： n需要极其大来得到一个准确的概率估计
-  + sample的过程中 $P(X|z_i)的概率大多为0，对参数的更新没有贡献
-    + 所以我们要更加有效的 z, 比如使用  $Q(z|X)$ 来sample z
-    + $Q(z|X)$ 能给出来容易生成$X$ 的z 来。
-    + 计算 $E_{z\sim Q} P(X|z)$
-** 符号的标记
-$Q(x|X)$ 
-** variational baysian methods
-*** core of variational autoencoder
+  + sample的过程中 $P(X|Z_i)的概率大多为0，对参数的更新没有贡献
+    + 所以我们要更加有效的 Z, 比如使用  $Q(Z|X)$ 来sample Z
+    + $Q(Z|X)$ 能给出来容易生成$X$ 的Z 来。
+    + 计算 $E_{Z\sim Q} P(X|Z)$
+* 数学基础回顾
+** 概率论的公式回顾
+*** 先验
+*** 后验
+*** 似然性
+*** 联合概率
+** 蒙特卡洛方法和维度灾难
+*** 定义
+*** 一个简单的例子：计算pi
+*** 大数定律：均值可以
+换句话说，随着样本大小 n 无限增加，样本均值几乎肯定会等于总体均值 μ。
+*** 缺点：在高维空间中效率非常的低
+*** 本质上：在高维空间里面，你的采样到的大部分的点都不是你想要的
+** 高斯分布的性质
+*** 定义
+*** 性质
+- 高斯随机变量线性变换之后还是高斯分布
+- 先验gauss，似然高斯，后验依然是高斯
+- KL divergence
+   $D\left[ \mathcal{N}(\mu_0, \Sigma_0) \parallel \mathcal{N}(\mu_1, \Sigma_1) \right] = \frac{1}{2} \left( \text{tr} \left( \Sigma_1^{-1}\Sigma_0 \right) + (\mu_1 - \mu_0)^T \Sigma_1^{-1} (\mu_1 - \mu_0) - k + \log \left( \dfrac{\det\Sigma_1}{\det\Sigma_0} \right) \right)$
+- KL
+   $D\left[ \mathcal{N}(\mu(X), \Sigma(X)) \parallel \mathcal{N}(0, I) \right] = \frac{1}{2} \left( \text{tr}(\Sigma(X)) + (\mu(X))^T (\mu(X)) - k - \log \det (\Sigma(X)) \right)$
+*** linear gaussian
+
+** TODO reparameterization trick
+问题：假设我们要对$\theta$ 求导
+*** 如果pdf中没有$\theta$ 
+\[
+\mathrm{E}_{p(z)} \left[ f_\theta(z) \right]
+\]
+where \(p\) is a density. Provided we can differentiate \(f_\theta(z)\), we can easily compute the gradient:
+\[
+\nabla_\theta \mathrm{E}_{p(z)} \left[ f_\theta(z) \right] = \nabla_\theta \int p(z)f_\theta(z)dz
+\]
+\[
+= \int p(z) \nabla_\theta f_\theta(z) dz
+\]
+\[
+= \mathrm{E}_{p(z)} \left[ \nabla_\theta f_\theta(z) \right]
+\]
+*** 如果pdf中依赖于 $\theta$ 
+
+\[
+\nabla_\theta \mathrm{E}_{p_\theta(z)} \left[ f_\theta(z) \right] = \nabla_\theta \int p_\theta(z)f_\theta(z)dz
+\]
+\[
+= \int \nabla_\theta \left[ p_\theta(z)f_\theta(z) \right] dz
+\]
+\[
+= \int f_\theta(z) \nabla_\theta p_\theta(z) dz + \int p_\theta(z) \nabla_\theta f_\theta(z) dz
+\]
+\[
+= \int f_\theta(z) \nabla_\theta p_\theta(z) dz + \mathrm{E}_{p_\theta(z)} \left[ \nabla_\theta f_\theta(z) \right]
+\]
+
+这时候不再可以写成为期望的形式了，这个时候MC方法就走不下去了。
+*** 重参数化
+$\epsilon \sim p(\epsilon)$
+$z = g_\theta(\epsilon, x)$
+$\mathrm{E}_{p_\theta(z)}[f(z^{(i)})] = \mathrm{E}_{p(\epsilon)}[f(g_\theta(\epsilon, x^{(i)}))]$
+$\begin{aligned}
+\nabla_\theta \mathrm{E}_{p_\theta(z)}[f(z^{(i)})]
+&= \nabla_\theta \mathrm{E}_{p(\epsilon)}[f(g_\theta(\epsilon, x^{(i)}))] \\
+&= \mathrm{E}_{p(\epsilon)}[\nabla_\theta f(g_\theta(\epsilon, x^{(i)}))] \\
+&\approx \frac{1}{L} \sum_{l=1}^L \nabla_\theta f(g_\theta(\epsilon^{(l)}, x^{(i)}))
+\end{aligned}$
+*** 类比
+可以类比于强化学习中的 policy gradient 求导
+   $J(\theta)= E_{\tau\sim \pi_{\theta}(\tau)} r(\tau)$
+   
+   $\begin{aligned}\nabla_{\theta}J(\theta) = & \int \nabla_{\theta}\pi_{\theta}(\tau)r(\tau)d\tau \\
+     = & \int \pi_{\theta}(\tau) \nabla_{\theta}\log \pi_{\theta}(\tau)r(\tau)d\tau \\
+     = & E_{\tau \sim \pi_{\theta}(\tau)}\left[ \nabla_{\theta}\log \pi_{\theta}(\tau)r(\tau) \right]
+     \end{aligned}$
+
+* VAE
+** core of variational autoencoder
 对于任意的$Q(Z|X)$， 有
 $\log P(X) - D_{KL}[Q(Z|X) \| P(Z|X)] = \mathbb{E}_{Z \sim Q}[\log P(X|Z)] - D_{KL}[Q(Z|X) \| P(Z)]$
 *** proof:
@@ -169,59 +240,42 @@ $\begin{aligned}
 - 当$Q_{\phi}(Z|X)= P(Z|X)$的时候，结束。
 *** 继续拆分ELBO
 $\begin{aligned}
-E_{Q(Z|X)} \log \dfrac{P(X,Z)}{Q(Z|X)} &= E_{Q(Z|X)}\log \dfrac{p(X|Z)P(Z)}{Q(Z|X)} \\
-&= E_{Q(Z|X)}\log p(X|Z) + E_{Q(Z|X)}\log \dfrac{p(Z)}{Q(Z|X)} \\
-& = E_{Q(Z|X)}\log p(X|Z) - D_{KL}[Q(Z|X) \| P(Z)]
+E_{Q(Z|X)} \log \dfrac{P(X,Z)}{Q(Z|X)} &= E_{Q(Z|X)}\log \dfrac{P(X|Z)P(Z)}{Q(Z|X)} \\
+&= E_{Q(Z|X)}\log P(X|Z) + E_{Q(Z|X)}\log \dfrac{P(Z)}{Q(Z|X)} \\
+& = E_{Q(Z|X)}\log P(X|Z) - D_{KL}[Q(Z|X) \| P(Z)]
 \end{aligned}$
 - 第一项:
   + 有了encoding,decoding的意思
   + 可以使用MC的方法来优化
 - 第二项:
-   + 
+   + 正则的一个效果
 *** 最后
 $\log P(X) - D_{KL}[Q(Z|X) \| P(Z|X)] = \mathbb{E}_{Z \sim Q}[\log P(X|Z)] - D_{KL}[Q(Z|X) \| P(Z)]$
-** 如何来做参数化来优化ELBO
-- $Q(Z|X)=\mathcal{N}(Z|\mu(X;\theta), \sigma(X;\theta))$ Gauss
+** 参数化
+- $Q(Z|X)=\mathcal{N}(Z|\mu(X;\theta), \Sigma(X;\theta))$ Gauss
 - $P(Z)$ gauss
 **** 第二项
-两个gauss分布之间的KL散度可以明显的计算出来
-** 重参数化
-- $E_{Q(Z|X)}\log p(X|Z)$的计算
+两个gauss分布之间的KL散度可以显式的计算出来
+** 重参数化=积分的变量替换
+- sample
+  + sample $Z_{i}$ from $Q_{\phi}(Z|X)$
+  + $\dfrac{1}{n}\sum log P_{\theta}(X_i|Z_{i})$
+- 问题
+  + 采样依赖于参数$\phi$
+  + 如何对$\phi$ 求导
+     
+- $E_{Q_{\phi}(Z|X)}\log P_{\theta}(X|Z)$ 的梯度计算问题
+  + $\nabla_{\phi} E_{Q_{\phi}(Z|X)}\log P_{\theta}(X|Z)$
+  + 期望依赖的随机变量依赖于参数，无法对参数求导
+- 重参数化 = 数学积分中的变量替换
+  + $Z\sim Q(Z|X)=\mathcal{N}(Z|\mu(X;\theta), \Sigma(X;\theta))$ 
+  + $Z=\mu(X)+\Sigma^{1/2}(X)*\varepsilon$
+  + $E_{Q(Z|X)}\log p(X|Z)=E_{\varepsilon}\log p(X|Z(\varepsilon))$
 ** 建立新的优化目标
 我们来计算一个新的东西：$E$
-** 生成模型的概率建模
-- 每个样本对应一个latent variable $(x, z)$
-- $P(x)=\int_{z} P(x,z) dz=\int_{z}P(x|z)P(z)dz$
-*** 如何做最大化？
-- 积分的存在，没法直接优化
-*** 改用MC 方法？
-- $P(x) = E_{z\in P(z)}P(x|z) P(z) dz = \sum_{i} P(x_i|z_i)P(z_i)$
-*** 生成式的模型如何来优化？
-* 数学基础回顾
-** 概率论的公式回顾
-*** 先验
-*** 后验
-*** 似然性
-*** 联合概率
-** 蒙特卡洛方法和维度灾难
-*** 定义
-*** 一个简单的例子：计算pi
-*** 大数定律：均值可以
-换句话说，随着样本大小 n 无限增加，样本均值几乎肯定会等于总体均值 μ。
-*** 缺点：在高维空间中效率非常的低
-*** 本质上：在高维空间里面，你的采样到的大部分的点都不是你想要的
-** 高斯分布的性质
-*** 定义
-*** 性质
-- 高斯随机变量线性变换之后还是高斯分布
-- 先验gauss，似然高斯，后验依然是高斯
-*** linear gaussian
-
-** 随机变量
-*** reparameterization trick
-如果你对随机变量来做期望，同时这个随机变量里面还有参数的时候，你对随机变量求导基本做不了，需要使用这个trick，记得在强化学习中也用到过了
-*** 
-* variational auto encoder
+** VAE 图示
+* VAE代码实现
+** VAE代码实现
 ** ELBO backbone
 *** 背景
 $P(x)=\int P(x|z) p(z)$
@@ -236,3 +290,16 @@ P(z∣X)。
 *** formula
 $\log P(X) - D_{KL}[Q(z|X) \| P(z|X)] = \mathbb{E}_{z \sim Q}[\log P(X|z)] - D_{KL}[Q(z|X) \| P(z)]$
 
+* others
+** 建模
+*** 建模
+- latent variable space $\mathcal{Z}$, pdf $p(z)$
+- $z\in\mathcal{Z}$ 是一个随机变量
+- deterministic function: $f:\mathcal{Z} \times {\Theta} \rightarrow \mathcal{X}$
+- $f(z,\theta)$ 是一个随机变量
+  + 希望$f$ 描述了这个数据的分布
+- 优化的难点，在于随机变量的一个引入。
+*** 建模两步
+- sample z from $P(z)$
+- sample x from $P(z|x)$
+*
