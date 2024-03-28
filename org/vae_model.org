@@ -80,7 +80,6 @@ $P(X)=P(Z)P(X|Z)$
   + 在一个低维度的latent space中采样
 - 确定性函数：
   + h(z)
-
 ** 理论的依据
 *** 高斯分布+CDF逆变换可以拟合任意的分布
 - 假设
@@ -120,36 +119,31 @@ sample $X$ 可以分两步走
 **** latent variable
 - 我们看到的世界可能是高维空间到低维子空间的一个投影
 - 每个样本$X$ 对应一个latent variable $Z$
-- 不可见的
+- latent variable 不可见的
+- 完整的样本是$(X, Z)$
 **** 上帝的视角
-- 首先采样$Z$ 基于 $P(Z)$
+- 首先基于$P(Z)$ 采样$Z$ 
 - 然后再采样$X$ 基于 $P(X|Z)$
 **** 建模
-**** 一些假设
-- $P(X|Z)$ 是参数化的
+- $P(X|Z)$ 是参数化的 $P_{\theta}(X|Z)$
 - $P(Z)$ 是无参数的
 
 ** 生成模型的优化
 *** 优化的目标：
-$P(X)=\int_Z P(X|Z)P(Z) dZ$
-*** 积分的存在，导致无法直接优化
-*** 需要使用蒙特卡洛方法
-$P(X)= E\limits_{Z\sim P(Z)} P(X|Z)$
-- sample $Z_1, Z_2, \ldots, Z_n$
-- $P(X) \approx \dfrac{1}{n} \sum_{i} P(X|Z_i)$
-- 再做梯度下降
-- 问题：
-  + 维度灾难的问题： n需要极其大来得到一个准确的概率估计
-  + sample的过程中 $P(X|Z_i)的概率大多为0，对参数的更新没有贡献
-    + 所以我们要更加有效的 Z, 比如使用  $Q(Z|X)$ 来sample Z
-    + $Q(Z|X)$ 能给出来容易生成$X$ 的Z 来。
-    + 计算 $E_{Z\sim Q} P(X|Z)$
+$P(X)=\int_Z P_{\theta}(X|Z)P(Z) dZ$
+- 积分的存在，导致无法直接优化
+*** 使用蒙特卡洛方法
+对于一个给定的样本 $X$,$P(X)= E\limits_{Z\sim P(Z)} P(X|Z)$
+- sample $Z_1, Z_2, \ldots, Z_n$ from $P(Z)$
+- $P(X) \approx \dfrac{1}{n} \sum_{i} P_{\theta}(X|Z_i)$
+- 在针对$\theta$ 做梯度下降
+*** 问题：
+- 维度灾难的问题： $n$ 需要极其大来得到一个准确的概率估计
+- sample的过程中 $P(X|Z_i)$ 的概率大多为0，对参数的更新没有贡献
+  + 所以我们要更加有效的 Z, 比如使用  $Q(Z|X)$ 来sample $Z$
+  + $Q(Z|X)$ 能给出来容易生成$X$ 的Z 来。
+  + 计算 $E_{Z\sim Q} P(X|Z)$
 * 数学基础回顾
-** 概率论的公式回顾
-*** 先验
-*** 后验
-*** 似然性
-*** 联合概率
 ** 蒙特卡洛方法和维度灾难
 *** 定义
 *** 一个简单的例子：计算pi
@@ -220,9 +214,18 @@ $\begin{aligned}
      \end{aligned}$
 
 * VAE
+** VAE 的思路
+#+DOWNLOADED: screenshot @ 2024-03-28 23:14:24
+#+ATTR_HTML: :width 600px :align middle
+[[file:images/2024-03-28_23-14-24_screenshot.png]]
+
+- 不从$P(Z)$ 中sample $Z$
+- 而从$Q_{\phi}(Z|X)$ 中sample $Z$，提升$P(X|Z)$ 的概率
+- 然后基于$Z$ 重建 $\widehat{X}=f_{\theta}(Z)$
+- 计算误差 $\widehat{X}$ 和 $X$ 的误差，再反向传播回去
 ** core of variational autoencoder
 对于任意的$Q(Z|X)$， 有
-$\log P(X) - D_{KL}[Q(Z|X) \| P(Z|X)] = \mathbb{E}_{Z \sim Q}[\log P(X|Z)] - D_{KL}[Q(Z|X) \| P(Z)]$
+$\log P(X) - D_{KL}[Q(Z|X) \| P(Z|X)] = \mathrm{E}_{Z \sim Q}[\log P(X|Z)] - D_{KL}[Q(Z|X) \| P(Z)]$
 *** proof:
 $\begin{aligned}
 \log P(X) &= E_{Q(Z|X)} \log P(X) \\
@@ -255,10 +258,16 @@ E_{Q(Z|X)} \log \dfrac{P(X,Z)}{Q(Z|X)} &= E_{Q(Z|X)}\log \dfrac{P(X|Z)P(Z)}{Q(Z|
 - 第二项:
    + 正则的一个效果
 *** 最后
-$\log P(X) - D_{KL}[Q(Z|X) \| P(Z|X)] = \mathbb{E}_{Z \sim Q}[\log P(X|Z)] - D_{KL}[Q(Z|X) \| P(Z)]$
-** 参数化
-- $Q(Z|X)=\mathcal{N}(Z|\mu(X;\theta), \Sigma(X;\theta))$ Gauss
-- $P(Z)$ gauss
+$\log P(X) - \mathcal{D}[Q(Z|X) \| P(Z|X)] = \mathrm{E}_{Q(Z|X))}[\log P(X|Z)] - \mathcal{D}[Q(Z|X) \|P(Z)]$
+ELBO
+$\log P(X) \ge \mathrm{E}_{Q(Z|X))}[\log P(X|Z)] - \mathcal{D}[Q(Z|X) \|P(Z)]$
+*** 直接来优化ELBO
+** 参数化ELBO
+- $Q(Z|X)=\mathcal{N}(Z|\mu(X;\phi), \Sigma(X;\phi))$ 每个样本对应一个独立的正态分布
+- $P(X|Z)=\mathcal{N}(X|f_{\theta}(Z), 1)$
+- $\log P(X|Z)\sim \|X-f_{\theta}(Z)\|^{2}$ 
+- $\log P(X) \ge \mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]$
+- $P(Z)=\mathcal{N}(0,1)$
 **** 第二项
 两个gauss分布之间的KL散度可以显式的计算出来
 ** 重参数化=积分的变量替换
