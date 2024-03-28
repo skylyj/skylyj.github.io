@@ -1,0 +1,238 @@
+#+TITLE: 图像生成之VAE
+* 背景
+** 主要内容
+- 是理解diffusion model的一个基础
+- 应用场景，活跃在图像生成的各个领域
+  - dall-e2
+  - imagen
+  - sora
+- 数学基础回顾
+- 参考：
+  + https://erdem.pl/2023/11/step-by-step-visual-introduction-to-diffusion-models
+  + https://medium.com/@kemalpiro/step-by-step-visual-introduction-to-diffusion-models-235942d2f15c
+** 关于概率密度的估计
+*** 机器学习中常见的任务
+- 分类
+- 回归
+*** 我们之前熟悉的概率建模
+- 基于特征来推断目标事件发生的概率。P(label|特征）
+- ctr 里面：基于用户和item的特征信息来推测用户点击item的概率
+
+   $P(y=1|x)=\sigma(f_{\theta}(x))$
+
+- NLP 中的相关性模型：基于用户输入的query和doc特征来推测两者相关的概率
+   $P(y=1|(q,t))=\sigma(f_{\theta}(q,t))$
+
+- 我们很少需要对特征的分布直接建模
+  + 用户特征的分布？
+  + query,doc 的特征分布？
+*** 概率密度估计
+机器学习中另外一个大的topic是概率密度的估计：
+- 假设概率分布的pdf，然后做参数估计
+  + 假设这个分布是gaussian，来推断mu, sigma
+- 例子：
+  + language model:
+    + token粒度，每个token有离散的值    $P(x_{1}, x_{2},\ldots, x_{n})= P(x_{1})P(x_{2}|x_{1})\ldots P(x_{n}|x_{1,\ldots,n-1})$
+    + autoregressive
+    + decoder only GPT model
+  + image model?
+    + pixelRNN
+    + 效率的问题: 1920*1080=207,3600
+*** 做概率密度估计有啥用？
+- 建模出来一个概率密度函数pdf $P_{\theta}(x)$ 
+  + 知道什么样的x概率低，知道什么样的x概率高
+- 有啥用？
+  + 基于概率采样，我们可以生成更多的类似的，不在样本集合中的 X
+  + 图片：比如登录的图片认证，生成若干旋转的文字，角度等等，这些应该是单纯随机生成的
+- conditional 的时候会产生大的价值
+  + 文本：LLM GPT做的就是概率密度估计的事情，可以逐个token来生成
+  + 图片：更进一步，做可以控制的图像生成，如果加一个conditional，P(x) P(x|c), 可以做文本到图像的生成
+** 图像生成的两种思路
+*** 自回归的方式
+**** 像素级别的自回归
+- PixelRNN/PixelCNN
+**** patch级别的自回归
+
+** 关于生成模型的直接建模
+*** 如果直接建模
+- 使用范围局限：
+  + 基于这个$P_{\theta}(x)$ 采样
+  + 无法做更多的复杂生成的事情，无法对对生成做细粒度操控
+  + 比如，
+    + 我想加入一段文字的描述来生成
+    + 我想生成某种特定类型，特定的风格的图片
+*** 直接建模的难点？
+- 图像本省的高维特性
+- sample 的效率：高维空间中的sample效率会很低
+- 你的建模需要能建模出来像素之间的依赖性
+- 直接来建模pdf是一个非常困难的事情
+* Generative Model
+** 换个一种思路：先验分布+确定性函数来建模
+*** 先验分布+确定性函数来建模
+- prior z:
+  + 没有需要学习的参数
+  + 在一个低维度的latent space中采样
+- 确定性函数：
+  + h(z)
+*** 理论依据
+- 理论的依据：先验的gauss + 确定性的函数 可以表征任意的分布。
+*** 用处
+- - 有什么用呢？
+- 
+** 理论的依据
+*** 均匀分布+CDF逆变换可以拟合任意的分布
+- 假设
+  + 随机变量 $U\sim \text{Uniform}[0,1]$
+  + 目标随机变量$X$ 对应的分布的CDF是 $F(x)=P(X\le x)$
+- 那么随机变量 $X=F^{-1}(U)$ 分布满足$F$
+- 证明:
+
+   $P(X\le x)=P(F^{-1}(U)\le x)=P(U\le F(x))=F(x)$
+*** 高斯分布到均匀分布
+- 假设
+  + 随机变量 $N\sim \mathcal{N}[0,1]$, 对应的CDF 是$\Psi$
+  + 那么$Y=\Psi(N)\sim \text{Uniform}[0,1]$
+- 证明:
+   $P(Y\le y)=P(\Psi(N)\le y )=P(N\le \Psi^{-1}(y))=\Psi(\Psi^{-1}(y))=y$
+*** 进一步：高斯分布+CDF逆变换可以拟合任意的分布
+- 假设
+  + 随机变量 $N\sim \mathcal{N}[0,1]$, 对应的CDF 是$\Psi$
+  + 那么$Y=\Psi(N)\sim \text{Uniform}[0,1]$
+  + 目标随机变量$X$ 对应的分布的CDF是 $F(x)=P(X\le x)$
+- 那么随机变量 $X=F^{-1}(Y)$ 分布满足$F$
+- 高维中依然是成立，但是这个函数表达是不知道的，我们可以通过模型学习得到。
+*** 在生成式模型中运用：
+sample $X$ 可以分两步走
+- 先sample $Z\sim \mathcal{N}(\mu,\sigma)$
+- 然后再基于一个复杂的确定函数变换得到 $f(Z)$ 变换得到$X$
+- 随机变量 $X=f(Z)$ 就是对整体的sample
+*** 为什么不用均匀分布做先验？而使用高斯？
+- 高斯分布在整个空间上有定义，计算KL 不会有除以0的问题发生
+- 高斯分布有很多很好的性质可以使用
+** Generative Model
+*** 正常的模型是怎么做概率建模的？
+思考清楚一个样本的概率，然后做概率的最大化。
+$P(x)$
+*** latent variable
+- 我们看到的世界可能是高维空间到低维子空间的一个投影
+- 每个$x$
+*** 建模
+- latent variable space $\mathcal{Z}$, pdf $p(z)$
+- $z\in\mathcal{Z}$ 是一个随机变量
+- deterministic function: $f:\mathcal{Z} \times {\Theta} \rightarrow \mathcal{X}$
+- $f(z,\theta)$ 是一个随机变量
+  + 希望$f$ 描述了这个数据的分布
+- 优化的难点，在于随机变量的一个引入。
+*** 建模两步
+- sample z from $P(z)$
+- sample x from $P(z|x)$
+** 优化
+*** 优化的目标：
+$P(X)=\int P(X|z)P(z) dz$
+*** 积分的存在，导致无法直接优化
+*** 需要使用蒙特卡洛方法
+$P(X)= E\limits_{z\sim P(z)} P(X|z)$
+- sample $z_1, z_2, \ldots, z_n$
+- $P(X) \approx \dfrac{1}{n} \sum_{i} P(X|z_i)$
+- 再做梯度下降
+- 问题：
+  + 维度灾难的问题： n需要极其大来得到一个准确的概率估计
+  + sample的过程中 $P(X|z_i)的概率大多为0，对参数的更新没有贡献
+    + 所以我们要更加有效的 z, 比如使用  $Q(z|X)$ 来sample z
+    + $Q(z|X)$ 能给出来容易生成$X$ 的z 来。
+    + 计算 $E_{z\sim Q} P(X|z)$
+** 符号的标记
+$Q(x|X)$ 
+** variational baysian methods
+*** core of variational autoencoder
+对于任意的$Q(Z|X)$， 有
+$\log P(X) - D_{KL}[Q(Z|X) \| P(Z|X)] = \mathbb{E}_{Z \sim Q}[\log P(X|Z)] - D_{KL}[Q(Z|X) \| P(Z)]$
+*** proof:
+$\begin{aligned}
+\log P(X) &= E_{Q(Z|X)} \log P(X) \\
+&=E_{Q(Z|X)} \log \dfrac{P(X,Z)}{P(Z|X)} \\
+&=E_{Q(Z|X)} \log \dfrac{P(X,Z)}{P(Z|X)} \dfrac{Q(Z|X)}{Q(Z|X)} \\
+& = E_{Q(Z|X)} \log \dfrac{P(X,Z)}{Q(Z|X)} + E_{Q(Z|X)} \log \dfrac{Q(Z|X)}{P(Z|X)}\\
+& = E_{Q(Z|X)} \log \dfrac{P(X,Z)}{Q(Z|X)} + D_{KL}[Q(Z|X)||P(Z|X)]
+\end{aligned}$
+*** ELBO
+由于 KL Divergence 非负，所以
+$\begin{aligned}
+\log P(X) & \ge  E_{Q(Z|X)} \log \dfrac{P(X,Z)}{Q(Z|X)}
+\end{aligned}$
+*** 理解
+- 变分：$Q_{\phi}(Z|X)$ 参数化
+- 左边是优化的目标似然性
+- 右边第一项是ELBO
+- 右边第一项是KL divergence
+- 我们希望不断去优化$Q_{\phi}(Z|X)$ 提升ELBO，
+- 当$Q_{\phi}(Z|X)= P(Z|X)$的时候，结束。
+*** 继续拆分ELBO
+$\begin{aligned}
+E_{Q(Z|X)} \log \dfrac{P(X,Z)}{Q(Z|X)} &= E_{Q(Z|X)}\log \dfrac{p(X|Z)P(Z)}{Q(Z|X)} \\
+&= E_{Q(Z|X)}\log p(X|Z) + E_{Q(Z|X)}\log \dfrac{p(Z)}{Q(Z|X)} \\
+& = E_{Q(Z|X)}\log p(X|Z) - D_{KL}[Q(Z|X) \| P(Z)]
+\end{aligned}$
+- 第一项:
+  + 有了encoding,decoding的意思
+  + 可以使用MC的方法来优化
+- 第二项:
+   + 
+*** 最后
+$\log P(X) - D_{KL}[Q(Z|X) \| P(Z|X)] = \mathbb{E}_{Z \sim Q}[\log P(X|Z)] - D_{KL}[Q(Z|X) \| P(Z)]$
+** 如何来做参数化来优化ELBO
+- $Q(Z|X)=\mathcal{N}(Z|\mu(X;\theta), \sigma(X;\theta))$ Gauss
+- $P(Z)$ gauss
+**** 第二项
+两个gauss分布之间的KL散度可以明显的计算出来
+** 重参数化
+- $E_{Q(Z|X)}\log p(X|Z)$的计算
+** 建立新的优化目标
+我们来计算一个新的东西：$E$
+** 生成模型的概率建模
+- 每个样本对应一个latent variable $(x, z)$
+- $P(x)=\int_{z} P(x,z) dz=\int_{z}P(x|z)P(z)dz$
+*** 如何做最大化？
+- 积分的存在，没法直接优化
+*** 改用MC 方法？
+- $P(x) = E_{z\in P(z)}P(x|z) P(z) dz = \sum_{i} P(x_i|z_i)P(z_i)$
+*** 生成式的模型如何来优化？
+* 数学基础回顾
+** 概率论的公式回顾
+*** 先验
+*** 后验
+*** 似然性
+*** 联合概率
+** 蒙特卡洛方法和维度灾难
+*** 定义
+*** 一个简单的例子：计算pi
+*** 大数定律：均值可以
+换句话说，随着样本大小 n 无限增加，样本均值几乎肯定会等于总体均值 μ。
+*** 缺点：在高维空间中效率非常的低
+*** 本质上：在高维空间里面，你的采样到的大部分的点都不是你想要的
+** 高斯分布的性质
+*** 定义
+*** 性质
+- 高斯随机变量线性变换之后还是高斯分布
+- 先验gauss，似然高斯，后验依然是高斯
+*** linear gaussian
+
+** 随机变量
+*** reparameterization trick
+如果你对随机变量来做期望，同时这个随机变量里面还有参数的时候，你对随机变量求导基本做不了，需要使用这个trick，记得在强化学习中也用到过了
+*** 
+* variational auto encoder
+** ELBO backbone
+*** 背景
+$P(x)=\int P(x|z) p(z)$
+直接做主要的困难来源于MC在高维空间中的sample的效率问题
+*** 引入Q分布
+1. 聚焦有意义的 z 值
+2. Q(z∣X)：为此，我们引入了一个新的函数 
+Q(z∣X)，这是一个编码器网络，它可以基于观察到的数据 
+X 提供一个关于 z 值的分布。这个分布专门针对那些可能产生 
+X 的 z 值。变分方法使得这个分布可以通过学习数据来逼近真实的后验分布 
+P(z∣X)。
+*** formula
+$\log P(X) - D_{KL}[Q(z|X) \| P(z|X)] = \mathbb{E}_{z \sim Q}[\log P(X|z)] - D_{KL}[Q(z|X) \| P(z)]$
+

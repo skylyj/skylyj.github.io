@@ -1,0 +1,84 @@
+#+TITLE: GPU上的并行计算
+* 数值的稳定性问题
+https://arxiv.org/pdf/2112.05682.pdf
+* self-attention的memory
+SELF-ATTENTION DOES NOT NEED O(n
+2
+) MEMORY
+
+* GPU 入门
+** GPU的结构的基本概念
+*** 存储结构
+- HBM：
+  + HBM是一种高性能的显存技术，用于GPU的主存储。它提供了非常高的带宽，使得GPU能够快速读取和存储大量数据。当运行深度学习模型或其他需要处理大量数据的应用时，数据首先存储在HBM中
+  + 可以近似理解为是内存的概念
+  + 所有的计算必须先把数据load到内存中来
+- SRAM：
+*** bandwidth
+*** FLOPS： floating point operation
+*** Memory
+https://horace.io/brrr_intro.html
+*** 几个市场上的GPU卡
+*** 我们的希望是：flops能够打满，而实际是？
+Even optimized implementations such as Megatron (Shoeybi et al., 2019) report achieving only 30% of peak GPU floating point operations per second (flop/s).
+** 计算的分类
+- tensor contraction
+  + matrix-matrix multiplication (MMM), batched MM
+  + suported by cuBLAS
+  + tiling strategy is critical
+- statistical normalization
+  + softmax
+  + layer normalization
+- element-wise operators
+   + biases, dropout, activations, and residual connections.
+   + least compute-intensive operations
+* 基本的前向传播和反向传播
+** 前向传播
+
+#+DOWNLOADED: screenshot @ 2024-01-03 20:13:52
+#+ATTR_HTML: :width 300px :align middle
+[[file:images/2024-01-03_20-13-52_screenshot.png]]
+
+我们来举个例子，这个例子里面的向量全部都是列向量的形式。
+\begin{equation*}
+\begin{split}
+a_{l} & = f(z_{l})\\
+z_{l} & = W_{l}a_{l-1} \\
+a_{l+1} & = f(z_{l+1})\\
+z_{l+1} & = W_{l+1}a_{l} \\
+\end{split}
+\end{equation*}
+** 反向传播
+\begin{equation*}
+\begin{split}
+\frac{\partial L}{\partial W_{l}} & = <\frac{\partial L}{z_{l}}, \frac{\partial z_{l}}{W_{l}}> \\
+&= \frac{\partial L}{z_{l}}\otimes a_{l-1} \\
+&= \delta_{l}\otimes a_{l-1}
+\end{split}
+\end{equation*}
+
+\begin{equation*}
+\begin{split}
+\delta_{l} &= \frac{\partial L}{\partial z_{l}} \\
+& = <\frac{\partial L}{\partial z_{l+1}}, \frac{\partial z_{l+1}}{\partial a_{l}}, \frac{\partial a_{l}}{\partial z_{l}}> \\
+& = <\delta_{l+1}, W_{l+1}, f'(z_{l}) >\\
+& = W_{l+1} \times \delta_{l+1} \times f'(z_{l})
+\end{split}
+\end{equation*}
+
+* GPU如何计算矩阵乘法的？
+- 分块的矩阵乘法
+- 在多个GPU，在GPU集群上是怎么计算乘法的？
+* gradient checking是什么？
+
+* DNN 的反向传播的过程
+* transformer的加速
+** Amdahl's law
+#+begin_quote
+the overall performance improvement gained by optimizing a single part of a system is limited by the fraction of time that the improved part is actually used.
+#+end_quote
+** transformer训练的速度瓶颈到底在哪里？
+我们常常听人说我用1k张卡，训练一个月，就得到一个大模型的从0到1的base版本，这个是墙上的时间，这个训练的过程中有多少是有效的在使用GPU？
+
+Over a third (37%) of the runtime in a BERT training iteration is spent in memory-bound operators: While tensor contractions account for over 99% of the arithmetic operations performed, they constitute only 61% of the runtime.
+** 
