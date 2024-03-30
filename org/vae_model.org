@@ -274,7 +274,8 @@ $\begin{aligned}
      = & \int \pi_{\theta}(\tau) \nabla_{\theta}\log \pi_{\theta}(\tau)r(\tau)d\tau \\
      = & E_{\tau \sim \pi_{\theta}(\tau)}\left[ \nabla_{\theta}\log \pi_{\theta}(\tau)r(\tau) \right]
      \end{aligned}$
-
+** 变分
+*** 定义：什么是变分？
 * VAE
 ** VAE 的思路
 #+DOWNLOADED: screenshot @ 2024-03-28 23:14:24
