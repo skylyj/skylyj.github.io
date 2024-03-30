@@ -165,12 +165,35 @@ $P(X)=\int_Z P_{\theta}(X|Z)P(Z) dZ$
   + 计算 $E_{Z\sim Q} P(X|Z)$
 * 数学基础回顾
 ** 蒙特卡洛方法和维度灾难
-*** 定义
-*** 一个简单的例子：计算pi
-*** 大数定律：均值可以
-换句话说，随着样本大小 n 无限增加，样本均值几乎肯定会等于总体均值 μ。
+*** 什么是MC
+#+begin_quote
+ The underlying concept is to use randomness to solve problems that might be deterministic in principle. 
+#+end_quote
+*** 计算期望
+$E_{X\sim p(x)} f(X)$
+- sample $\{X_{i}\}_{i=1}^{n} \sim p(x)$
+- $\dfrac{1}{n}\sum_{i=1}^{n}f(X_{i})\rightarrow \mathrm{E}(f(X))$
+*** 背后的依据：大数定律
+如果$\{X_i\}_{i=1}^{n}$ 独立同分布，那么 $\dfrac{1}{n}\sum_{i=1}^{n}X_{i}\rightarrow \mathrm{E}(X)$
+
+如果$\{X_i\}_{i=1}^{n}$ 独立同部分, 那么 $\{f(X_i)\}_{i=1}^{n}$ 也是独立同分布的，
+且$\dfrac{1}{n}\sum_{i=1}^{n}f(X_{i})\rightarrow \mathrm{E}(f(X))$
 *** 缺点：在高维空间中效率非常的低
-*** 本质上：在高维空间里面，你的采样到的大部分的点都不是你想要的
+- 在高维空间里面，你的采样到的大部分的点都不是你想要的
+*** 举一个例子：计算$\pi$
+- $n$ 维的球体的体积
+  + $V_n=\dfrac{\pi^{\frac{n}{2}}R^{n}}{\Gamma(\frac{n}{2}+1)}$
+  + $\Gamma(n+1)=n!$
+- 计算方法
+  + 基于单位球体的体积公式反向推导
+     $\pi = (\dfrac{V_n\Gamma(\frac{n}{2}+1)}{R^n})^{\frac{2}{n}}$
+  + sample n个[-1,1] 之间的均匀随机变量
+  + 计算单位球中的个数比例得到单位球体的体积
+  + 基于上述公式推导出$\pi$
+- 维度灾难
+  + $V_{n}\rightarrow 0, as\quad n\rightarrow \infty$
+  + n维单位球体的体积趋向于0
+  + sample失效
 ** 高斯分布的性质
 *** 定义
 *** 性质
@@ -182,8 +205,7 @@ $P(X)=\int_Z P_{\theta}(X|Z)P(Z) dZ$
    $D\left[ \mathcal{N}(\mu(X), \Sigma(X)) \parallel \mathcal{N}(0, I) \right] = \frac{1}{2} \left( \text{tr}(\Sigma(X)) + (\mu(X))^T (\mu(X)) - k - \log \det (\Sigma(X)) \right)$
 *** linear gaussian
 
-** TODO reparameterization trick
-
+** 重参数化
 *** 问题
 - $\nabla_{\theta}\mathrm{E}_{p(z)} \left[ f_\theta(z) \right]$
 - $\nabla_{\theta}\mathrm{E}_{p_{\theta}(z)} \left[ f_\theta(z) \right]$
