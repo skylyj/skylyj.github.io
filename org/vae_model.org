@@ -11,10 +11,11 @@
   + https://erdem.pl/2023/11/step-by-step-visual-introduction-to-diffusion-models
   + https://medium.com/@kemalpiro/step-by-step-visual-introduction-to-diffusion-models-235942d2f15c
 ** 关于概率密度的估计
-*** 机器学习中常见的任务
+*** 机器学习的几个topic
 - 分类
 - 回归
-*** 我们之前熟悉的概率建模
+- 概率密度PDF估计
+*** 我们熟悉的概率建模
 - 基于特征来推断目标事件发生的概率。P(label|特征）
 - ctr 里面：基于用户和item的特征信息来推测用户点击item的概率
 
@@ -28,11 +29,9 @@
   + query,doc 的特征分布？
 ** 概率密度估计
 机器学习中另外一个大的topic是概率密度的估计：
-*** 一种简单的方式：
-假设概率分布的pdf，然后做参数估计
+*** 一种简单的方式：假设概率分布的pdf，然后做参数估计
   - 假设这个分布是$\mathcal{N}(\mu,\Sigma)$，来推断$\mu, \Sigma$
-*** 另一种
-基于自身$X$ 的序列结构，做条件概率展开
+*** 基于自身$X$ 的序列结构，做条件概率展开
   - language model:
     + token粒度，每个token有离散的值
     + $P(x_{1}, x_{2},\ldots, x_{n})= P(x_{1})P(x_{2}|x_{1})\ldots P(x_{n}|x_{1,\ldots,n-1})$
@@ -41,7 +40,7 @@
   - image model?
     + pixelRNN
     + 效率的问题: 1920*1080=207,3600
-*** 用途
+*** 概率密度估计有什么用？
 - 建模出来一个概率密度函数pdf $P_{\theta}(x)$ 
   + 知道什么样的x概率低，知道什么样的x概率高
 - 基于概率采样，我们可以生成更多的类似的，不在样本集合中的 X
@@ -50,11 +49,6 @@
 - conditional 的时候会产生大的价值
   + 文本：LLM GPT做的就是概率密度估计的事情，可以逐个token来生成
   + 图片：更进一步，做可以控制的图像生成，如果加一个conditional，P(x) P(x|c), 可以做文本到图像的生成
-** 图像生成的两种思路
-*** 自回归的方式
-**** 像素级别的自回归
-- PixelRNN/PixelCNN
-**** patch级别的自回归
 
 ** 关于生成模型的直接建模
 *** 如果直接建模
@@ -110,24 +104,50 @@ sample $X$ 可以分两步走
 *** 为什么不用均匀分布做先验？而使用高斯？
 - 高斯分布在整个空间上有定义，计算KL 不会有除以0的问题发生
 - 高斯分布有很多很好的性质可以使用
-** Generative Model
+** latent variables
+*** motivation
+- 我们看到的世界可能是高维空间到低维子空间的一个投影
+- 我们观察获取到的信息$X$ 本身是不完整的
+  + 或者说，我们无法观测到完整的信息
+  + 盲人摸象
+  + ctr模型我们人工定义了很多的特征，但是依然有大量的表征没有考虑进去
+- 我们把在我们观测之外的这些特征可以记作 latent variables
+- hidden variables
+*** 一些假设
+- 每个样本$X$ 对应一个latent variable $Z$
+- 完整的样本是$(X, Z)$
+- 直接去优化 $P_{\theta}(X)$ 是困难的, 有积分的存在
+   + $P(X)=\int_Z P_{\theta}(X,Z)=\int_{Z}P_{\theta}(X|Z)P_{\theta}(Z)dZ$
+- 但是知道了$Z$ 后，$P(X,Z)$ 或者 $P(X|Z)$ 是容易优化的
+*** 生成模型中的latent variables
+- 生成的概念： 观测值是基于隐变量的值来生成的。
+  + $Z\rightarrow X$ 
+  + 先sample $Z$
+  + 再基于 $P(X|Z)$ sample得到 $X$
+- $P(X,Z)=P(Z)P(X|Z)$
+*** 一个例子：高斯混合模型
+$P(X)=\sum_{Z}P(Z)P(X|Z)=\sum\limits_{k=1}^{K} \pi_{k}\mathcal{N}(x|\mu_{k},\Sigma_{k})$
+- sample过程
+  + 先根据先验$P(Z)$ 决定在哪个群落点，
+  + 再根据局部的似然 $P(X|Z)$ 采样，(根据这个群的均值，方差采样)
+- 直接优化 $\log P(X)$ 非常困难
+- 但是 $P(X,Z)=\prod\limits_{k=1}^K \pi_k^{Z_k}\mathcal{N}(X|\mu_{k}, \Sigma_{k})^{Z_k}$, 其中 $Z=(Z_1, Z_2, \ldots, Z_{k})$ one-hot 形式
+  + $\log P(X,Z)=\sum\limits_{k=1}^{K}Z_k[log\pi_k+\log\mathcal{N}(X|\mu_{k}, \Sigma_{k})]$ 容易优化
+#+DOWNLOADED: screenshot @ 2024-03-29 09:31:36
+#+ATTR_HTML: :width 400px :align middle
+[[file:images/2024-03-29_09-31-36_screenshot.png]]
+
+** 生成式模型的概率建模
 *** 一般的模型的概率建模方式
-- 参数化单个样本$X$的概率 $P_{\theta}(X)$，
+- 参数化单个样本$X$ 的概率 $P_{\theta}(X)$，
 - 得到若干的样本$X_1, X_2, \ldots, X_N$
 - 然后做概率的最大似然估计 $\prod_{i} P_{\theta}(X_i)$
 *** 生成式模型的概率建模方式
-**** latent variable
-- 我们看到的世界可能是高维空间到低维子空间的一个投影
-- 每个样本$X$ 对应一个latent variable $Z$
-- latent variable 不可见的
-- 完整的样本是$(X, Z)$
-**** 上帝的视角
-- 首先基于$P(Z)$ 采样$Z$ 
-- 然后再采样$X$ 基于 $P(X|Z)$
-**** 建模
-- $P(X|Z)$ 是参数化的 $P_{\theta}(X|Z)$
-- $P(Z)$ 是无参数的
-
+- $P(X)=\int_Z P_{\theta}(X,Z)=\int_{Z}P_{\theta}(X|Z)P_{\theta}(Z)dZ$
+- $P(X|Z)$ 参数化为 $P_{\theta}(X|Z)$
+  + 比如 $P(X|Z)=\mathcal{N}(\mu(Z;\theta),\Sigma(Z;\theta))$
+- $P(Z)$ 可以有参数，也可以没有参数
+   + 在VAE/diffusion model 中，$P(Z)=\mathcal{N)(0,1)$
 ** 生成模型的优化
 *** 优化的目标：
 $P(X)=\int_Z P_{\theta}(X|Z)P(Z) dZ$
@@ -136,7 +156,7 @@ $P(X)=\int_Z P_{\theta}(X|Z)P(Z) dZ$
 对于一个给定的样本 $X$,$P(X)= E\limits_{Z\sim P(Z)} P(X|Z)$
 - sample $Z_1, Z_2, \ldots, Z_n$ from $P(Z)$
 - $P(X) \approx \dfrac{1}{n} \sum_{i} P_{\theta}(X|Z_i)$
-- 在针对$\theta$ 做梯度下降
+- 再针对$\theta$ 做梯度下降
 *** 问题：
 - 维度灾难的问题： $n$ 需要极其大来得到一个准确的概率估计
 - sample的过程中 $P(X|Z_i)$ 的概率大多为0，对参数的更新没有贡献
@@ -163,12 +183,11 @@ $P(X)=\int_Z P_{\theta}(X|Z)P(Z) dZ$
 *** linear gaussian
 
 ** TODO reparameterization trick
-问题：假设我们要对$\theta$ 求导
-*** 如果pdf中没有$\theta$ 
-\[
-\mathrm{E}_{p(z)} \left[ f_\theta(z) \right]
-\]
-where \(p\) is a density. Provided we can differentiate \(f_\theta(z)\), we can easily compute the gradient:
+
+*** 问题
+- $\nabla_{\theta}\mathrm{E}_{p(z)} \left[ f_\theta(z) \right]$
+- $\nabla_{\theta}\mathrm{E}_{p_{\theta}(z)} \left[ f_\theta(z) \right]$
+*** pdf不含有参数
 \[
 \nabla_\theta \mathrm{E}_{p(z)} \left[ f_\theta(z) \right] = \nabla_\theta \int p(z)f_\theta(z)dz
 \]
@@ -178,8 +197,8 @@ where \(p\) is a density. Provided we can differentiate \(f_\theta(z)\), we can 
 \[
 = \mathrm{E}_{p(z)} \left[ \nabla_\theta f_\theta(z) \right]
 \]
-*** 如果pdf中依赖于 $\theta$ 
-
+求导穿过了期望
+*** pdf中含有参数
 \[
 \nabla_\theta \mathrm{E}_{p_\theta(z)} \left[ f_\theta(z) \right] = \nabla_\theta \int p_\theta(z)f_\theta(z)dz
 \]
@@ -192,17 +211,38 @@ where \(p\) is a density. Provided we can differentiate \(f_\theta(z)\), we can 
 \[
 = \int f_\theta(z) \nabla_\theta p_\theta(z) dz + \mathrm{E}_{p_\theta(z)} \left[ \nabla_\theta f_\theta(z) \right]
 \]
-
-这时候不再可以写成为期望的形式了，这个时候MC方法就走不下去了。
-*** 重参数化
-$\epsilon \sim p(\epsilon)$
-$z = g_\theta(\epsilon, x)$
-$\mathrm{E}_{p_\theta(z)}[f(z^{(i)})] = \mathrm{E}_{p(\epsilon)}[f(g_\theta(\epsilon, x^{(i)}))]$
+- 多出来一个左端项，不好处理
+- 进一步，如果我们基于MC来表达期望的话
+  + sample $\{Z_{i}\}_{i=1}^{n}\sim p(Z)$
+  + 得到 $\dfrac{1}{n}\sum_{i}f_\theta(Z_{i})$
+  + 如果sample 的分布 $p(Z)$ 依赖于$\theta$, 将无法求导
+*** 重参数化=积分的变量替换
+**** 依据
+- 如果 $z\sim p_z, z = g(\varepsilon), \varepsilon \sim p_\varepsilon$
+- 那么 $\mathrm{E}_{p_{z}}f(z)=\mathrm{E}_{p_\varepsilon}f(g(\varepsilon))$
+**** proof:
+- 首先 $p_\varepsilon=p_z(g(\varepsilon))g'(\varepsilon)$
+  + proof
+     $\begin{aligned}P(\varepsilon < y)
+     &= P(g^{-1}(z)<y) \\
+     &= P(z < g(y)) \\
+     & = \int_{-\infty}^{g(y)} p_z(s) ds \\
+     & \overset{s=g(\varepsilon)}{=} \int_{-\infty}^{y} p_z(g(\varepsilon))g'(\varepsilon) d\varepsilon
+     \end{aligned}$
+- 其次
+    $\begin{aligned}
+    & \quad\mathrm{E}_{p_{z}}f(z)\\
+    =&\int f(s)p_z(s) ds \\
+    =&\int f(g(\varepsilon))p_z(g(\varepsilon))g'(\varepsilon) d\varepsilon \\
+    =&\int f(g(\varepsilon))p_{\varepsilon}(\varepsilon)d\varepsilon \\
+    =& \mathrm{E}_{p_\varepsilon}f(g(\varepsilon)) \\
+    \end{aligned}$
+**** 应用
 $\begin{aligned}
-\nabla_\theta \mathrm{E}_{p_\theta(z)}[f(z^{(i)})]
-&= \nabla_\theta \mathrm{E}_{p(\epsilon)}[f(g_\theta(\epsilon, x^{(i)}))] \\
-&= \mathrm{E}_{p(\epsilon)}[\nabla_\theta f(g_\theta(\epsilon, x^{(i)}))] \\
-&\approx \frac{1}{L} \sum_{l=1}^L \nabla_\theta f(g_\theta(\epsilon^{(l)}, x^{(i)}))
+\nabla_\theta \mathrm{E}_{p_\theta(z)}[f(z)]
+&= \nabla_\theta \mathrm{E}_{p(\varepsilon)}[f(g_\theta(\varepsilon}))] \\
+&= \mathrm{E}_{p(\varepsilon)}[\nabla_\theta f(g_\theta(\varepsilon}))] \\
+&\approx \frac{1}{L} \sum_{l=1}^L \nabla_\theta f(g_\theta(\varepsilon^{(l)}))
 \end{aligned}$
 *** 类比
 可以类比于强化学习中的 policy gradient 求导
@@ -224,33 +264,52 @@ $\begin{aligned}
 - 然后基于$Z$ 重建 $\widehat{X}=f_{\theta}(Z)$
 - 计算误差 $\widehat{X}$ 和 $X$ 的误差，再反向传播回去
 ** core of variational autoencoder
-对于任意的$Q(Z|X)$， 有
-$\log P(X) - D_{KL}[Q(Z|X) \| P(Z|X)] = \mathrm{E}_{Z \sim Q}[\log P(X|Z)] - D_{KL}[Q(Z|X) \| P(Z)]$
+对于任意的$Q(Z)$， 有
+$\log P(X) - \mathcal{D}[Q(Z) \| P(Z|X)] = \mathrm{E}_{Z \sim Q}[\log P(X|Z)] - \mathcal{D}[Q(Z) \| P(Z)]$
+*** 其中涉及到的几个分布
+- $P(X)$ 似然性
+- $P(X|Z)$
+- $P(Z)$ 先验分布
+- $Q(Z)$ 
 *** proof:
 $\begin{aligned}
-\log P(X) &= E_{Q(Z|X)} \log P(X) \\
-&=E_{Q(Z|X)} \log \dfrac{P(X,Z)}{P(Z|X)} \\
-&=E_{Q(Z|X)} \log \dfrac{P(X,Z)}{P(Z|X)} \dfrac{Q(Z|X)}{Q(Z|X)} \\
-& = E_{Q(Z|X)} \log \dfrac{P(X,Z)}{Q(Z|X)} + E_{Q(Z|X)} \log \dfrac{Q(Z|X)}{P(Z|X)}\\
-& = E_{Q(Z|X)} \log \dfrac{P(X,Z)}{Q(Z|X)} + D_{KL}[Q(Z|X)||P(Z|X)]
+\log P(X) &= E_{Q(Z)} \log P(X) \\
+&=E_{Q(Z)} \log \dfrac{P(X,Z)}{P(Z|X)} \\
+&=E_{Q(Z)} \log \dfrac{P(X,Z)}{P(Z|X)} \dfrac{Q(Z)}{Q(Z)} \\
+& = E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)} + E_{Q(Z)} \log \dfrac{Q(Z)}{P(Z|X)}\\
+& = E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)} + D_{KL}[Q(Z)||P(Z|X)]
 \end{aligned}$
 *** ELBO
 由于 KL Divergence 非负，所以
 $\begin{aligned}
-\log P(X) & \ge  E_{Q(Z|X)} \log \dfrac{P(X,Z)}{Q(Z|X)}
+\log P(X) & \ge  E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)}
 \end{aligned}$
-*** 理解
+*** 理解ELBO
+- $\log P_{\theta}(X) = \mathcal{L}(Q, \theta) + \mathcal{D}[Q(Z)\|P(Z|X)}]$
+#+DOWNLOADED: screenshot @ 2024-03-29 11:29:54
+#+ATTR_HTML: :width 400px :align middle
+[[file:images/2024-03-29_11-29-54_screenshot.png]]
+- 对于任意的$Q(Z)$，$\log P_\theta(X)\ge \mathcal{L}(Q,\theta)$
+- 给定一个$\theta$, $\mathcal{L}(Q(Z), \theta)$ 是一个泛函
+  + 这也是变分的意义所在，在各种函数中寻找一个最好的。
+- 给定一个$Q(Z)$, $\mathcal{L}(Q(Z), \theta)$ 提供了一个$\theta$的函数曲线
+  + 不断地优化和提升下界 $Q(Z)$，下界成为一个代理的优化目标
+  + 通过不多优化下界来更新$\theta$
+#+DOWNLOADED: screenshot @ 2024-03-29 11:50:58
+[[file:images/2024-03-29_11-50-58_screenshot.png]]
+      
+*** 带上参数来理解
 - 变分：$Q_{\phi}(Z|X)$ 参数化
 - 左边是优化的目标似然性
 - 右边第一项是ELBO
 - 右边第一项是KL divergence
 - 我们希望不断去优化$Q_{\phi}(Z|X)$ 提升ELBO，
-- 当$Q_{\phi}(Z|X)= P(Z|X)$的时候，结束。
+- 当$Q_{\phi}(Z|X)= P(Z|X)$ 的时候，结束。
 *** 继续拆分ELBO
 $\begin{aligned}
-E_{Q(Z|X)} \log \dfrac{P(X,Z)}{Q(Z|X)} &= E_{Q(Z|X)}\log \dfrac{P(X|Z)P(Z)}{Q(Z|X)} \\
-&= E_{Q(Z|X)}\log P(X|Z) + E_{Q(Z|X)}\log \dfrac{P(Z)}{Q(Z|X)} \\
-& = E_{Q(Z|X)}\log P(X|Z) - D_{KL}[Q(Z|X) \| P(Z)]
+E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)} &= E_{Q(Z)}\log \dfrac{P(X|Z)P(Z)}{Q(Z)} \\
+&= E_{Q(Z)}\log P(X|Z) + E_{Q(Z)}\log \dfrac{P(Z)}{Q(Z)} \\
+& = E_{Q(Z)}\log P(X|Z) - D_{KL}[Q(Z) \| P(Z)]
 \end{aligned}$
 - 第一项:
   + 有了encoding,decoding的意思
@@ -258,38 +317,88 @@ E_{Q(Z|X)} \log \dfrac{P(X,Z)}{Q(Z|X)} &= E_{Q(Z|X)}\log \dfrac{P(X|Z)P(Z)}{Q(Z|
 - 第二项:
    + 正则的一个效果
 *** 最后
-$\log P(X) - \mathcal{D}[Q(Z|X) \| P(Z|X)] = \mathrm{E}_{Q(Z|X))}[\log P(X|Z)] - \mathcal{D}[Q(Z|X) \|P(Z)]$
+$\log P(X) - \mathcal{D}[Q(Z) \| P(Z|X)] = \mathrm{E}_{Q(Z))}[\log P(X|Z)] - \mathcal{D}[Q(Z) \|P(Z)]$
 ELBO
-$\log P(X) \ge \mathrm{E}_{Q(Z|X))}[\log P(X|Z)] - \mathcal{D}[Q(Z|X) \|P(Z)]$
-*** 直接来优化ELBO
+$\log P(X) \ge \mathrm{E}_{Q(Z))}[\log P(X|Z)] - \mathcal{D}[Q(Z) \|P(Z)]$
 ** 参数化ELBO
-- $Q(Z|X)=\mathcal{N}(Z|\mu(X;\phi), \Sigma(X;\phi))$ 每个样本对应一个独立的正态分布
-- $P(X|Z)=\mathcal{N}(X|f_{\theta}(Z), 1)$
-- $\log P(X|Z)\sim \|X-f_{\theta}(Z)\|^{2}$ 
-- $\log P(X) \ge \mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]$
+$\log P(X) \ge \mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]$
+
+*** 将Q,P 做参数化
+- $Q_{\phi}(Z|X)=\mathcal{N}(Z|\mu_{\phi}(X), \Sigma_{\phi}(X))$
+  + 每个样本对应一个独立的正态分布
+  + $\mu_{\phi}(X)$ DNN
+  + $\sigma_{\phi}(X)$ DNN
+- $P_{\theta}(X|Z)=\mathcal{N}(X|f_{\theta}(Z), 1)$
+   + $f_{\theta}(Z)$ DNN
+*** 其他
 - $P(Z)=\mathcal{N}(0,1)$
-**** 第二项
-两个gauss分布之间的KL散度可以显式的计算出来
+- $\log P(X|Z)\sim \|X-f_{\theta}(Z)\|^{2}$ 
+*** 两个gauss分布之间的KL散度可以显式计算
+
+*** 下一步：求导
 ** 重参数化=积分的变量替换
-- sample
-  + sample $Z_{i}$ from $Q_{\phi}(Z|X)$
-  + $\dfrac{1}{n}\sum log P_{\theta}(X_i|Z_{i})$
-- 问题
-  + 采样依赖于参数$\phi$
-  + 如何对$\phi$ 求导
-     
+*** why
 - $E_{Q_{\phi}(Z|X)}\log P_{\theta}(X|Z)$ 的梯度计算问题
   + $\nabla_{\phi} E_{Q_{\phi}(Z|X)}\log P_{\theta}(X|Z)$
-  + 期望依赖的随机变量依赖于参数，无法对参数求导
+  + 期望依赖的分布依赖于参数$\phi$
+*** how
 - 重参数化 = 数学积分中的变量替换
-  + $Z\sim Q(Z|X)=\mathcal{N}(Z|\mu(X;\theta), \Sigma(X;\theta))$ 
-  + $Z=\mu(X)+\Sigma^{1/2}(X)*\varepsilon$
-  + $E_{Q(Z|X)}\log p(X|Z)=E_{\varepsilon}\log p(X|Z(\varepsilon))$
-** 建立新的优化目标
-我们来计算一个新的东西：$E$
+  + $Z\sim Q(Z|X)=\mathcal{N}(Z|\mu(X;\phi), \Sigma(X;\phi))$ 
+  + $Z=\mu(X,\phi)+\Sigma^{1/2}(X,\phi)*\varepsilon$
+  + $E_{Q_{\phi}(Z|X)}\log P(X|Z)=E_{\varepsilon}\log P(X|\mu(X,\phi)+\Sigma^{1/2}(X,\phi)*\varepsilon))$
+- 最后期望的分布不再依赖于参数
+- 求导此时可以穿过期望
+   
+   $\begin{aligned}
+   & \nabla_{\phi} E_{Q_{\phi}(Z|X)}\log P(X|Z)\\
+   = &\nabla_{\phi} E_{\varepsilon}\log P(X|\mu(X,\phi)+\Sigma^{1/2}(X,\phi)*\varepsilon)) \\
+   = &E_{\varepsilon} \nabla_{\phi} \log P(X|\mu(X,\phi)+\Sigma^{1/2}(X,\phi)*\varepsilon))
+   \end{aligned}$
+*** 结果
+
+** 基于MC的优化算法
+$\begin{aligned}
+\mathcal{L} &=
+\mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]\\
+&=\mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathrm{E}_{Q_{\phi}(Z|X)} \dfrac{Q_{\phi}(Z|X)}{P(Z)}\\
+&=\mathrm{E}_{\varepsilon}[\log P_{\theta}(X|Z(\phi,\varepsilon))] - \mathrm{E}_{\varepsilon} \dfrac{Q_{\phi}(Z|X)}{P(Z)}\\
+\end{aligned}$
+简化一下
+$\begin{aligned}
+\mathcal{L} &=
+\mathrm{E}_{\varepsilon}[\log P_{\theta}(X|Z(X, \phi,\varepsilon)) - Q_{\phi}(Z(X, \phi, \varepsilon)|X)]\\
+\end{aligned}$
+
+$\log P(X) \ge \mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]$
+
+我们来做一个简化：
+$\mathcal{L}(\theta, \phi, X)=
+\dfrac{1}{L}\sum\limits_{l=1}^{L} \log P_{\theta}(X, Z^{l})}$
+
+** 
+
+
+** 理解encoder和decoder
+*** encoder $Q_{\psi}(Z|X)$
+训练好之后，
+*** decoder $P_{\theta}(X|Z)$
+** VAE训练好后怎么用？
+*** 直接生成
+这个时候可以抛弃encoder了 $Q(Z|X)$
+- sample $Z$ from $P(Z)$
+- 确定性函数做一个映射 $f(Z)$
+  + 虽然 $f(Z)$ 只是gauss的 $\mu$ 参数，无需再次sample
+*** 重构原来的图像
+encoder 和decoder 都需要使用
+- 基于Q(Z
+** open problems
+*** 如何来理解整个训练过程中的噪音？
+基于sample得到了$Z$，基于加入噪音后的sample来还原图像，这是一种提升模型鲁棒性的方法。
+*** 如何来理解训练完了以后，基于$P(Z)$ 来sample？
+- 正常使用生成工具的时候，原图是没有的
+   + 你需要基于给与的条件或者是无中生有。
 ** VAE 图示
 * VAE代码实现
-** VAE代码实现
 ** ELBO backbone
 *** 背景
 $P(x)=\int P(x|z) p(z)$
@@ -316,4 +425,30 @@ $\log P(X) - D_{KL}[Q(z|X) \| P(z|X)] = \mathbb{E}_{z \sim Q}[\log P(X|z)] - D_{
 *** 建模两步
 - sample z from $P(z)$
 - sample x from $P(z|x)$
-*
+** 图像生成的两种思路
+*** 自回归的方式
+- 像素级别的自回归
+- PixelRNN/PixelCNN
+*** patch级别的自回归
+* todos
+** 完成理论的讲解
+** 脉络的梳理
+1. latent variable
+2. 积分存在，优化困难
+3. vae 出现
+4. ELBO 来优化，为什么基于lower bound可以优化
+5. reparametrization trick
+6. vae 在训练和预测的区别
+7. vae为什么丢弃掉 encoder, 直接基于一个全新的prior来sample P(Z)
+8. vae的训练脉络
+   1. 直接sample p(z) 效率很低，没法做
+
+   2. 最好从P(Z|X)中sample，不能
+
+   3. 从Q(Z|X) 从sample，Q(Z|X)会 converge 到P(Z|X)
+
+   4. Q(Z|X) 做了编码，然后 P(X|Z) 来解码
+
+9. loss的构建：
+   1. z生成 x，比较一下x的似然性，l2 loss, 或者说
+      直接来比较 f(Z) 和 x的距离
