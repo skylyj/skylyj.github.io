@@ -279,9 +279,29 @@ $\begin{aligned}
      = & E_{\tau \sim \pi_{\theta}(\tau)}\left[ \nabla_{\theta}\log \pi_{\theta}(\tau)r(\tau) \right]
      \end{aligned}$
 ** 变分
-*** 泛函：
+*** 泛函 fuctionals：
+- 输入是一个函数，输出一个值
+- 例如熵的定义： $H(p)=\int p(x) \log p(x)dx$
+- 我们经常做泛函的极小化
+*** DNN 求解是在做泛函极小化的事情
+- 给定数据集合 $D={(x_i,y_i)|i=1,\ldots, N}
+- loss
+   
+   $J(f) = \sum\limits_{(x_i,y_i)\in D} L(f(x_i), y_i)$
+- 在函数空间$F$ 中寻找极小化
+   
+   $\min\limits_{f\in F} J(f)$
+- DNN 参数化
+   
+   $\min\limits_{\theta} J(\theta)$
 
-*** 变分：
+*** 变分 calculus of variations
+- $\log P(X) = \mathcal{L} (Q) + \mathcal{D}(Q\|P)$
+- $\mathcal{L}(Q) = \int Q(Z) \log \dfrac{P(X,Z)}{Q(Z)}dZ$
+- $\mathcal{D}(Q\|P) = \int Q(Z) \log\dfrac{Q(Z)}{P(Z|X)} dZ$
+- 寻找$Q(Z)$ 中最大化 $\mathcal{L}(Q)$
+- 参数化 $Q_{\phi}(Z)$ 最大化 $\mathcal{L}(Q)$
+   $\max\limits_{\phi}\mathcal{L}(Q)$
 * VAE
 ** VAE 的思路
 #+DOWNLOADED: screenshot @ 2024-03-28 23:14:24
@@ -509,3 +529,4 @@ $\mathcal{L}(\theta, \phi, X)=
 直接来比较 f(Z) 和 x的距离
 *** TODO 我们的问题的优化难点在哪里？
 **** 我们要把不确定的东西引入到问题的优化过程中来。
+**** TODO variational inference
