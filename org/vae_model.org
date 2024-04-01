@@ -10,6 +10,7 @@
 - 参考：
   + https://erdem.pl/2023/11/step-by-step-visual-introduction-to-diffusion-models
   + https://medium.com/@kemalpiro/step-by-step-visual-introduction-to-diffusion-models-235942d2f15c
+
 ** 关于概率密度的估计
 *** 机器学习的几个topic
 - 分类
@@ -196,14 +197,14 @@ $E_{X\sim p(x)} f(X)$
   + sample失效
 ** 高斯分布的性质
 *** 定义
+$X\sim \mathcal{N}(\mu,\Sigma)$
 *** 性质
-- 高斯随机变量线性变换之后还是高斯分布
+- 高斯分布的线性组合还是高斯分布
 - 先验gauss，似然高斯，后验依然是高斯
 - KL divergence
    $D\left[ \mathcal{N}(\mu_0, \Sigma_0) \parallel \mathcal{N}(\mu_1, \Sigma_1) \right] = \frac{1}{2} \left( \text{tr} \left( \Sigma_1^{-1}\Sigma_0 \right) + (\mu_1 - \mu_0)^T \Sigma_1^{-1} (\mu_1 - \mu_0) - k + \log \left( \dfrac{\det\Sigma_1}{\det\Sigma_0} \right) \right)$
 - KL
    $D\left[ \mathcal{N}(\mu(X), \Sigma(X)) \parallel \mathcal{N}(0, I) \right] = \frac{1}{2} \left( \text{tr}(\Sigma(X)) + (\mu(X))^T (\mu(X)) - k - \log \det (\Sigma(X)) \right)$
-*** linear gaussian
 
 ** 重参数化
 *** 问题
@@ -239,12 +240,22 @@ $E_{X\sim p(x)} f(X)$
   + 得到 $\dfrac{1}{n}\sum_{i}f_\theta(Z_{i})$
   + 如果sample 的分布 $p(Z)$ 依赖于$\theta$, 将无法求导
 *** 重参数化=积分的变量替换
-**** 依据
+**** 什么是reparameterization trick?
 - 如果 $z\sim p_z, z = g(\varepsilon), \varepsilon \sim p_\varepsilon$
 - 那么 $\mathrm{E}_{p_{z}}f(z)=\mathrm{E}_{p_\varepsilon}f(g(\varepsilon))$
+**** 解读
+- 期望依赖的随机变量换了，pdf也换了
+- 旧的pdf中可能不好处理，但是新的pdf比较容易处理
+**** 应用
+如果期望依赖的pdf中有参数，而我们需要针对这个期望对参数求导
+$\begin{aligned}
+\nabla_\theta \mathrm{E}_{p_\theta(z)}[f(z)]
+&= \nabla_\theta \mathrm{E}_{p(\varepsilon)}[f(g_\theta(\varepsilon}))] \\
+&= \mathrm{E}_{p(\varepsilon)}[\nabla_\theta f(g_\theta(\varepsilon}))] \\
+&\approx \frac{1}{L} \sum_{l=1}^L \nabla_\theta f(g_\theta(\varepsilon^{(l)}))
+\end{aligned}$
 **** proof:
-- 首先 $p_\varepsilon=p_z(g(\varepsilon))g'(\varepsilon)$
-  + proof
+- 首先，两个pdf之间满足 $p_\varepsilon=p_z(g(\varepsilon))g'(\varepsilon)$
      $\begin{aligned}P(\varepsilon < y)
      &= P(g^{-1}(z)<y) \\
      &= P(z < g(y)) \\
@@ -259,13 +270,6 @@ $E_{X\sim p(x)} f(X)$
     =&\int f(g(\varepsilon))p_{\varepsilon}(\varepsilon)d\varepsilon \\
     =& \mathrm{E}_{p_\varepsilon}f(g(\varepsilon)) \\
     \end{aligned}$
-**** 应用
-$\begin{aligned}
-\nabla_\theta \mathrm{E}_{p_\theta(z)}[f(z)]
-&= \nabla_\theta \mathrm{E}_{p(\varepsilon)}[f(g_\theta(\varepsilon}))] \\
-&= \mathrm{E}_{p(\varepsilon)}[\nabla_\theta f(g_\theta(\varepsilon}))] \\
-&\approx \frac{1}{L} \sum_{l=1}^L \nabla_\theta f(g_\theta(\varepsilon^{(l)}))
-\end{aligned}$
 *** 类比
 可以类比于强化学习中的 policy gradient 求导
    $J(\theta)= E_{\tau\sim \pi_{\theta}(\tau)} r(\tau)$
@@ -275,7 +279,9 @@ $\begin{aligned}
      = & E_{\tau \sim \pi_{\theta}(\tau)}\left[ \nabla_{\theta}\log \pi_{\theta}(\tau)r(\tau) \right]
      \end{aligned}$
 ** 变分
-*** 定义：什么是变分？
+*** 泛函：
+
+*** 变分：
 * VAE
 ** VAE 的思路
 #+DOWNLOADED: screenshot @ 2024-03-28 23:14:24
@@ -286,7 +292,7 @@ $\begin{aligned}
 - 而从$Q_{\phi}(Z|X)$ 中sample $Z$，提升$P(X|Z)$ 的概率
 - 然后基于$Z$ 重建 $\widehat{X}=f_{\theta}(Z)$
 - 计算误差 $\widehat{X}$ 和 $X$ 的误差，再反向传播回去
-** core of variational autoencoder
+** core of VAE
 对于任意的$Q(Z)$， 有
 $\log P(X) - \mathcal{D}[Q(Z) \| P(Z|X)] = \mathrm{E}_{Z \sim Q}[\log P(X|Z)] - \mathcal{D}[Q(Z) \| P(Z)]$
 *** 其中涉及到的几个分布
@@ -345,61 +351,72 @@ ELBO
 $\log P(X) \ge \mathrm{E}_{Q(Z))}[\log P(X|Z)] - \mathcal{D}[Q(Z) \|P(Z)]$
 ** 参数化ELBO
 $\log P(X) \ge \mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]$
-
 *** 将Q,P 做参数化
 - $Q_{\phi}(Z|X)=\mathcal{N}(Z|\mu_{\phi}(X), \Sigma_{\phi}(X))$
   + 每个样本对应一个独立的正态分布
   + $\mu_{\phi}(X)$ DNN
-  + $\sigma_{\phi}(X)$ DNN
+  + $\Sigma_{\phi}(X)$ DNN
 - $P_{\theta}(X|Z)=\mathcal{N}(X|f_{\theta}(Z), 1)$
    + $f_{\theta}(Z)$ DNN
 *** 其他
 - $P(Z)=\mathcal{N}(0,1)$
-- $\log P(X|Z)\sim \|X-f_{\theta}(Z)\|^{2}$ 
+- $\log P(X|Z)\sim \|X-f_{\theta}(Z)\|^{2}$
 *** 两个gauss分布之间的KL散度可以显式计算
+$\begin{aligned}
+&\mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]\\
+=& D\left[ \mathcal{N}(\mu_{\phi}(X), \Sigma_{\theta}(X)) \parallel \mathcal{N}(0, I) \right] \\
+=& \frac{1}{2} \left( \text{tr}(\Sigma_{\phi}(X)) + (\mu_{\phi}(X))^T (\mu(X)) - k - \log \det (\Sigma_{\phi}(X)) \right)
+\end{aligned}$
+*** 前向的步骤
 
+#+DOWNLOADED: screenshot @ 2024-04-01 16:39:15
+#+ATTR_HTML: :width 600px :align middle
+[[file:images/2024-04-01_16-39-15_screenshot.png]]
+
+*** 整体求导处理的思路：
+我们有两个参数$\phi, \theta$, $\phi$ 出现在变分的候选函数里面，$\theta$出现在decoder里面。
+- 第一项利用MC 近似期望，
+- 第二项基于显式的计算来求导
 *** 下一步：求导
-** 重参数化=积分的变量替换
+** 重参数化
 *** why
 - $E_{Q_{\phi}(Z|X)}\log P_{\theta}(X|Z)$ 的梯度计算问题
   + $\nabla_{\phi} E_{Q_{\phi}(Z|X)}\log P_{\theta}(X|Z)$
   + 期望依赖的分布依赖于参数$\phi$
 *** how
-- 重参数化 = 数学积分中的变量替换
-  + $Z\sim Q(Z|X)=\mathcal{N}(Z|\mu(X;\phi), \Sigma(X;\phi))$ 
-  + $Z=\mu(X,\phi)+\Sigma^{1/2}(X,\phi)*\varepsilon$
+- 重参数化
+  + $Z\sim Q_{\phi}(Z|X)=\mathcal{N}(Z|\mu(X;\phi), \Sigma(X;\phi))$ 
+  + $Z=\mu(X,\phi)+\Sigma^{1/2}(X,\phi)*\varepsilon, \quad \varepsilon \sim N(0,1)$
   + $E_{Q_{\phi}(Z|X)}\log P(X|Z)=E_{\varepsilon}\log P(X|\mu(X,\phi)+\Sigma^{1/2}(X,\phi)*\varepsilon))$
 - 最后期望的分布不再依赖于参数
 - 求导此时可以穿过期望
    
    $\begin{aligned}
-   & \nabla_{\phi} E_{Q_{\phi}(Z|X)}\log P(X|Z)\\
-   = &\nabla_{\phi} E_{\varepsilon}\log P(X|\mu(X,\phi)+\Sigma^{1/2}(X,\phi)*\varepsilon)) \\
-   = &E_{\varepsilon} \nabla_{\phi} \log P(X|\mu(X,\phi)+\Sigma^{1/2}(X,\phi)*\varepsilon))
+   & \nabla_{\phi} E_{Q_{\phi}(Z|X)}\log P_{\theta}(X|Z)\\
+   = &\nabla_{\phi} E_{\varepsilon}\log P_{\theta}(X|\mu(X,\phi)+\Sigma^{1/2}(X,\phi)*\varepsilon) \\
+   = &E_{\varepsilon} \nabla_{\phi} \log P_{\theta}(X|\mu(X,\phi)+\Sigma^{1/2}(X,\phi)*\varepsilon)
    \end{aligned}$
-*** 结果
-
+   
 ** 基于MC的优化算法
+ELBO，我们有两个参数$\phi, \theta$
+
 $\begin{aligned}
 \mathcal{L} &=
 \mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]\\
-&=\mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathrm{E}_{Q_{\phi}(Z|X)} \dfrac{Q_{\phi}(Z|X)}{P(Z)}\\
-&=\mathrm{E}_{\varepsilon}[\log P_{\theta}(X|Z(\phi,\varepsilon))] - \mathrm{E}_{\varepsilon} \dfrac{Q_{\phi}(Z|X)}{P(Z)}\\
-\end{aligned}$
-简化一下
-$\begin{aligned}
-\mathcal{L} &=
-\mathrm{E}_{\varepsilon}[\log P_{\theta}(X|Z(X, \phi,\varepsilon)) - Q_{\phi}(Z(X, \phi, \varepsilon)|X)]\\
+&=\mathrm{E}_{\varepsilon}[\log P_{\theta}(X|Z(\phi,\varepsilon))] - \mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]\\
 \end{aligned}$
 
-$\log P(X) \ge \mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]$
-
-我们来做一个简化：
-$\mathcal{L}(\theta, \phi, X)=
-\dfrac{1}{L}\sum\limits_{l=1}^{L} \log P_{\theta}(X, Z^{l})}$
+应用MC方法
+1. sample $\varepsilon_l \sim N(0,1), Z_l=\mu(X,\phi)+\Sigma^{1/2}(X,\phi)*\varepsilon_{l}$
+2. 计算ELBO
+   $\mathcal{L}(\theta, \phi, X)=\dfrac{1}{L}\sum\limits_{l=1}^{L} \log P_{\theta}(X| Z_{l})}$
+3. 对$\phi, \theta$ 求导
 
 ** 
 
+** 
+
+** 
 
 ** 理解encoder和decoder
 *** encoder $Q_{\psi}(Z|X)$
@@ -453,25 +470,42 @@ $\log P(X) - D_{KL}[Q(z|X) \| P(z|X)] = \mathbb{E}_{z \sim Q}[\log P(X|z)] - D_{
 - 像素级别的自回归
 - PixelRNN/PixelCNN
 *** patch级别的自回归
+*** 基于MC的优化算法
+$\begin{aligned}
+\mathcal{L} &=
+\mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]\\
+&=\mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathrm{E}_{Q_{\phi}(Z|X)} \dfrac{Q_{\phi}(Z|X)}{P(Z)}\\
+&=\mathrm{E}_{\varepsilon}[\log P_{\theta}(X|Z(\phi,\varepsilon))] - \mathrm{E}_{\varepsilon} \dfrac{Q_{\phi}(Z|X)}{P(Z)}\\
+\end{aligned}$
+简化一下
+$\begin{aligned}
+\mathcal{L} &=
+\mathrm{E}_{\varepsilon}[\log P_{\theta}(X|Z(X, \phi,\varepsilon)) - Q_{\phi}(Z(X, \phi, \varepsilon)|X)]\\
+\end{aligned}$
+
+$\log P(X) \ge \mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]$
+
+我们来做一个简化：
+$\mathcal{L}(\theta, \phi, X)=
+\dfrac{1}{L}\sum\limits_{l=1}^{L} \log P_{\theta}(X, Z^{l})}$
+
 * todos
 ** 完成理论的讲解
 ** 脉络的梳理
-1. latent variable
-2. 积分存在，优化困难
-3. vae 出现
-4. ELBO 来优化，为什么基于lower bound可以优化
-5. reparametrization trick
-6. vae 在训练和预测的区别
-7. vae为什么丢弃掉 encoder, 直接基于一个全新的prior来sample P(Z)
-8. vae的训练脉络
-   1. 直接sample p(z) 效率很低，没法做
-
-   2. 最好从P(Z|X)中sample，不能
-
-   3. 从Q(Z|X) 从sample，Q(Z|X)会 converge 到P(Z|X)
-
-   4. Q(Z|X) 做了编码，然后 P(X|Z) 来解码
-
-9. loss的构建：
-   1. z生成 x，比较一下x的似然性，l2 loss, 或者说
-      直接来比较 f(Z) 和 x的距离
+*** TODO latent variable
+*** TODO 积分存在，优化困难
+*** TODO vae 出现
+*** TODO ELBO 来优化，为什么基于lower bound可以优化
+*** DONE reparametrization trick
+*** TODO vae 在训练和预测的区别
+*** TODO vae为什么丢弃掉 encoder, 直接基于一个全新的prior来sample P(Z)
+*** TODO vae的训练脉络
+**** 直接sample p(z) 效率很低，没法做
+**** 最好从P(Z|X)中sample，不能
+**** 从Q(Z|X) 从sample，Q(Z|X)会 converge 到P(Z|X)
+**** Q(Z|X) 做了编码，然后 P(X|Z) 来解码
+*** TODO loss的构建：
+**** z生成 x，比较一下x的似然性，l2 loss, 或者说
+直接来比较 f(Z) 和 x的距离
+*** TODO 我们的问题的优化难点在哪里？
+**** 我们要把不确定的东西引入到问题的优化过程中来。
