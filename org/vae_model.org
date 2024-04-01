@@ -29,9 +29,16 @@
   + 用户特征的分布？
   + query,doc 的特征分布？
 ** 概率密度估计
-机器学习中另外一个大的topic是概率密度的估计：
-*** 一种简单的方式：假设概率分布的pdf，然后做参数估计
-  - 假设这个分布是$\mathcal{N}(\mu,\Sigma)$，来推断$\mu, \Sigma$
+*** 目标
+- 做什么：对样本的概率分布做估计
+- 目的：可以生成新的类似的样本出来
+- 例如：
+  + 图像：给一堆图像，生成类似的图像出来。
+  + 对 $P(X)$ 建模，估计图像分布的一个概率
+  + $X$ 是输入的一幅原始的图像
+*** 一种简单的方式
+- 假设概率分布的pdf，然后做参数估计
+- 假设这个分布是$\mathcal{N}(\mu,\Sigma)$，来推断$\mu, \Sigma$
 *** 基于自身$X$ 的序列结构，做条件概率展开
   - language model:
     + token粒度，每个token有离散的值
@@ -42,8 +49,7 @@
     + pixelRNN
     + 效率的问题: 1920*1080=207,3600
 *** 概率密度估计有什么用？
-- 建模出来一个概率密度函数pdf $P_{\theta}(x)$ 
-  + 知道什么样的x概率低，知道什么样的x概率高
+- 知道什么样的x概率低，知道什么样的x概率高
 - 基于概率采样，我们可以生成更多的类似的，不在样本集合中的 X
 - 图片：
    比如登录的图片认证，生成若干旋转的文字，角度等等
@@ -279,10 +285,10 @@ $\begin{aligned}
      = & E_{\tau \sim \pi_{\theta}(\tau)}\left[ \nabla_{\theta}\log \pi_{\theta}(\tau)r(\tau) \right]
      \end{aligned}$
 ** 变分
-*** 泛函 fuctionals：
+*** 泛函 fuctional
 - 输入是一个函数，输出一个值
-- 例如熵的定义： $H(p)=\int p(x) \log p(x)dx$
-- 我们经常做泛函的极小化
+- 例如熵的定义：$H(p)=\int p(x) \log p(x)dx$
+- 变分：是在一个函数空间中针对一个泛函来寻求极值。
 *** DNN 求解是在做泛函极小化的事情
 - 给定数据集合 $D={(x_i,y_i)|i=1,\ldots, N}
 - loss
@@ -295,13 +301,7 @@ $\begin{aligned}
    
    $\min\limits_{\theta} J(\theta)$
 
-*** 变分 calculus of variations
-- $\log P(X) = \mathcal{L} (Q) + \mathcal{D}(Q\|P)$
-- $\mathcal{L}(Q) = \int Q(Z) \log \dfrac{P(X,Z)}{Q(Z)}dZ$
-- $\mathcal{D}(Q\|P) = \int Q(Z) \log\dfrac{Q(Z)}{P(Z|X)} dZ$
-- 寻找$Q(Z)$ 中最大化 $\mathcal{L}(Q)$
-- 参数化 $Q_{\phi}(Z)$ 最大化 $\mathcal{L}(Q)$
-   $\max\limits_{\phi}\mathcal{L}(Q)$
+
 * VAE
 ** VAE 的思路
 #+DOWNLOADED: screenshot @ 2024-03-28 23:14:24
@@ -312,6 +312,22 @@ $\begin{aligned}
 - 而从$Q_{\phi}(Z|X)$ 中sample $Z$，提升$P(X|Z)$ 的概率
 - 然后基于$Z$ 重建 $\widehat{X}=f_{\theta}(Z)$
 - 计算误差 $\widehat{X}$ 和 $X$ 的误差，再反向传播回去
+** variational inference
+- $\log P(X) = \mathcal{L} (Q) + \mathcal{D}(Q\|P)$
+- $\mathcal{L}(Q) = \int Q(Z) \log \dfrac{P(X,Z)}{Q(Z)}dZ$
+- $\mathcal{D}(Q\|P) = \int Q(Z) \log\dfrac{Q(Z)}{P(Z|X)} dZ$
+- 寻找$Q(Z)$ 中最大化 $\mathcal{L}(Q)$
+- 参数化 $Q_{\phi}(Z)$ 最大化 $\mathcal{L}(Q)$
+   $\max\limits_{\phi}\mathcal{L}(Q)$
+*** 证明
+$\begin{aligned}
+\log P(X) &= E_{Q(Z)} \log P(X) \\
+&=E_{Q(Z)} \log \dfrac{P(X,Z)}{P(Z|X)} \\
+&=E_{Q(Z)} \log \dfrac{P(X,Z)}{P(Z|X)} \dfrac{Q(Z)}{Q(Z)} \\
+& = E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)} + E_{Q(Z)} \log \dfrac{Q(Z)}{P(Z|X)}\\
+& = E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)} + \mathcal{D}[Q(Z)||P(Z|X)]
+\end{aligned}$
+
 ** core of VAE
 对于任意的$Q(Z)$， 有
 $\log P(X) - \mathcal{D}[Q(Z) \| P(Z|X)] = \mathrm{E}_{Z \sim Q}[\log P(X|Z)] - \mathcal{D}[Q(Z) \| P(Z)]$
@@ -321,18 +337,12 @@ $\log P(X) - \mathcal{D}[Q(Z) \| P(Z|X)] = \mathrm{E}_{Z \sim Q}[\log P(X|Z)] - 
 - $P(Z)$ 先验分布
 - $Q(Z)$ 
 *** proof:
-$\begin{aligned}
-\log P(X) &= E_{Q(Z)} \log P(X) \\
-&=E_{Q(Z)} \log \dfrac{P(X,Z)}{P(Z|X)} \\
-&=E_{Q(Z)} \log \dfrac{P(X,Z)}{P(Z|X)} \dfrac{Q(Z)}{Q(Z)} \\
-& = E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)} + E_{Q(Z)} \log \dfrac{Q(Z)}{P(Z|X)}\\
-& = E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)} + D_{KL}[Q(Z)||P(Z|X)]
-\end{aligned}$
 *** ELBO
 由于 KL Divergence 非负，所以
 $\begin{aligned}
 \log P(X) & \ge  E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)}
 \end{aligned}$
+** 理解ELBO
 *** 理解ELBO
 - $\log P_{\theta}(X) = \mathcal{L}(Q, \theta) + \mathcal{D}[Q(Z)\|P(Z|X)}]$
 #+DOWNLOADED: screenshot @ 2024-03-29 11:29:54
@@ -341,7 +351,7 @@ $\begin{aligned}
 - 对于任意的$Q(Z)$，$\log P_\theta(X)\ge \mathcal{L}(Q,\theta)$
 - 给定一个$\theta$, $\mathcal{L}(Q(Z), \theta)$ 是一个泛函
   + 这也是变分的意义所在，在各种函数中寻找一个最好的。
-- 给定一个$Q(Z)$, $\mathcal{L}(Q(Z), \theta)$ 提供了一个$\theta$的函数曲线
+- 给定一个$Q(Z)$, $\mathcal{L}(Q(Z), \theta)$ 提供了一个$\theta$ 的函数曲线
   + 不断地优化和提升下界 $Q(Z)$，下界成为一个代理的优化目标
   + 通过不多优化下界来更新$\theta$
 #+DOWNLOADED: screenshot @ 2024-03-29 11:50:58
@@ -388,7 +398,6 @@ $\begin{aligned}
 =& \frac{1}{2} \left( \text{tr}(\Sigma_{\phi}(X)) + (\mu_{\phi}(X))^T (\mu(X)) - k - \log \det (\Sigma_{\phi}(X)) \right)
 \end{aligned}$
 *** 前向的步骤
-
 #+DOWNLOADED: screenshot @ 2024-04-01 16:39:15
 #+ATTR_HTML: :width 600px :align middle
 [[file:images/2024-04-01_16-39-15_screenshot.png]]
@@ -431,13 +440,6 @@ $\begin{aligned}
 2. 计算ELBO
    $\mathcal{L}(\theta, \phi, X)=\dfrac{1}{L}\sum\limits_{l=1}^{L} \log P_{\theta}(X| Z_{l})}$
 3. 对$\phi, \theta$ 求导
-
-** 
-
-** 
-
-** 
-
 ** 理解encoder和decoder
 *** encoder $Q_{\psi}(Z|X)$
 训练好之后，
