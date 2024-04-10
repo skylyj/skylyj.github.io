@@ -11,11 +11,11 @@
   + https://erdem.pl/2023/11/step-by-step-visual-introduction-to-diffusion-models
   + https://medium.com/@kemalpiro/step-by-step-visual-introduction-to-diffusion-models-235942d2f15c
 
-** 关于概率密度的估计
+** 生成模型
 *** 机器学习的几个常见的topic
 - 分类
 - 回归
-- 概率密度估计
+- 概率密度估计：生成模型关注的事情
 *** 我们熟悉的概率建模
 - 基于特征来推断目标事件发生的概率。P(label|特征）
 - ctr 里面：基于用户和item的特征信息来推测用户点击item的概率
@@ -28,8 +28,8 @@
 - 我们很少需要对特征的分布直接建模
   + 用户特征的分布？
   + query,doc 的特征分布？
-** 概率密度估计
-*** 目标
+
+*** 生成模型在做什么？
 - 做什么：
   + 对样本$X$ 的概率分布$P(X)$ 做估计
   + 知道什么样的样本出现的概率高，什么样的样本出现的概率低
@@ -43,7 +43,17 @@
      1 & 1 & 3 & 255 \\
      1 & 1 & 3 & 255 \\
      \end{pmatrix}$
-*** 概率密度估计有什么用？
+*** 不确定性描述
+我看到的都是一些实实在在的东西，一个图像怎么用概率来描述？
+- 可以认为这个世界上的一切都是不确定的，都是上帝在采样丢色子的结果。
+  - 比如相关性性判断，表面上是确定性的，依然可以表达为概率形式
+     P(相关|query, 广告)
+  - 一张图像，我们可以认为是采样的结果，
+    + 一张灰度图像可以看做是一个n*n维度的向量，
+    + 按照像素值来组织
+    + 整体是一个gauss分布，
+    + 简单的可以认为是各向同性的，像素之间相互独立。
+*** 生成模型的目的
 - 对图像的likilihood给出一个客观的判断
   + 知道什么样的x概率低，知道什么样的x概率高
 - 基于概率采样生成
@@ -54,137 +64,42 @@
   + conditional 的时候会产生更大的价值
     + 文本：LLM GPT做的就是概率密度估计的事情，可以逐个token来生成
     + 图片：控制的图像生成，P(x|c), 文本到图像的生成
-** 不确定性描述
-我看到的都是一些实实在在的东西，一个图像怎么用概率来描述？
-- 可以认为这个世界上的一些都是不确定的，都是上帝在采样丢色子的结果。
-  - 比如相关性性判断，表面上是确定性的，依然可以表达为概率形式
-     P(相关|query, 广告)
-  - 一张图像，我们可以认为是采样的结果，
-    + 一张灰度图像可以看做是一个n*n维度的向量，
-    + 按照像素值来组织
-    + 整体是一个gauss分布，
-    + 简单的可以认为是各向同性的，像素之间相互独立。
-** 如何来建模概率密度
-*** 直接做参数估计
-- 假设概率分布的pdf，然后做参数估计
-- 假设这个分布是$\mathcal{N}(\mu,\Sigma)$，来推断$\mu, \Sigma$
-*** 基于序列结构做条件概率展开
-- language model:
-    + $P(x_{1}, x_{2},\ldots, x_{n})= P(x_{1})P(x_{2}|x_{1})\ldots P(x_{n}|x_{1,\ldots,n-1})$
-    + autoregressive
-- image model?
+** 如何来对概率密度做建模
+我们会用DNN来建模函数密度函数$p_{\theta}(x)$ 
+*** 概率建模的难点在哪里？
+- $p_{\theta}(x)\ge 0, \forall x \in \mathcal{X}$ 
+- $\int p_{\theta}(x) dx=1, \forall \theta \in \Theta$ ✅ 真正的难点
+- $\nabla_{\theta} log P_{\theta}(x)$ 是否容易计算
+  + $P(x)=\int p(x,z) dz$
+- 能够容易sample 采样生成
+*** 限定概率分布的形状，对pdf参数做函数化
+- 假设这个分布是 $\mathcal{N}(\mu_{\theta}(x),\Sigma_{\theta}(x))$
+- 来推断 $\mu_{\theta}, \Sigma_{\theta}$
+*** 限定序列结构做条件概率展开
+- 依赖：
+  + $X$ 是可以序列化的 $X=(x_{1}, x_{2},\ldots, x_{n})$
+  + $P(x_{1}, x_{2},\ldots, x_{n})= P(x_{1})P(x_{2}|x_{1})\ldotsP(x_{n}|x_{1,\ldots,n-1})$
+- 对中间的每个条件概率项做好归一化即可
+  + $\int P(x_i|x_{1,\ldots,i-1}) dx_i=1$
+  + $\int P(x_{1}, x_{2},\ldots, x_{n}) dx_1dx_2\cdots dx_n=1$
+  + 在DNN中，表现为最后一层做softmax
+- autoregressive models
+- 例子：
+  + language model
+  + image model?
     + pixelRNN
     + 效率的问题: 1920*1080=207,3600
-** 生成模型直接建模
-*** 如果直接建模$P_{\theta}(x)$, 使用范围局限
-- 基于这个$P_{\theta}(x)$ 采样
-- 无法做更多的复杂生成的事情，无法对对生成做细粒度操控
-- 比如，
-    + 我想加入一段文字的描述来生成
-    + 我想生成某种特定类型，特定的风格的图片
-*** 直接建模的难点？
-- 图像本省的高维特性
-- sample 的效率：高维空间中的sample效率会很低
-- 你的建模需要能建模出来像素之间的依赖性
-- 直接来建模pdf是一个非常困难的事情
-
-* Generative Model
-** 换个思路建模密度
-*** 先验分布+确定性函数来建模
-$P(X)=P(Z)P(X|Z)$
-- prior z:
-  + 没有需要学习的参数
-  + 在一个低维度的latent space中采样
-- 确定性函数：
-  + h(z)
-** 理论的依据
-*** 高斯分布+CDF逆变换可以拟合任意的分布
-- 假设
-  + 随机变量 $N\sim \mathcal{N}[0,1]$, 对应的CDF 是$\Psi$
-  + 那么$Y=\Psi(N)\sim \text{Uniform}[0,1]$
-  + 目标随机变量$X$ 对应的分布的CDF是 $F(x)=P(X\le x)$
-- 那么随机变量 $X=F^{-1}(Y)$ 分布满足$F$
-- 高维中依然是成立，但是这个函数表达是不知道的，我们可以通过模型学习得到。
-**** 均匀分布+CDF逆变换可以拟合任意的分布
-- 假设
-  + 随机变量 $U\sim \text{Uniform}[0,1]$
-  + 目标随机变量对应的CDF是 $F(x)=P(X\le x)$
-- 结论：随机变量 $X=F^{-1}(U)$ 分布满足$F$
-- 证明:
-
-   $P(X\le x)=P(F^{-1}(U)\le x)=P(U\le F(x))=F(x)$
-**** 高斯分布到均匀分布
-- 假设
-  + 随机变量 $N\sim \mathcal{N}[0,1]$, 对应的CDF 是$\Psi$
-  + 那么$Y=\Psi(N)\sim \text{Uniform}[0,1]$
-- 证明:
-   $P(Y\le y)=P(\Psi(N)\le y )=P(N\le \Psi^{-1}(y))=\Psi(\Psi^{-1}(y))=y$
-*** 在生成式模型中运用：
-sample $X$ 可以分两步走
-- 先sample $Z\sim \mathcal{N}(0,1)$
-- 然后再基于一个复杂的确定函数变换（交给DNN学习）得到 $f(Z)$ 变换得到$X$
-- 随机变量 $X=f(Z)$ 就是对整体的sample建模
-*** 为什么不用均匀分布做先验？而使用高斯？
-- 高斯分布在整个空间上有定义，计算KL 不会有除以0的问题发生
-- 高斯分布有很多很好的性质可以使用
-** latent variables
-*** motivation
-- 我们看到的世界可能是高维空间到低维子空间的一个投影
-- 我们观察获取到的信息$X$ 本身是不完整的
-  + 或者说，我们无法观测到完整的信息
-  + 盲人摸象
-- 我们把在我们观测之外的这些特征可以记作 latent variables
-*** 一些假设
-- 每个样本$X$ 对应一个latent variable $Z$
-- 完整的样本是$(X, Z)$
-- 直接去优化 $P_{\theta}(X)$ 是困难的, 有积分的存在
-   + $P(X)=\int_Z P_{\theta}(X,Z)=\int_{Z}P_{\theta}(X|Z)P_{\theta}(Z)dZ$
-- 但是知道了$Z$ 后，$P(X,Z)$ 或者 $P(X|Z)$ 是容易优化的
-*** 生成模型中的latent variables
-- 生成的概念： 观测值是基于隐变量的值来生成的。
-  + $Z\rightarrow X$ 
-  + 先sample $Z$
-  + 再基于 $P(X|Z)$ sample得到 $X$
-- $P(X,Z)=P(Z)P(X|Z)$
-*** 一个例子：高斯混合模型
-$P(X)=\sum_{Z}P(Z)P(X|Z)=\sum\limits_{k=1}^{K} \pi_{k}\mathcal{N}(x|\mu_{k},\Sigma_{k})$
-- sample过程
-  + 先根据先验$P(Z)$ 决定在哪个群落点，
-  + 再根据局部的似然 $P(X|Z)$ 采样，(根据这个群的均值，方差采样)
-- 直接优化 $\log P(X)$ 非常困难
-- 但是 $P(X,Z)=\prod\limits_{k=1}^K \pi_k^{Z_k}\mathcal{N}(X|\mu_{k}, \Sigma_{k})^{Z_k}$, 其中 $Z=(Z_1, Z_2, \ldots, Z_{k})$ one-hot 形式
-  + $\log P(X,Z)=\sum\limits_{k=1}^{K}Z_k[log\pi_k+\log\mathcal{N}(X|\mu_{k}, \Sigma_{k})]$ 容易优化
-#+DOWNLOADED: screenshot @ 2024-03-29 09:31:36
-#+ATTR_HTML: :width 400px :align middle
-[[file:images/2024-03-29_09-31-36_screenshot.png]]
-
-** 生成式模型的概率建模
-*** 一般的模型的概率建模方式
-- 参数化单个样本$X$ 的概率 $P_{\theta}(X)$，
-- 得到若干的样本$X_1, X_2, \ldots, X_N$
-- 然后做概率的最大似然估计 $\prod_{i} P_{\theta}(X_i)$
-*** 生成式模型的概率建模方式
-- $P(X)=\int_Z P_{\theta}(X,Z)=\int_{Z}P_{\theta}(X|Z)P_{\theta}(Z)dZ$
-- $P(X|Z)$ 参数化为 $P_{\theta}(X|Z)$
-  + 比如 $P(X|Z)=\mathcal{N}(\mu(Z;\theta),\Sigma(Z;\theta))$
-- $P(Z)$ 可以有参数，也可以没有参数
-   + 在VAE/diffusion model 中，$P(Z)=\mathcal{N}(0,I)$
-** 生成模型的优化
-*** 优化的目标：
-$P(X)=\int_Z P_{\theta}(X|Z)P(Z) dZ$
-- 积分的存在，导致无法直接优化
-*** 使用蒙特卡洛方法
-对于一个给定的样本 $X$,$P(X)= E\limits_{Z\sim P(Z)} P(X|Z)$
-- sample $Z_1, Z_2, \ldots, Z_n$ from $P(Z)$
-- $P(X) \approx \dfrac{1}{n} \sum_{i} P_{\theta}(X|Z_i)$
-- 再针对$\theta$ 做梯度下降
-*** 问题：
-- 维度灾难的问题： $n$ 需要极其大来得到一个准确的概率估计
-- sample的过程中 $P(X|Z_i)$ 的概率大多为0，对参数的更新没有贡献
-  + 所以我们要更加有效的 Z, 比如使用  $Q(Z|X)$ 来sample $Z$
-  + $Q(Z|X)$ 能给出来容易生成$X$ 的Z 来。
-  + 计算 $E_{Z\sim Q} P(X|Z)$
+*** 其他方法：
+- 基于隐变量的生成模型
+  + VAE
+  + diffusion model
+- flow based
+- GAN：其实绕开了对于概率密度的数学建模
 * 数学基础回顾
+** 关于最大似然估计
+- 数据集合 $\{X_1, X_2, \cdots, X_N}\}\sim P_{\text{data}}(X)$
+- 建模 $P_{\theta}(X)$
+- 寻找 $P_{\theta^{*}}(X)$
 ** 蒙特卡洛方法和维度灾难
 *** 什么是MC
 #+begin_quote
@@ -195,10 +110,11 @@ $E_{X\sim p(x)} f(X)$
 - sample $\{X_{i}\}_{i=1}^{n} \sim p(x)$
 - $\dfrac{1}{n}\sum_{i=1}^{n}f(X_{i})\rightarrow \mathrm{E}(f(X))$
 *** 背后的依据：大数定律
-如果$\{X_i\}_{i=1}^{n}$ 独立同分布，那么 $\dfrac{1}{n}\sum_{i=1}^{n}X_{i}\rightarrow \mathrm{E}(X)$
+- 如果$\{X_i\}_{i=1}^{n}$ 独立同分布，那么 $\dfrac{1}{n}\sum_{i=1}^{n}X_{i}\rightarrow \mathrm{E}(X)$
+- Explain:
 
-如果$\{X_i\}_{i=1}^{n}$ 独立同部分, 那么 $\{f(X_i)\}_{i=1}^{n}$ 也是独立同分布的，
-且$\dfrac{1}{n}\sum_{i=1}^{n}f(X_{i})\rightarrow \mathrm{E}(f(X))$
+   如果$\{X_i\}_{i=1}^{n}$ 独立同部分, 那么 $\{f(X_i)\}_{i=1}^{n}$ 也是独立同分布的，且$\dfrac{1}{n}\sum_{i=1}^{n}f(X_{i})\rightarrow \mathrm{E}(f(X))$
+**** 更进一步，有中心极限定律：
 *** 缺点：在高维空间中效率非常的低
 - 在高维空间里面，你的采样到的大部分的点都不是你想要的
 *** 举一个例子：计算$\pi$
@@ -221,11 +137,18 @@ $X\sim \mathcal{N}(\mu,\Sigma)$
 *** 性质
 - 高斯分布的线性组合还是高斯分布
 - 先验gauss，似然高斯，后验依然是高斯
-- KL divergence
+- 两个高斯分布之间的KL divergence
    $D\left[ \mathcal{N}(\mu_0, \Sigma_0) \parallel \mathcal{N}(\mu_1, \Sigma_1) \right] = \frac{1}{2} \left( \text{tr} \left( \Sigma_1^{-1}\Sigma_0 \right) + (\mu_1 - \mu_0)^T \Sigma_1^{-1} (\mu_1 - \mu_0) - k + \log \left( \dfrac{\det\Sigma_1}{\det\Sigma_0} \right) \right)$
 - KL
    $D\left[ \mathcal{N}(\mu(X), \Sigma(X)) \parallel \mathcal{N}(0, I) \right] = \frac{1}{2} \left( \text{tr}(\Sigma(X)) + (\mu(X))^T (\mu(X)) - k - \log \det (\Sigma(X)) \right)$
 
+*** closed under many operations.
+A crucial computation property: Gaussians are closed under many operations.
+- Affine transformation: if p(x) is Gaussian, then p(Ax + b) is a Gaussian1
+- Marginalization: if p(x, z) is Gaussian, then p(x) is Gaussian.
+- Conditioning: if p(x, z) is Gaussian, then p(x | z) is Gaussian.
+- Product: if p(x) and p(z) are Gaussian, then p(x)p(z) is proportional to a Gaussian
+- x gaussian N(0,1), y gaussian N(0,1), ax+by gaussion a^2+b^2.
 ** 重参数化
 *** 问题
 - $\nabla_{\theta}\mathrm{E}_{p(z)} \left[ f_\theta(z) \right]$
@@ -304,7 +227,7 @@ $\begin{aligned}
 - 例如熵的定义：$H(p)=\int p(x) \log p(x)dx$
 - 变分：是在一个函数空间中针对一个泛函来寻求极值。
 *** DNN 求解是在做泛函极小化的事情
-- 给定数据集合 $D={(x_i,y_i)|i=1,\ldots, N}
+- 给定数据集合 $D=\{(x_i,y_i)|i=1,\ldots, N\}$
 - loss
    
    $J(f) = \sum\limits_{(x_i,y_i)\in D} L(f(x_i), y_i)$
@@ -312,27 +235,153 @@ $\begin{aligned}
    
    $\min\limits_{f\in F} J(f)$
 - DNN 参数化
-   
+   $f(x)=f_{\theta}(x)$
    $\min\limits_{\theta} J(\theta)$
 
+* 基于隐变量的生成模型
+** latent variables
+*** 什么是latent variables
+- 我们看到的世界可能是高维空间到低维子空间的一个投影
+- 我们观察获取到的信息$X$ 本身是不完整的
+  + 或者说，我们无法观测到完整的信息，盲人摸象
+  + 例子：ctr预估，天气，人的心情，或者平台获取不到信息等
+- 我们可以把观测之外的这些特征可以记作 latent variables
+*** 图片的latent variable
+- 尽管说，一张图片包含了所有的信息，但是很多的信息是你的人脑反馈分析出来的。
+   + 比如这个图里面，你会反应出来它有簇，群的概念。
+#+DOWNLOADED: screenshot @ 2024-03-29 09:31:36
+#+ATTR_HTML: :width 400px :align middle
+[[file:images/2024-03-29_09-31-36_screenshot.png]]
 
+- 在人脸的图片中，$Z$ 可能是肤色，脸型，发型，眼睛，鼻子的形状等
+*** 机器学习中的latent variables
+- 完整的样本是$(X, Z)$
+  + 每个样本$X$ 对应一个latent variable $Z$
+- 但是我们只能观测到$X$, $Z$ 是观测不到的
+- 直接去优化 $P_{\theta}(X)$ 是困难的, 有积分的存在
+  + $P(X)=\int_Z P_{\theta}(X,Z)=\int_{Z}P_{\theta}(X|Z)P_{\theta}(Z)dZ$
+- 但是知道了$Z$ 后，$P(X,Z)$ 或者 $P(X|Z)$ 是容易优化的
+*** 基于隐变量的生成模型
+- latent variable 变的至关重要
+  + $Z\rightarrow X$
+  + $Z$ 中是表达了图像中至关重要的特征
+  + 知道了$Z$, 整个图像就可以基于$P(X|Z) decode 构建出来。
+  + 我们会把 $Z$ 当做是 $X$对一个的encoding 向量。
+- 生成：观测值是基于隐变量的值来生成的。
+  + 先sample $Z$
+  + 再基于 $P(X|Z)$ sample得到 $X$
+- $P(X,Z)=P(Z)P(X|Z)$
+*** 一个例子：高斯混合模型
+$P(X)=\sum_{Z}P(Z)P(X|Z)=\sum\limits_{k=1}^{K} \pi_{k}\mathcal{N}(x|\mu_{k},\Sigma_{k})$
+- sample过程
+  + 先根据先验$P(Z)$ 决定在哪个群落点，
+  + 再根据局部的似然 $P(X|Z)$ 采样，(根据这个群的均值，方差采样)
+- 直接优化 $\log P(X)$ 非常困难
+- 但是 $P(X,Z)=\prod\limits_{k=1}^K \pi_k^{Z_k}\mathcal{N}(X|\mu_{k}, \Sigma_{k})^{Z_k}$, 其中 $Z=(Z_1, Z_2, \ldots, Z_{k})$ one-hot 形式
+  + $\log P(X,Z)=\sum\limits_{k=1}^{K}Z_k[log\pi_k+\log\mathcal{N}(X|\mu_{k}, \Sigma_{k})]$ 容易优化
+#+DOWNLOADED: screenshot @ 2024-03-29 09:31:36
+#+ATTR_HTML: :width 400px :align middle
+[[file:images/2024-03-29_09-31-36_screenshot.png]]
+
+** 生成式模型的概率建模
+*** 一般的模型的概率建模方式
+- 参数化单个样本$X$ 的概率 $P_{\theta}(X)$，
+- 得到若干的样本$X_1, X_2, \ldots, X_N$
+- 然后做概率的最大似然估计 $\prod_{i} P_{\theta}(X_i)$
+*** 生成式模型的概率建模方式
+- $P(X)=\int_Z P_{\theta}(X,Z)=\int_{Z}P_{\theta}(X|Z)P_{\theta}(Z)dZ$
+- 是一堆分布做做加权平均
+- $P(X|Z)$ 参数化为 $P_{\theta}(X|Z)$
+  + 比如 $P(X|Z)=\mathcal{N}(\mu(Z;\theta),\Sigma(Z;\theta))$
+- $P(Z)$ 可以有参数，也可以没有参数
+  + 在VAE/diffusion model 中，$P(Z)=\mathcal{N}(0,I)$
+- 是一堆高斯分布做加权平均
+** 生成模型的优化
+*** 优化的目标：
+- $P(X)=\int_Z P_{\theta}(X|Z)P(Z) dZ$
+- 积分的存在，导致 $\log P(X)$ 无法直接优化
+*** 使用蒙特卡洛方法
+对于一个给定的样本 $X$,$P(X)= E\limits_{Z\sim P(Z)} P_{\theta}(X|Z)$
+- sample $Z_1, Z_2, \ldots, Z_n$ from $P(Z)$
+- $P(X) \approx \dfrac{1}{n} \sum_{i} P_{\theta}(X|Z_i)$
+- 再针对$\theta$ 做梯度下降
+*** 问题：
+- 维度灾难的问题：
+   + $n$ 需要极其大来得到一个准确的概率估计
+- $Z_{i}$ 的有效性
+  + $P(X|Z_i)$ 的概率大多为0，对参数的更新没有贡献
+  + 所以我们要更加有效的 Z, 比如使用  $Q(Z|X)$ 来sample $Z$
+  + $Q(Z|X)$ 能给出来容易生成$X$ 的Z 来。
+  + 计算 $E_{Z\sim Q} P(X|Z)$
+- $\log P(X)$ 的问题依然存在     
+** 换个思路建模密度
+*** 先验分布+确定性函数来建模
+$P(X)=P(Z)P(X|Z)$
+- prior z:
+  + 没有需要学习的参数
+  + 在一个低维度的latent space中采样
+- 确定性函数：
+  + h(z)
+** 理论的依据
+*** 高斯分布+CDF逆变换可以拟合任意的分布
+- 假设
+  + 随机变量 $N\sim \mathcal{N}[0,1]$, 对应的CDF 是$\Psi$
+  + 那么$Y=\Psi(N)\sim \text{Uniform}[0,1]$
+  + 目标随机变量$X$ 对应的分布的CDF是 $F(x)=P(X\le x)$
+- 那么随机变量 $X=F^{-1}(Y)$ 分布满足$F$
+- 高维中依然是成立，但是这个函数表达是不知道的，我们可以通过模型学习得到。
+**** 均匀分布+CDF逆变换可以拟合任意的分布
+- 假设
+  + 随机变量 $U\sim \text{Uniform}[0,1]$
+  + 目标随机变量对应的CDF是 $F(x)=P(X\le x)$
+- 结论：随机变量 $X=F^{-1}(U)$ 分布满足$F$
+- 证明:
+
+   $P(X\le x)=P(F^{-1}(U)\le x)=P(U\le F(x))=F(x)$
+**** 高斯分布到均匀分布
+- 假设
+  + 随机变量 $N\sim \mathcal{N}[0,1]$, 对应的CDF 是$\Psi$
+  + 那么$Y=\Psi(N)\sim \text{Uniform}[0,1]$
+- 证明:
+   $P(Y\le y)=P(\Psi(N)\le y )=P(N\le \Psi^{-1}(y))=\Psi(\Psi^{-1}(y))=y$
+*** 在生成式模型中运用：
+sample $X$ 可以分两步走
+- 先sample $Z\sim \mathcal{N}(0,1)$
+- 然后再基于一个复杂的确定函数变换（交给DNN学习）得到 $f(Z)$ 变换得到$X$
+- 随机变量 $X=f(Z)$ 就是对整体的sample建模
+*** 为什么不用均匀分布做先验？而使用高斯？
+- 高斯分布在整个空间上有定义，计算KL 不会有除以0的问题发生
+- 高斯分布有很多很好的性质可以使用
 * VAE
 ** VAE 的思路
+*** 思考点一：穿过积分
+- 寻找 $\log P(X)$ 的下界
+- 利用$\log$ 函数的凹性，$\log$ 可以穿过去积分, 得到一个下界
+- 而这个下界是容易优化的
+
 #+DOWNLOADED: screenshot @ 2024-03-28 23:14:24
 #+ATTR_HTML: :width 600px :align middle
 [[file:images/2024-03-28_23-14-24_screenshot.png]]
-
+*** proof:
+$\begin{aligned}
+\log P(X)
+&= \log \int P(X, Z) dZ\\
+&= \log \int P(X, Z) \dfrac{Q(Z)}{Q(Z)}dZ\\
+&= \log E_{Q(Z)} \dfrac{P(X,Z)}{Q(Z)}\\
+&\ge E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)}\\
+\end{aligned}$
+*** 思考点二：提升有效性
 - 不从$P(Z)$ 中sample $Z$
-- 而从$Q_{\phi}(Z|X)$ 中sample $Z$，提升$P(X|Z)$ 的概率
+- 而从$Q_{\phi}(Z)$ 中sample $Z$，$Q_{\phi}(Z)\rightarrow P(Z|X)$
 - 然后基于$Z$ 重建 $\widehat{X}=f_{\theta}(Z)$
-- 计算误差 $\widehat{X}$ 和 $X$ 的误差，再反向传播回去
 ** variational inference
 - $\log P(X) = \mathcal{L} (Q) + \mathcal{D}(Q\|P)$
 - $\mathcal{L}(Q) = \int Q(Z) \log \dfrac{P(X,Z)}{Q(Z)}dZ$
 - $\mathcal{D}(Q\|P) = \int Q(Z) \log\dfrac{Q(Z)}{P(Z|X)} dZ$
-- 寻找$Q(Z)$ 中最大化 $\mathcal{L}(Q)$
-- 参数化 $Q_{\phi}(Z)$ 最大化 $\mathcal{L}(Q)$
-   $\max\limits_{\phi}\mathcal{L}(Q)$
+- $\log P(X) \ge \mathcal{L} (Q)$
+  + 寻找$Q(Z)$ 中最大化 $\mathcal{L}(Q)$
+  + 参数化: $Q_{\phi}(Z)$  $\max\limits_{\phi}\mathcal{L}(Q)$
+  + 变分的思想
 *** 证明
 $\begin{aligned}
 \log P(X) &= E_{Q(Z)} \log P(X) \\
@@ -341,21 +390,28 @@ $\begin{aligned}
 & = E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)} + E_{Q(Z)} \log \dfrac{Q(Z)}{P(Z|X)}\\
 & = E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)} + \mathcal{D}[Q(Z)||P(Z|X)]
 \end{aligned}$
-
-** core of VAE
-对于任意的$Q(Z)$， 有
-$\log P(X) - \mathcal{D}[Q(Z) \| P(Z|X)] = \mathrm{E}_{Z \sim Q}[\log P(X|Z)] - \mathcal{D}[Q(Z) \| P(Z)]$
-*** 其中涉及到的几个分布
-- $P(X)$ 似然性
-- $P(X|Z)$
-- $P(Z)$ 先验分布
-- $Q(Z)$ 
-*** proof:
 *** ELBO
 由于 KL Divergence 非负，所以
 $\begin{aligned}
 \log P(X) & \ge  E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)}
 \end{aligned}$
+
+*** 进一步
+对于任意的$Q(Z)$， 有
+$\log P(X) - \mathcal{D}[Q(Z) \| P(Z|X)] = \mathrm{E}_{Z \sim Q}[\log P(X|Z)] - \mathcal{D}[Q(Z) \| P(Z)]$
+**** proof
+$\begin{aligned}
+\mathcal{L}(Q)
+& = E_{Q(Z)}\log\dfrac{P(X,Z)}{Q(Z)}\\
+& = E_{Q(Z)}\log\dfrac{P(X|Z)P(Z)}{Q(Z)}\\
+& = E_{Q(Z)}\log P(X|Z) + E_{Q(Z)}\log\dfrac{P(Z)}{Q(Z)}\\
+& = E_{Q(Z)}\log P(X|Z) - E_{Q(Z)}\log\dfrac{Q(Z)}{P(Z)}\\
+\end{aligned}$
+**** 其中涉及到的几个分布
+- $P(X)$ 似然性
+- $P(X|Z)$
+- $P(Z)$ 先验分布
+- $Q(Z)$ 
 ** 理解ELBO
 *** 理解ELBO
 - $\log P_{\theta}(X) = \mathcal{L}(Q, \theta) + \mathcal{D}[Q(Z)\|P(Z|X)}]$
@@ -460,20 +516,23 @@ $\begin{aligned}
 *** decoder $P_{\theta}(X|Z)$
 ** VAE训练好后怎么用？
 *** 直接生成
-这个时候可以抛弃encoder了 $Q(Z|X)$
+这个时候可以抛弃encoder $Q(Z|X)$ 了
 - sample $Z$ from $P(Z)$
 - 确定性函数做一个映射 $f(Z)$
   + 虽然 $f(Z)$ 只是gauss的 $\mu$ 参数，无需再次sample
+**** why？
+因为在优化的过程中 $Q(Z|X)$ 和 $P(Z)$ 已经充分靠近，作为优化的第二项
+
 *** 重构原来的图像
 encoder 和decoder 都需要使用
-- 基于Q(Z
+- 基于$Q(Z|X)$ 得到encoding $Z$
+- 基于$P(X|Z)$ 生成出来 $\hat{X}$
 ** open problems
 *** 如何来理解整个训练过程中的噪音？
 基于sample得到了$Z$，基于加入噪音后的sample来还原图像，这是一种提升模型鲁棒性的方法。
 *** 如何来理解训练完了以后，基于$P(Z)$ 来sample？
 - 正常使用生成工具的时候，原图是没有的
    + 你需要基于给与的条件或者是无中生有。
-** VAE 图示
 * VAE代码实现
 ** ELBO backbone
 *** 背景
@@ -524,6 +583,22 @@ $\log P(X) \ge \mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathcal{D}[Q
 我们来做一个简化：
 $\mathcal{L}(\theta, \phi, X)=
 \dfrac{1}{L}\sum\limits_{l=1}^{L} \log P_{\theta}(X, Z^{l})}$
+
+** 关于生成模型直接建模
+*** 如果直接建模$P_{\theta}(x)$, 使用范围局限
+- 基于这个$P_{\theta}(x)$ 采样
+- 无法做更多的复杂生成的事情，无法对对生成做细粒度操控
+- 比如，
+    + 我想加入一段文字的描述来生成
+    + 我想生成某种特定类型，特定的风格的图片
+*** 直接建模的难点？
+- 图像本省的高维特性
+- sample 的效率：高维空间中的sample效率会很低
+- 你的建模需要能建模出来像素之间的依赖性
+
+** 涉及到的一些重要的思想
+- 用随机的方法来解决确定性的问题
+   + 用随机模拟的方法来计算积分
 
 * todos
 ** 完成理论的讲解
