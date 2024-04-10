@@ -69,9 +69,11 @@
 *** 概率建模的难点在哪里？
 - $p_{\theta}(x)\ge 0, \forall x \in \mathcal{X}$ 
 - $\int p_{\theta}(x) dx=1, \forall \theta \in \Theta$ ✅ 真正的难点
+   + DNN 在decode one token的时候，softmax付出了巨大的代价
 - $\nabla_{\theta} log P_{\theta}(x)$ 是否容易计算
-  + $P(x)=\int p(x,z) dz$
+  + $P(x)=\int p(x,z) dz$ ❌
 - 能够容易sample 采样生成
+   + autogressive model 应用在图像像素级别 ❌
 *** 限定概率分布的形状，对pdf参数做函数化
 - 假设这个分布是 $\mathcal{N}(\mu_{\theta}(x),\Sigma_{\theta}(x))$
 - 来推断 $\mu_{\theta}, \Sigma_{\theta}$
