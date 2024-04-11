@@ -69,7 +69,8 @@
 *** 概率建模的难点在哪里？
 - $p_{\theta}(x)\ge 0, \forall x \in \mathcal{X}$ 
 - $\int p_{\theta}(x) dx=1, \forall \theta \in \Theta$ ✅ 真正的难点
-   + DNN 在decode one token的时候，softmax付出了巨大的代价
+   
+   比如dnn的language model 在训练的时候，为了输出token $x_{i}$的概率，需要对所有的token做一个打分, 然后softmax
 - $\nabla_{\theta} log P_{\theta}(x)$ 是否容易计算
   + $P(x)=\int p(x,z) dz$ ❌
 - 能够容易sample 采样生成
@@ -223,6 +224,7 @@ $\begin{aligned}
      = & \int \pi_{\theta}(\tau) \nabla_{\theta}\log \pi_{\theta}(\tau)r(\tau)d\tau \\
      = & E_{\tau \sim \pi_{\theta}(\tau)}\left[ \nabla_{\theta}\log \pi_{\theta}(\tau)r(\tau) \right]
      \end{aligned}$
+** 颜森不等式
 ** 变分
 *** 泛函 fuctional
 - 输入是一个函数，输出一个值
@@ -239,6 +241,25 @@ $\begin{aligned}
 - DNN 参数化
    $f(x)=f_{\theta}(x)$
    $\min\limits_{\theta} J(\theta)$
+*** 变分和下界的关系
+**** 这个下界不是你想要的
+$\begin{aligned}
+\log P(X)
+& = log \int P(X|Z) P(Z) dZ \\
+&= log E_{P(Z)} P(X|Z)  \\
+& \ge E_{P(Z)} \log P(X|Z) 
+\end{aligned}$
+
+**** 下界需要动起来，变分的思想
+不断的提升上界天花板，逼近到原始值
+
+$\begin{aligned}
+\log P(X)
+& = \log \int \dfrac{P(X,Z)}{Q(Z)} Q(Z) dZ \\
+&= \log E_{Q(Z)} \dfrac{P(X,Z)}{Q(Z)}  \\
+&\ge E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)} 
+\end{aligned}$
+上面的式子对任意的概率分布$Q(Z)$ 都成立，我们可以在一个指定的函数空间寻找更好的 $Q(Z)$，不断提升这个下界。
 
 * 基于隐变量的生成模型
 ** latent variables
@@ -356,10 +377,10 @@ sample $X$ 可以分两步走
 - 高斯分布有很多很好的性质可以使用
 * VAE
 ** VAE 的思路
-*** 思考点一：穿过积分
+*** 思考点一：log穿过积分，优化下界
 - 寻找 $\log P(X)$ 的下界
 - 利用$\log$ 函数的凹性，$\log$ 可以穿过去积分, 得到一个下界
-- 而这个下界是容易优化的
+- 而这个下界是容易优化的， 同时可以对下界优化不断提升
 
 #+DOWNLOADED: screenshot @ 2024-03-28 23:14:24
 #+ATTR_HTML: :width 600px :align middle
@@ -378,8 +399,8 @@ $\begin{aligned}
 - 然后基于$Z$ 重建 $\widehat{X}=f_{\theta}(Z)$
 ** variational inference
 - $\log P(X) = \mathcal{L} (Q) + \mathcal{D}(Q\|P)$
-- $\mathcal{L}(Q) = \int Q(Z) \log \dfrac{P(X,Z)}{Q(Z)}dZ$
-- $\mathcal{D}(Q\|P) = \int Q(Z) \log\dfrac{Q(Z)}{P(Z|X)} dZ$
+  + $\mathcal{L}(Q) = \int Q(Z) \log \dfrac{P(X,Z)}{Q(Z)}dZ$
+  + $\mathcal{D}(Q\|P) = \int Q(Z) \log\dfrac{Q(Z)}{P(Z|X)} dZ$
 - $\log P(X) \ge \mathcal{L} (Q)$
   + 寻找$Q(Z)$ 中最大化 $\mathcal{L}(Q)$
   + 参数化: $Q_{\phi}(Z)$  $\max\limits_{\phi}\mathcal{L}(Q)$
