@@ -397,7 +397,7 @@ R(i\Theta)R(j\Theta)^{T} &= \widehat{R}(i\theta\_1)\widehat{R}(i\theta\_2)\ldots
 
 #### 具体化 {#具体化}
 
--   \\(\theta\_{k}=10000^{-k/d}, k\in[1,2,\ldots,d]\\)，
+-   \\(\theta\_{k}=10000^{-(k-1)/d}, k\in[1,2,\ldots,d]\\)，
 -   记\\(B=10000^{1/d}\\), 那么\\(\theta\_{k}=1/B^{k-1}\\) 是一个等比数列
 -   \\(B>1, k\rightarrow \infty, \theta\_{k}\rightarrow 0, T\rightarrow\infty\\)
 
@@ -493,9 +493,9 @@ T & 2\pi        & 2B\pi        & 2B^{2}\pi  & \ldots & 2B^{d-1}\pi \\\\
 
     -   在任意的一个子空间内, 位置编码都是唯一的,不会重复的, why?
     -   proof
-        -   \\((sin x, cos x)\\) 组成的向量pair周期是 \\(4\pi\\)
+        -   \\((sin x, cos x)\\) 组成的向量pair周期是 \\(2\pi\\)
         -   假设在第\\(k\\) 个子空间里面, 存在\\(i,j\\) 位置发生了重复,
-        -   那么存在整数\\(m\\), 使得\\(j\theta\_{k}- i\theta\_{k}=4m\pi\\),
+        -   那么存在整数\\(m\\), 使得\\(j\theta\_{k}- i\theta\_{k}=2m\pi\\),
         -   那么 \\(\theta\_{k}=\dfrac{2m\pi}{j-i}\\)
     -   在任意第\\(k\\) 个子空间, 只要\\(\theta\_{k}\\) 公式中不含有\\(\pi\\), 那么旋转角度序列\\(\\{i\theta\_{k}\\}\_{i}\\) 都不会出现周期性重复.
 
@@ -508,7 +508,7 @@ T & 2\pi        & 2B\pi        & 2B^{2}\pi  & \ldots & 2B^{d-1}\pi \\\\
 
 #### 具体化 {#具体化}
 
--   \\(\theta\_{k}=10000^{-k/d}, k\in[1,2,\ldots,d]\\)，
+-   \\(\theta\_{k}=10000^{-(k-1)/d}, k\in[1,2,\ldots,d]\\)，
 -   记\\(B=10000^{1/d}\\), 那么\\(\theta\_{k}=1/B^{k-1}\\) 是一个等比数列
 -   \\(B>1, k\rightarrow \infty, \theta\_{k}\rightarrow 0, T\rightarrow\infty\\)
 
