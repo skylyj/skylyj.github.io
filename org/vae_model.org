@@ -135,6 +135,7 @@ $E_{X\sim p(x)} f(X)$
   + $V_{n}\rightarrow 0, as\quad n\rightarrow \infty$
   + n维单位球体的体积趋向于0
   + sample失效
+*** 注意：MC 偏好期望形式的优化目标 $E_{P(X)} f(X)$
 ** 高斯分布的性质
 *** 定义
 $X\sim \mathcal{N}(\mu,\Sigma)$
@@ -404,7 +405,8 @@ $\begin{aligned}
   + $\mathcal{D}(Q(Z)\|P(Z|X)) = E_{Q(Z)} \log\dfrac{Q(Z)}{P(Z|X)}$
 - $\log P(X) \ge \mathcal{L} (Q)$ ，由于 KL 非负
   + 寻找$Q(Z)$ 中最大化 $\mathcal{L}(Q)$
-  + 参数化: $Q_{\phi}(Z)$  $\max\limits_{\phi}\mathcal{L}(Q)$ (变分的思想)
+  + 参数化: $Q_{\phi}(Z)$
+  + $\max\limits_{\phi}\mathcal{L}(Q)$ (变分的思想)
   + $\mathcal{L} (Q)$ 就是 ELBO
 *** 证明
 $\begin{aligned}
@@ -428,37 +430,43 @@ $\begin{aligned}
 - $P(X)$ 似然性
 - $P(X|Z)$
 - $P(Z)$ 先验分布
-- $Q(Z)$ 
+- $Q(Z)$
+**** 理解
+- 第一项:
+  + 有了encoding,decoding的意思
+  + 可以使用MC的方法来优化
+- 第二项:
+   + 正则的一个效果
+
 ** 参数化和求解ELBO
-给定一个$X$
-- $\mathcal{L} = \mathrm{E}_{Q(Z)}[\log P(X|Z)] - \mathcal{D}[Q(Z) \| P(Z)]$
-- $\mathcal{L}(\phi,\theta)=\mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]$
+给定一个$X$,  $\mathcal{L} = \mathrm{E}_{Q(Z)}[\log P(X|Z)] - \mathcal{D}[Q(Z) \| P(Z)]$
 *** 参数化
-- $Q_{\phi}(Z|X)=\mathcal{N}(Z|\mu_{\phi}(X), \Sigma_{\phi}(X))$
+- $Q(Z)$ 参数化为 $Q_{\phi}(Z|X)=\mathcal{N}(Z|\mu_{\phi}(X), \Sigma_{\phi}(X))$
   + 每个样本对应一个独立的正态分布
   + $\mu_{\phi}(X)$ DNN
   + $\Sigma_{\phi}(X)$ DNN
-- $P_{\theta}(X|Z)=\mathcal{N}(X|f_{\theta}(Z), I)$
+- $P(X|Z)$ 参数化为 $P_{\theta}(X|Z)=\mathcal{N}(X|f_{\theta}(Z), I)$
    + $f_{\theta}(Z)$ DNN
 - $P(Z)=\mathcal{N}(0,1)$
-*** 求解
-- $\log P(X|Z)\sim \|X-f_{\theta}(Z)\|^{2}$
-**** 整体求导处理的思路：
+*** 结果
+$\mathcal{L}(\phi,\theta)=\mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]$
 我们有两个参数$\phi, \theta$, $\phi$ 出现在变分的候选函数里面，$\theta$ 出现在decoder里面。
-- 第一项利用MC 近似期望
-   + $\mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)]
-- 第二项基于显式的计算来求导
+** 求解
+*** 整体思路
+- 第一项利用MC 近似，但是求解$\phi$ 梯度有问题，需要重参数化
+  + $\mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)]\approx \sum_i \log P_{\theta}(X|Z_i),\quad Z_i \sim Q_{\phi}(Z|X)$
+  + $\log P(X|Z)\sim \|X-f_{\theta}(Z)\|^{2}$
+- 第二项可以显式计算，只和$\phi$ 相关，容易计算梯度
    $\begin{aligned}
-&\mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]\\
-=& D\left[ \mathcal{N}(\mu_{\phi}(X), \Sigma_{\theta}(X)) \parallel \mathcal{N}(0, I) \right] \\
-=& \frac{1}{2} \left( \text{tr}(\Sigma_{\phi}(X)) + (\mu_{\phi}(X))^T (\mu(X)) - k - \log \det (\Sigma_{\phi}(X)) \right)
-\end{aligned}$
-**** 前向的步骤
+    &\mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]\\
+    =& D\left[ \mathcal{N}(\mu_{\phi}(X), \Sigma_{\theta}(X)) \parallel \mathcal{N}(0, I) \right] \\
+    =& \frac{1}{2} \left( \text{tr}(\Sigma_{\phi}(X)) + (\mu_{\phi}(X))^T (\mu_{\phi}(X)) - k - \log \det (\Sigma_{\phi}(X)) \right)
+    \end{aligned}$
+*** 前向的步骤
 #+DOWNLOADED: screenshot @ 2024-04-01 16:39:15
 #+ATTR_HTML: :width 600px :align middle
 [[file:images/2024-04-01_16-39-15_screenshot.png]]
 
-**** 下一步：求导
 ** 理解ELBO
 *** 理解ELBO
 - $\log P_{\theta}(X) = \mathcal{L}(Q, \theta) + \mathcal{D}[Q(Z)\|P(Z|X)}]$
@@ -473,29 +481,8 @@ $\begin{aligned}
   + 通过不多优化下界来更新$\theta$
 #+DOWNLOADED: screenshot @ 2024-03-29 11:50:58
 [[file:images/2024-03-29_11-50-58_screenshot.png]]
-      
-*** 带上参数来理解
-- 变分：参数化为$Q_{\phi}(Z|X)$ 
-- 左边: 目标似然性
-- 右边: ELBO + KL divergence
-- 我们希望不断去优化$Q_{\phi}(Z|X)$ 提升ELBO，
-- 当$Q_{\phi}(Z|X)= P(Z|X)$ 的时候，结束。
-*** 继续拆分ELBO
-$\begin{aligned}
-E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)} &= E_{Q(Z)}\log \dfrac{P(X|Z)P(Z)}{Q(Z)} \\
-&= E_{Q(Z)}\log P(X|Z) + E_{Q(Z)}\log \dfrac{P(Z)}{Q(Z)} \\
-& = E_{Q(Z)}\log P(X|Z) - D_{KL}[Q(Z) \| P(Z)]
-\end{aligned}$
-- 第一项:
-  + 有了encoding,decoding的意思
-  + 可以使用MC的方法来优化
-- 第二项:
-   + 正则的一个效果
-*** 最后
-$\log P(X) - \mathcal{D}[Q(Z) \| P(Z|X)] = \mathrm{E}_{Q(Z))}[\log P(X|Z)] - \mathcal{D}[Q(Z) \|P(Z)]$
-ELBO
-$\log P(X) \ge \mathrm{E}_{Q(Z))}[\log P(X|Z)] - \mathcal{D}[Q(Z) \|P(Z)]$
-** 重参数化
+
+* 重参数化
 *** why
 - $E_{Q_{\phi}(Z|X)}\log P_{\theta}(X|Z)$ 的梯度计算问题
   + $\nabla_{\phi} E_{Q_{\phi}(Z|X)}\log P_{\theta}(X|Z)$
@@ -551,6 +538,7 @@ encoder 和decoder 都需要使用
 *** 如何来理解训练完了以后，基于$P(Z)$ 来sample？
 - 正常使用生成工具的时候，原图是没有的
    + 你需要基于给与的条件或者是无中生有。
+*** 为什么不考虑协方差？如何建模像素之间的依赖呢？
 * VAE代码实现
 ** ELBO backbone
 *** 背景
