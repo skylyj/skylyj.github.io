@@ -17,7 +17,7 @@
 - 回归
 - 概率密度估计：生成模型关注的事情
 *** 我们熟悉的概率建模
-- 基于特征来推断目标事件发生的概率。P(label|特征）
+- 基于特征来推断目标事件发生的概率。$P(Y|X)$
 - ctr 里面：基于用户和item的特征信息来推测用户点击item的概率
 
    $P(y=1|x)=\sigma(f_{\theta}(x))$
@@ -25,18 +25,16 @@
 - NLP 中的相关性模型：基于用户输入的query和doc特征来推测两者相关的概率
    $P(y=1|(q,t))=\sigma(f_{\theta}(q,t))$
 
-- 我们很少需要对特征的分布直接建模
+- 我们很少需要对特征的分布$P(X)$ 直接建模
   + 用户特征的分布？
   + query,doc 的特征分布？
-
 *** 生成模型在做什么？
-- 做什么：
-  + 对样本$X$ 的概率分布$P(X)$ 做估计
+- 对样本$X$ 的概率分布$P(X)$ 做估计
   + 知道什么样的样本出现的概率高，什么样的样本出现的概率低
-- $X$ 是什么？原始的输入。
+- $X$ 是什么？原始的特征输入。
   + 文本：一句话     
-    - ✅ X=I have a dog.
-    - ❌ X=Dog have a i.
+    - ✅ X=I have a lovely dog.
+    - ❌ X=Lovely Dog have a i.
   + 图像: 一个图，灰度的图的话，一个矩阵
      $X=\begin{pmatrix}
      1 & 1 & 3 & 255 \\
@@ -44,17 +42,19 @@
      1 & 1 & 3 & 255 \\
      \end{pmatrix}$
 *** 不确定性描述
-我看到的都是一些实实在在的东西，一个图像怎么用概率来描述？
+如何来用概率的语言描述一个确定的$X$
+- 我看到的都是一些实实在在的东西，一个图像怎么用概率来描述？
 - 可以认为这个世界上的一切都是不确定的，都是上帝在采样丢色子的结果。
-  - 比如相关性性判断，表面上是确定性的，依然可以表达为概率形式
-     P(相关|query, 广告)
-  - 一张图像，我们可以认为是采样的结果，
-    + 一张灰度图像可以看做是一个n*n维度的向量，
-    + 按照像素值来组织
-    + 整体是一个gauss分布，
-    + 简单的可以认为是各向同性的，像素之间相互独立。
+  + P(相关|query, 广告)
+     比如相关性性判断，表面上是确定性的，依然可以表达为概率形式
+  + P(用户点击广告|用户, 广告)
+- 一张图像，我们可以认为是采样的结果，
+  + 一张灰度图像可以看做是一个n*n维度的向量，
+  + 按照像素值来组织
+  + 整体是一个gauss分布，
+  + 简单的可以认为是各向同性的，像素之间相互独立。
 *** 生成模型的目的
-- 对图像的likilihood给出一个客观的判断
+- 对图像的likelihood给出一个客观的判断
   + 知道什么样的x概率低，知道什么样的x概率高
 - 基于概率采样生成
   + 我们可以生成更多的类似的，不在样本集合中的 X
@@ -64,20 +64,21 @@
   + conditional 的时候会产生更大的价值
     + 文本：LLM GPT做的就是概率密度估计的事情，可以逐个token来生成
     + 图片：控制的图像生成，P(x|c), 文本到图像的生成
-** 如何来对概率密度做建模
-我们会用DNN来建模函数密度函数$p_{\theta}(x)$ 
+** 概率密度建模
+我们会用DNN来建模密度函数$p_{\theta}(x)$ 
 *** 概率建模的难点在哪里？
-- $p_{\theta}(x)\ge 0, \forall x \in \mathcal{X}$ 
-- $\int p_{\theta}(x) dx=1, \forall \theta \in \Theta$ ✅ 真正的难点
-   
-   比如dnn的language model 在训练的时候，为了输出token $x_{i}$的概率，需要对所有的token做一个打分, 然后softmax
+- 约束
+  + $p_{\theta}(x)\ge 0, \forall x \in \mathcal{X}$
+  + $\int p_{\theta}(x) dx=1, \forall \theta \in \Theta$ ✅ 真正的难点
+
+     比如dnn的language model 在训练的时候，为了输出token $x_{i}$的概率，需要对所有的token做一个打分, 然后softmax
 - $\nabla_{\theta} log P_{\theta}(x)$ 是否容易计算
   + $P(x)=\int p(x,z) dz$ ❌
 - 能够容易sample 采样生成
-   + autogressive model 应用在图像像素级别 ❌
+  + autogressive model 应用在图像像素级别 ❌
 *** 限定概率分布的形状，对pdf参数做函数化
 - 假设这个分布是 $\mathcal{N}(\mu_{\theta}(x),\Sigma_{\theta}(x))$
-- 来推断 $\mu_{\theta}, \Sigma_{\theta}$
+- 极大似然估计来推断 $\mu_{\theta}, \Sigma_{\theta}$
 *** 限定序列结构做条件概率展开
 - 依赖：
   + $X$ 是可以序列化的 $X=(x_{1}, x_{2},\ldots, x_{n})$
@@ -89,9 +90,9 @@
 - autoregressive models
 - 例子：
   + language model
-  + image model?
-    + pixelRNN
+  + image model: pixelRNN
     + 效率的问题: 1920*1080=207,3600
+    + 如何序列化？
 *** 其他方法：
 - 基于隐变量的生成模型
   + VAE
@@ -153,9 +154,11 @@ A crucial computation property: Gaussians are closed under many operations.
 - Product: if p(x) and p(z) are Gaussian, then p(x)p(z) is proportional to a Gaussian
 - x gaussian N(0,1), y gaussian N(0,1), ax+by gaussion a^2+b^2.
 ** 重参数化
-*** 问题
-- $\nabla_{\theta}\mathrm{E}_{p(z)} \left[ f_\theta(z) \right]$
-- $\nabla_{\theta}\mathrm{E}_{p_{\theta}(z)} \left[ f_\theta(z) \right]$
+*** 问题：期望依赖的pdf中是否有参数
+- 两种情形下求梯度
+  + $\nabla_{\theta}\mathrm{E}_{p(z)} \left[ f_\theta(z) \right]$
+  + $\nabla_{\theta}\mathrm{E}_{p_{\theta}(z)} \left[ f_\theta(z) \right]$
+- $E_{Q_{\phi}(Z|X)}\log P_{\theta}(X|Z)$ 的梯度计算问题
 *** pdf不含有参数
 \[
 \nabla_\theta \mathrm{E}_{p(z)} \left[ f_\theta(z) \right] = \nabla_\theta \int p(z)f_\theta(z)dz
@@ -166,7 +169,7 @@ A crucial computation property: Gaussians are closed under many operations.
 \[
 = \mathrm{E}_{p(z)} \left[ \nabla_\theta f_\theta(z) \right]
 \]
-求导穿过了期望
+求导穿过了期望，这个好处在于可以对最后这个式子做MC
 *** pdf中含有参数
 \[
 \nabla_\theta \mathrm{E}_{p_\theta(z)} \left[ f_\theta(z) \right] = \nabla_\theta \int p_\theta(z)f_\theta(z)dz
@@ -378,14 +381,8 @@ sample $X$ 可以分两步走
 * VAE
 ** VAE 的思路
 *** 思考点一：log穿过积分，优化下界
-- 寻找 $\log P(X)$ 的下界
 - 利用$\log$ 函数的凹性，$\log$ 可以穿过去积分, 得到一个下界
 - 而这个下界是容易优化的， 同时可以对下界优化不断提升
-
-#+DOWNLOADED: screenshot @ 2024-03-28 23:14:24
-#+ATTR_HTML: :width 600px :align middle
-[[file:images/2024-03-28_23-14-24_screenshot.png]]
-*** proof:
 $\begin{aligned}
 \log P(X)
 &= \log \int P(X, Z) dZ\\
@@ -393,18 +390,22 @@ $\begin{aligned}
 &= \log E_{Q(Z)} \dfrac{P(X,Z)}{Q(Z)}\\
 &\ge E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)}\\
 \end{aligned}$
-*** 思考点二：提升有效性
+*** 思考点二：提升采样有效性
 - 不从$P(Z)$ 中sample $Z$
-- 而从$Q_{\phi}(Z)$ 中sample $Z$，$Q_{\phi}(Z)\rightarrow P(Z|X)$
+- 而从$Q(Z)$ 中sample $Z$，$Q(Z)\rightarrow P(Z|X)$
 - 然后基于$Z$ 重建 $\widehat{X}=f_{\theta}(Z)$
+#+DOWNLOADED: screenshot @ 2024-03-28 23:14:24
+#+ATTR_HTML: :width 600px :align middle
+[[file:images/2024-03-28_23-14-24_screenshot.png]]   
 ** variational inference
-- $\log P(X) = \mathcal{L} (Q) + \mathcal{D}(Q\|P)$
-  + $\mathcal{L}(Q) = \int Q(Z) \log \dfrac{P(X,Z)}{Q(Z)}dZ$
-  + $\mathcal{D}(Q\|P) = \int Q(Z) \log\dfrac{Q(Z)}{P(Z|X)} dZ$
-- $\log P(X) \ge \mathcal{L} (Q)$
+对于任意的$Q(Z)$， 有
+- $\log P(X) = \mathcal{L} (Q) + \mathcal{D}(Q(Z)\|P(Z|X))$
+  + $\mathcal{L}(Q) = E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)}$
+  + $\mathcal{D}(Q(Z)\|P(Z|X)) = E_{Q(Z)} \log\dfrac{Q(Z)}{P(Z|X)}$
+- $\log P(X) \ge \mathcal{L} (Q)$ ，由于 KL 非负
   + 寻找$Q(Z)$ 中最大化 $\mathcal{L}(Q)$
-  + 参数化: $Q_{\phi}(Z)$  $\max\limits_{\phi}\mathcal{L}(Q)$
-  + 变分的思想
+  + 参数化: $Q_{\phi}(Z)$  $\max\limits_{\phi}\mathcal{L}(Q)$ (变分的思想)
+  + $\mathcal{L} (Q)$ 就是 ELBO
 *** 证明
 $\begin{aligned}
 \log P(X) &= E_{Q(Z)} \log P(X) \\
@@ -413,15 +414,8 @@ $\begin{aligned}
 & = E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)} + E_{Q(Z)} \log \dfrac{Q(Z)}{P(Z|X)}\\
 & = E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)} + \mathcal{D}[Q(Z)||P(Z|X)]
 \end{aligned}$
-*** ELBO
-由于 KL Divergence 非负，所以
-$\begin{aligned}
-\log P(X) & \ge  E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)}
-\end{aligned}$
-
-*** 进一步
-对于任意的$Q(Z)$， 有
-$\log P(X) - \mathcal{D}[Q(Z) \| P(Z|X)] = \mathrm{E}_{Z \sim Q}[\log P(X|Z)] - \mathcal{D}[Q(Z) \| P(Z)]$
+*** ELBO=重建误差+正则项
+$\mathcal{L}(Q) = \mathrm{E}_{Q(Z)}[\log P(X|Z)] - \mathcal{D}[Q(Z) \| P(Z)]$
 **** proof
 $\begin{aligned}
 \mathcal{L}(Q)
@@ -435,6 +429,36 @@ $\begin{aligned}
 - $P(X|Z)$
 - $P(Z)$ 先验分布
 - $Q(Z)$ 
+** 参数化和求解ELBO
+给定一个$X$
+- $\mathcal{L} = \mathrm{E}_{Q(Z)}[\log P(X|Z)] - \mathcal{D}[Q(Z) \| P(Z)]$
+- $\mathcal{L}(\phi,\theta)=\mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]$
+*** 参数化
+- $Q_{\phi}(Z|X)=\mathcal{N}(Z|\mu_{\phi}(X), \Sigma_{\phi}(X))$
+  + 每个样本对应一个独立的正态分布
+  + $\mu_{\phi}(X)$ DNN
+  + $\Sigma_{\phi}(X)$ DNN
+- $P_{\theta}(X|Z)=\mathcal{N}(X|f_{\theta}(Z), I)$
+   + $f_{\theta}(Z)$ DNN
+- $P(Z)=\mathcal{N}(0,1)$
+*** 求解
+- $\log P(X|Z)\sim \|X-f_{\theta}(Z)\|^{2}$
+**** 整体求导处理的思路：
+我们有两个参数$\phi, \theta$, $\phi$ 出现在变分的候选函数里面，$\theta$ 出现在decoder里面。
+- 第一项利用MC 近似期望
+   + $\mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)]
+- 第二项基于显式的计算来求导
+   $\begin{aligned}
+&\mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]\\
+=& D\left[ \mathcal{N}(\mu_{\phi}(X), \Sigma_{\theta}(X)) \parallel \mathcal{N}(0, I) \right] \\
+=& \frac{1}{2} \left( \text{tr}(\Sigma_{\phi}(X)) + (\mu_{\phi}(X))^T (\mu(X)) - k - \log \det (\Sigma_{\phi}(X)) \right)
+\end{aligned}$
+**** 前向的步骤
+#+DOWNLOADED: screenshot @ 2024-04-01 16:39:15
+#+ATTR_HTML: :width 600px :align middle
+[[file:images/2024-04-01_16-39-15_screenshot.png]]
+
+**** 下一步：求导
 ** 理解ELBO
 *** 理解ELBO
 - $\log P_{\theta}(X) = \mathcal{L}(Q, \theta) + \mathcal{D}[Q(Z)\|P(Z|X)}]$
@@ -451,10 +475,9 @@ $\begin{aligned}
 [[file:images/2024-03-29_11-50-58_screenshot.png]]
       
 *** 带上参数来理解
-- 变分：$Q_{\phi}(Z|X)$ 参数化
-- 左边是优化的目标似然性
-- 右边第一项是ELBO
-- 右边第一项是KL divergence
+- 变分：参数化为$Q_{\phi}(Z|X)$ 
+- 左边: 目标似然性
+- 右边: ELBO + KL divergence
 - 我们希望不断去优化$Q_{\phi}(Z|X)$ 提升ELBO，
 - 当$Q_{\phi}(Z|X)= P(Z|X)$ 的时候，结束。
 *** 继续拆分ELBO
@@ -472,34 +495,6 @@ E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)} &= E_{Q(Z)}\log \dfrac{P(X|Z)P(Z)}{Q(Z)} \\
 $\log P(X) - \mathcal{D}[Q(Z) \| P(Z|X)] = \mathrm{E}_{Q(Z))}[\log P(X|Z)] - \mathcal{D}[Q(Z) \|P(Z)]$
 ELBO
 $\log P(X) \ge \mathrm{E}_{Q(Z))}[\log P(X|Z)] - \mathcal{D}[Q(Z) \|P(Z)]$
-** 参数化ELBO
-$\log P(X) \ge \mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]$
-*** 将Q,P 做参数化
-- $Q_{\phi}(Z|X)=\mathcal{N}(Z|\mu_{\phi}(X), \Sigma_{\phi}(X))$
-  + 每个样本对应一个独立的正态分布
-  + $\mu_{\phi}(X)$ DNN
-  + $\Sigma_{\phi}(X)$ DNN
-- $P_{\theta}(X|Z)=\mathcal{N}(X|f_{\theta}(Z), 1)$
-   + $f_{\theta}(Z)$ DNN
-*** 其他
-- $P(Z)=\mathcal{N}(0,1)$
-- $\log P(X|Z)\sim \|X-f_{\theta}(Z)\|^{2}$
-*** 两个gauss分布之间的KL散度可以显式计算
-$\begin{aligned}
-&\mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]\\
-=& D\left[ \mathcal{N}(\mu_{\phi}(X), \Sigma_{\theta}(X)) \parallel \mathcal{N}(0, I) \right] \\
-=& \frac{1}{2} \left( \text{tr}(\Sigma_{\phi}(X)) + (\mu_{\phi}(X))^T (\mu(X)) - k - \log \det (\Sigma_{\phi}(X)) \right)
-\end{aligned}$
-*** 前向的步骤
-#+DOWNLOADED: screenshot @ 2024-04-01 16:39:15
-#+ATTR_HTML: :width 600px :align middle
-[[file:images/2024-04-01_16-39-15_screenshot.png]]
-
-*** 整体求导处理的思路：
-我们有两个参数$\phi, \theta$, $\phi$ 出现在变分的候选函数里面，$\theta$出现在decoder里面。
-- 第一项利用MC 近似期望，
-- 第二项基于显式的计算来求导
-*** 下一步：求导
 ** 重参数化
 *** why
 - $E_{Q_{\phi}(Z|X)}\log P_{\theta}(X|Z)$ 的梯度计算问题
