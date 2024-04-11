@@ -438,7 +438,7 @@ $\begin{aligned}
 - 第二项:
    + 正则的一个效果
 
-** 参数化和求解ELBO
+** 参数化ELBO
 给定一个$X$,  $\mathcal{L} = \mathrm{E}_{Q(Z)}[\log P(X|Z)] - \mathcal{D}[Q(Z) \| P(Z)]$
 *** 参数化
 - $Q(Z)$ 参数化为 $Q_{\phi}(Z|X)=\mathcal{N}(Z|\mu_{\phi}(X), \Sigma_{\phi}(X))$
@@ -451,6 +451,21 @@ $\begin{aligned}
 *** 结果
 $\mathcal{L}(\phi,\theta)=\mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]$
 我们有两个参数$\phi, \theta$, $\phi$ 出现在变分的候选函数里面，$\theta$ 出现在decoder里面。
+** 理解ELBO
+*** 理解ELBO
+- $\log P_{\theta}(X) = \mathcal{L}(Q, \theta) + \mathcal{D}[Q(Z)\|P(Z|X)}]$
+#+DOWNLOADED: screenshot @ 2024-03-29 11:29:54
+#+ATTR_HTML: :width 400px :align middle
+[[file:images/2024-03-29_11-29-54_screenshot.png]]
+- 对于任意的$Q(Z)$，$\log P_\theta(X)\ge \mathcal{L}(Q,\theta)$
+- 给定一个$\theta$, $\mathcal{L}(Q(Z), \theta)$ 是一个泛函
+  + 这也是变分的意义所在，在各种函数中寻找一个最好的。
+- 给定一个$Q(Z)$, $\mathcal{L}(Q(Z), \theta)$ 提供了一个$\theta$ 的函数曲线
+  + 不断地优化和提升下界 $Q(Z)$，下界成为一个代理的优化目标
+  + 通过不多优化下界来更新$\theta$
+#+DOWNLOADED: screenshot @ 2024-03-29 11:50:58
+[[file:images/2024-03-29_11-50-58_screenshot.png]]
+
 ** 求解
 *** 整体思路
 - 第一项利用MC 近似，但是求解$\phi$ 梯度有问题，需要重参数化
@@ -467,22 +482,7 @@ $\mathcal{L}(\phi,\theta)=\mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \m
 #+ATTR_HTML: :width 600px :align middle
 [[file:images/2024-04-01_16-39-15_screenshot.png]]
 
-** 理解ELBO
-*** 理解ELBO
-- $\log P_{\theta}(X) = \mathcal{L}(Q, \theta) + \mathcal{D}[Q(Z)\|P(Z|X)}]$
-#+DOWNLOADED: screenshot @ 2024-03-29 11:29:54
-#+ATTR_HTML: :width 400px :align middle
-[[file:images/2024-03-29_11-29-54_screenshot.png]]
-- 对于任意的$Q(Z)$，$\log P_\theta(X)\ge \mathcal{L}(Q,\theta)$
-- 给定一个$\theta$, $\mathcal{L}(Q(Z), \theta)$ 是一个泛函
-  + 这也是变分的意义所在，在各种函数中寻找一个最好的。
-- 给定一个$Q(Z)$, $\mathcal{L}(Q(Z), \theta)$ 提供了一个$\theta$ 的函数曲线
-  + 不断地优化和提升下界 $Q(Z)$，下界成为一个代理的优化目标
-  + 通过不多优化下界来更新$\theta$
-#+DOWNLOADED: screenshot @ 2024-03-29 11:50:58
-[[file:images/2024-03-29_11-50-58_screenshot.png]]
-
-* 重参数化
+** 重参数化
 *** why
 - $E_{Q_{\phi}(Z|X)}\log P_{\theta}(X|Z)$ 的梯度计算问题
   + $\nabla_{\phi} E_{Q_{\phi}(Z|X)}\log P_{\theta}(X|Z)$
@@ -515,10 +515,6 @@ $\begin{aligned}
 2. 计算ELBO
    $\mathcal{L}(\theta, \phi, X)=\dfrac{1}{L}\sum\limits_{l=1}^{L} \log P_{\theta}(X| Z_{l})}$
 3. 对$\phi, \theta$ 求导
-** 理解encoder和decoder
-*** encoder $Q_{\psi}(Z|X)$
-训练好之后，
-*** decoder $P_{\theta}(X|Z)$
 ** VAE训练好后怎么用？
 *** 直接生成
 这个时候可以抛弃encoder $Q(Z|X)$ 了
@@ -539,6 +535,7 @@ encoder 和decoder 都需要使用
 - 正常使用生成工具的时候，原图是没有的
    + 你需要基于给与的条件或者是无中生有。
 *** 为什么不考虑协方差？如何建模像素之间的依赖呢？
+*** 为什么只采样一次、在MC方法里面？
 * VAE代码实现
 ** ELBO backbone
 *** 背景
