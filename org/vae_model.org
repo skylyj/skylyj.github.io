@@ -104,22 +104,26 @@
 - 数据集合 $\{X_1, X_2, \cdots, X_N}\}\sim P_{\text{data}}(X)$
 - 建模 $P_{\theta}(X)$
 - 寻找 $P_{\theta^{*}}(X)$
-*** 什么是似然？
-- evidence
 *** 什么是最大似然
 - 寻找参数$\theta$，使得$X$ 发生的概率 $P(X)$ 最大化
 - 或者说是 $\theta^{*}$ 能够最好的匹配 $X$, 最好的解释了 $X$.
-   
 *** 类比：
-- 用模型来解释已经发生的事实，哪个模型解释的好，就用哪个。
-- 犯罪推理: 在这些证据面前，哪个犯罪嫌疑人的可能性最大。
+- 用模型来解释已经发生的事实，哪个模型输出的概率高，就用哪个。
+  + model1 预测 $X$ 概率0.9
+  + model2 预测 $X$ 概率0.2
+  + 而$X$ 已经发生，选择和事实最接近的。
+- 
 *** 最大似然会有什么问题？
 - 当数据量少的时候，会发生过拟合。
-  - 类比，地域歧视
+  + 发生的事实可能有噪音
+  + 类比地域歧视：
+     #+begin_quote
+     你招了两个阿姨，打扫卫生都不干净，你发现他们都来自于A 省份，然后你得出一个结论：A省份的阿姨打扫卫生都很差。
+     #+end_quote
 - 怎么办？
   - 读万卷书，先验的知识来纠偏
   - 行万里路，看更多的数据，调整你的$\theta$
-- 但是人生短暂，实践的代价可能会很大。
+     + 但是人生短暂，实践的代价可能会很大 :)
 ** 蒙特卡洛方法和维度灾难
 *** 什么是MC
 #+begin_quote
@@ -155,21 +159,22 @@ $E_{X\sim p(x)} f(X)$
 ** 高斯分布的性质
 *** 定义
 $X\sim \mathcal{N}(\mu,\Sigma)$
+*** 封闭性
+- Affine transformation: if p(x) is Gaussian, then p(Ax + b) is a Gaussian.
+- Marginalization: if p(x, z) is Gaussian, then p(x) is Gaussian.
+- Conditioning: if p(x, z) is Gaussian, then p(x | z) is Gaussian.
+- Product: if p(x) and p(z) are Gaussian, then p(x)p(z) is proportional to a Gaussian
+  - 先验gauss，似然高斯，后验依然是高斯
+  - $P(X|Z)=\dfrac{P(Z|X)P(X)}{P(Z)}$
+  - diffusion model 中会使用到
+
+     $P(z_{t-1})$ 是高斯，$P(z_t|z_{t-1})$ 也是高斯，那么$P(z_{t-1}|z_{t})$ 也是高斯。
+- x gaussian N(0,1), y gaussian N(0,1), ax+by gaussion, with sigma= a^2+b^2.
 *** 性质
-- 高斯分布的线性组合还是高斯分布
-- 先验gauss，似然高斯，后验依然是高斯
 - 两个高斯分布之间的KL divergence
    $D\left[ \mathcal{N}(\mu_0, \Sigma_0) \parallel \mathcal{N}(\mu_1, \Sigma_1) \right] = \frac{1}{2} \left( \text{tr} \left( \Sigma_1^{-1}\Sigma_0 \right) + (\mu_1 - \mu_0)^T \Sigma_1^{-1} (\mu_1 - \mu_0) - k + \log \left( \dfrac{\det\Sigma_1}{\det\Sigma_0} \right) \right)$
 - KL
    $D\left[ \mathcal{N}(\mu(X), \Sigma(X)) \parallel \mathcal{N}(0, I) \right] = \frac{1}{2} \left( \text{tr}(\Sigma(X)) + (\mu(X))^T (\mu(X)) - k - \log \det (\Sigma(X)) \right)$
-
-*** closed under many operations.
-A crucial computation property: Gaussians are closed under many operations.
-- Affine transformation: if p(x) is Gaussian, then p(Ax + b) is a Gaussian1
-- Marginalization: if p(x, z) is Gaussian, then p(x) is Gaussian.
-- Conditioning: if p(x, z) is Gaussian, then p(x | z) is Gaussian.
-- Product: if p(x) and p(z) are Gaussian, then p(x)p(z) is proportional to a Gaussian
-- x gaussian N(0,1), y gaussian N(0,1), ax+by gaussion a^2+b^2.
 ** 重参数化
 *** 问题：期望依赖的pdf中是否有参数
 - 两种情形下求梯度
@@ -244,7 +249,18 @@ $\begin{aligned}
      = & \int \pi_{\theta}(\tau) \nabla_{\theta}\log \pi_{\theta}(\tau)r(\tau)d\tau \\
      = & E_{\tau \sim \pi_{\theta}(\tau)}\left[ \nabla_{\theta}\log \pi_{\theta}(\tau)r(\tau) \right]
      \end{aligned}$
-** 颜森不等式
+** Jensen's inequality
+*** statement：
+the secant line of a convex function lies above the graph of the function
+#+DOWNLOADED: screenshot @ 2024-04-13 16:46:32
+#+ATTR_HTML: :width 500px :align middle
+[[file:images/2024-04-13_16-46-32_screenshot.png]]
+*** 概率中的表述：
+如果 $X$ 是随机变量，$\phi$ 是一个凸函数的话，r$\phi (E(X)) \le E(\phi(X))$
+*** 注
+- log函数是一个凹函数,  $\log (E(X)) \ge E(\log(X))$
+- 如果遇到 log和期望的时候，我们可以让log穿过期望符号，得到一个好的下界
+   + $\log E_{Q(Z)} \dfrac{P(X,Z)}{Q(Z)} dZ \ge E_{Q(Z)}\log\dfrac{P(X,Z)}{Q(Z)}$
 ** 变分
 *** 泛函 fuctional
 - 输入是一个函数，输出一个值
@@ -552,6 +568,32 @@ encoder 和decoder 都需要使用
    + 你需要基于给与的条件或者是无中生有。
 *** 为什么不考虑协方差？如何建模像素之间的依赖呢？
 *** 为什么只采样一次、在MC方法里面？
+** high level再看下
+*** 每个图像都是一个高维的随机变量
+- 是可以sample的
+- 可以认为每个图像都是在一个独特的分布下采样的结果
+  + 按照像素点的当前值，是一个高斯分布，有唯一的均值，不过方差为0
+  + 如果我们把方差relax以下，我们也可以基于每个图像得到一些新的图像
+- 从一图一个分布到一个编码一个分布
+  + 一个图像一个分布有点太粗糙了
+  + 对图像$X$ 来做编码$Z$ ，如果编码相同，那么对应的分布是P(X|Z)是相同的。
+  + 这套编码至关重要，有了它，图像的基本特征就决定了，
+    + 人脸中，它可能包括了性别，肤色，发型，脸型等等
+  + 如果把 $P(X|Z)$ 学好了，那么我直接采样 $Z$ 就好了。
+    + 我希望直接从 $Z$ 中来采样
+    + 这个分布很容易sample，首选的还是多维的gaussian 分布
+    + 问题来了，$Z$的空间这么大，你sample出来的东西能合法吗？
+- key point
+  + 不是所有的图像放在一起做一个分布 $P(X)$
+*** 我们的假设：
+- 可以基于隐变量来做sample
+  + 先sample $Z$, 然后基于 $P(X|Z)$ 再sample 出来 $X$
+- 各种高斯：
+   + $P(Z)$ gaussian，$P(Z|X)$ ，$P(X|Z)$ 都是gaussian， $P(X,Z)$ 是gaussian
+- $P(X)$ 也是gaussian
+*** 本质的建模：无穷个高斯模型做加权混合
++ $P(X) = \int P(X|Z)P(Z) dZ \approx \sum_{i} P(X|Z_i) P(Z_{i}) \delta Z$
++ 权重的分布是符合高斯分布
 * VAE代码实现
 ** ELBO backbone
 *** 背景
@@ -566,6 +608,23 @@ X 的 z 值。变分方法使得这个分布可以通过学习数据来逼近真
 P(z∣X)。
 *** formula
 $\log P(X) - D_{KL}[Q(z|X) \| P(z|X)] = \mathbb{E}_{z \sim Q}[\log P(X|z)] - D_{KL}[Q(z|X) \| P(z)]$
+
+** 总结
+*** 生成模型
+- 概率建模 $P(X)$：目的是为了采样，生成样本以外的x
+- 直接基于类似于LM的条件概率建模，decode代价太大
+- 基于隐变量的方式: $Z\rightarrow X$
+  + $P(X) = P(Z)P(|X|Z)$
+*** 求解：
+- Jensen 不等式得到了似然函数的变分下界
+  + 最大似然转化为了对下界的优化上
+- 优化下界：
+  + 下界中有两套参数 $\phi, \theta$
+  + 变分相关的参数 $\phi$, 不断地提升下界
+  + 似然函数中的$\theta$, 这个是要不断提升的。
+*** 使用：
+- 使用的时候我们会丢掉 Encoder, 使用Decoder
+- 基于$N(0,1)$ sample 到$Z$, $Z$ 在
 
 * others
 ** 建模
