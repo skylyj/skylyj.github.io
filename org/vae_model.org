@@ -342,6 +342,14 @@ $\begin{aligned}
   + 或者说，我们无法观测到完整的信息，盲人摸象
   + 例子：ctr预估，天气，人的心情，或者平台获取不到信息等
 - 我们可以把观测之外的这些特征可以记作 latent variables
+
+**** Plato's Cave
+#+begin_quote
+In Plato’s allegory, a group of prisoners face the wall as a punishment and there are some physical objects behind them which the prisoners cannot see – the prisoners can only see the shadows of these objects on the wall. The shadows are otherwise the “observations” which the prisoners make – the observed variables. The physical objects are the “latent variables” the underlying variables governing the actual behaviour which we cannot directly see in Plato’s cave example.
+#+end_quote
+#+DOWNLOADED: screenshot @ 2024-04-14 17:22:01
+#+ATTR_HTML: :width 600px :align middle
+[[file:images/2024-04-14_17-22-01_screenshot.png]]
 *** 图片的latent variable
 - 尽管说，一张图片包含了所有的信息，但是很多的信息是你的人脑反馈分析出来的。
    + 比如这个图里面，你会反应出来它有簇，群的概念。
@@ -353,9 +361,10 @@ $\begin{aligned}
 *** 机器学习中的latent variables
 - 完整的样本是$(X, Z)$
   + 每个样本$X$ 对应一个latent variable $Z$
-- 但是我们只能观测到$X$, $Z$ 是观测不到的
+- 但是我们只能观测到$X$, $Z$ 是观测不到的, 且一般没有一个明确的定义
+  + VAE中的$Z$ 我们也不知道是feature，只是一种感觉
 - 直接去优化 $P_{\theta}(X)$ 是困难的, 有积分的存在
-  + $P(X)=\int_Z P_{\theta}(X,Z)=\int_{Z}P_{\theta}(X|Z)P_{\theta}(Z)dZ$
+  + $P(X)=\int_Z P_{\theta}(X,Z)dZ=\int_{Z}P_{\theta}(X|Z)P_{\theta}(Z)dZ$
 - 但是知道了$Z$ 后，$P(X,Z)$ 或者 $P(X|Z)$ 是容易优化的
 *** 基于隐变量的生成模型
 - latent variable 变的至关重要
