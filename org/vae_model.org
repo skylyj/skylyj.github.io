@@ -127,56 +127,85 @@
 #+end_quote
 *** 计算期望
 $E_{X\sim p(x)} f(X)$
-- sample $\{X_{i}\}_{i=1}^{n} \sim p(x)$
+- i.i.d sample $\{X_{i}\}_{i=1}^{n} \sim p(x)$
 - $\dfrac{1}{n}\sum_{i=1}^{n}f(X_{i})\rightarrow \mathrm{E}(f(X))$
 *** 背后的依据：大数定律
 - 如果$\{X_i\}_{i=1}^{n}$ 独立同分布，那么 $\dfrac{1}{n}\sum_{i=1}^{n}X_{i}\rightarrow \mathrm{E}(X)$
-- Explain:
+- 应用到上面：
 
-   如果$\{X_i\}_{i=1}^{n}$ 独立同部分, 那么 $\{f(X_i)\}_{i=1}^{n}$ 也是独立同分布的，且$\dfrac{1}{n}\sum_{i=1}^{n}f(X_{i})\rightarrow \mathrm{E}(f(X))$
-**** 更进一步，有中心极限定律：
+   如果$\{X_i\}_{i=1}^{n}$ 独立同部分, 那么 $\{f(X_i)\}_{i=1}^{n}$ 也是独立同分布的，
+   且$\dfrac{1}{n}\sum_{i=1}^{n}f(X_{i})\rightarrow \mathrm{E}(f(X))$
 *** 缺点：在高维空间中效率非常的低
 - 在高维空间里面，你的采样到的大部分的点都不是你想要的
-*** 举一个例子：计算$\pi$
+**** 看一个面试题目：计算$\pi$
+- 解法
+  + sample n个[-1,1] 之间的均匀随机变量
+  + 计算落入半径为1的圆形中间的比例
 - $n$ 维的球体的体积
   + $V_n=\dfrac{\pi^{\frac{n}{2}}R^{n}}{\Gamma(\frac{n}{2}+1)}$
   + $\Gamma(n+1)=n!$
-- 计算方法
+- 随机模拟方法
   + 基于单位球体的体积公式反向推导
      $\pi = (\dfrac{V_n\Gamma(\frac{n}{2}+1)}{R^n})^{\frac{2}{n}}$
   + sample n个[-1,1] 之间的均匀随机变量
   + 计算单位球中的个数比例得到单位球体的体积
-  + 基于上述公式推导出$\pi$
 - 维度灾难
   + $V_{n}\rightarrow 0, as\quad n\rightarrow \infty$
   + n维单位球体的体积趋向于0
   + sample失效
-*** 注意：MC 偏好期望形式的优化目标 $E_{P(X)} f(X)$
-** 高斯分布的性质
+*** 注意：
+- MC 偏好期望形式的优化目标 $E_{P(X)} f(X)$
+** 概率论基础的公式
+*** 链式法则
+$P(A_1 \cap A_2 \cap \ldots \cap A_n) = P(A_1) \times P(A_2 \mid A_1) \times  \ldots P(A_n \mid A_1 \cap \ldots \cap A_{n-1})$
+- $P(X_{1}X_{2}\ldots X_n) = P(X_1)P(X_2|X_1)\ldots P(X_{n}|X_{<n}})$
+*** 贝叶斯公式
+$P(Z|X)=\dfrac{P(X|Z)P(Z)}{P(X)}$
+- $P(Z)$ 先验
+- $P(X|Z)$ 似然性
+- $P(Z|X)$ 后验
+- 在VAE中，$Z$ 是隐变量，$X$ 是图像
+$P(\theta|\mathcal{X}) = \dfrac{P(\mathcal{X}|\theta)P(\theta)}{P(\mathcal{X})}$
+
+** 高斯分布
 *** 定义
-$X\sim \mathcal{N}(\mu,\Sigma)$
+- $X\sim \mathcal{N}(\mu,\Sigma)$
+  + 一维：$X\sim \mathcal{N}(\mu, \sigma^{2})$ , $p(x)=\dfrac{1}{\sqrt{2\pi\sigma^{2}}}\mathrm{exp}({-\dfrac{1}{2}(\dfrac{x-\mu}{\sigma})^{2}})$
+  + k维: $f(x)=\dfrac{1}{\sqrt{(2\pi)^{k}|\Sigma|}}\mathrm{exp}(-\dfrac{1}{2}(x-\mu)^T\Sigma^{-1}(x-\mu))$
+- mean vector: $\mu=\mathrm{E}[X]$
+- covariance matrix:
+  + $\Sigma_{i,j} = \mathrm{E}[(X_i-\mu_i)(X_{j}-\mu_j)}]$
+  + 在VAE/diffusion model中，出现的都是对角矩阵 $\Sigma=\sigma^{2}I$
 *** 封闭性
 - Affine transformation: if p(x) is Gaussian, then p(Ax + b) is a Gaussian.
+- 高斯随机变量的线性组合还是高斯分布
+  + VDM: $z_{t}=\sqrt{1-\beta_t}{z_{t-1}}+\beta_{t}\varepsilon$
+- Product: if p(x) and p(z) are Gaussian, then p(x)p(z) is proportional to a Gaussian
+  + 先验gauss，似然高斯，后验依然是高斯
+  + $P(X|Z)=\dfrac{P(Z|X)P(X)}{P(Z)}$
+  + VDM：$P(z_{t-1})$ 高斯，$P(z_t|z_{t-1})$ 高斯，那么$P(z_{t-1}|z_{t})$ 也是高斯。
 - Marginalization: if p(x, z) is Gaussian, then p(x) is Gaussian.
 - Conditioning: if p(x, z) is Gaussian, then p(x | z) is Gaussian.
-- Product: if p(x) and p(z) are Gaussian, then p(x)p(z) is proportional to a Gaussian
-  - 先验gauss，似然高斯，后验依然是高斯
-  - $P(X|Z)=\dfrac{P(Z|X)P(X)}{P(Z)}$
-  - diffusion model 中会使用到
-
-     $P(z_{t-1})$ 是高斯，$P(z_t|z_{t-1})$ 也是高斯，那么$P(z_{t-1}|z_{t})$ 也是高斯。
-- x gaussian N(0,1), y gaussian N(0,1), ax+by gaussion, with sigma= a^2+b^2.
-*** 性质
+*** KL divergence
 - 两个高斯分布之间的KL divergence
-   $D\left[ \mathcal{N}(\mu_0, \Sigma_0) \parallel \mathcal{N}(\mu_1, \Sigma_1) \right] = \frac{1}{2} \left( \text{tr} \left( \Sigma_1^{-1}\Sigma_0 \right) + (\mu_1 - \mu_0)^T \Sigma_1^{-1} (\mu_1 - \mu_0) - k + \log \left( \dfrac{\det\Sigma_1}{\det\Sigma_0} \right) \right)$
-- KL
-   $D\left[ \mathcal{N}(\mu(X), \Sigma(X)) \parallel \mathcal{N}(0, I) \right] = \frac{1}{2} \left( \text{tr}(\Sigma(X)) + (\mu(X))^T (\mu(X)) - k - \log \det (\Sigma(X)) \right)$
+   $\begin{aligned}
+   &\mathcal{D}\left[ \mathcal{N}(\mu_0, \Sigma_0) \parallel \mathcal{N}(\mu_1, \Sigma_1) \right] \\
+   =& \frac{1}{2} \left( \text{tr} \left( \Sigma_1^{-1}\Sigma_0 \right) + (\mu_1 - \mu_0)^T \Sigma_1^{-1} (\mu_1 - \mu_0) - k + \log \left( \dfrac{\det\Sigma_1}{\det\Sigma_0} \right) \right)
+   \\
+   \end{aligned}$
+- VAE中的涉及：后验和先验之间的距离
+   $\begin{aligned}
+   & \mathcal{D}\left[P(Z|X) \parallel P(Z)\right] \\
+   =&\mathcal{D}\left[ \mathcal{N}(\mu(X), \Sigma(X)) \parallel \mathcal{N}(0, I) \right] \\
+   =& \frac{1}{2} \left( \text{tr}(\Sigma(X)) + (\mu(X))^T (\mu(X)) - k - \log \det (\Sigma(X)) \right)
+   \end{aligned}$
 ** 重参数化
 *** 问题：期望依赖的pdf中是否有参数
 - 两种情形下求梯度
   + $\nabla_{\theta}\mathrm{E}_{p(z)} \left[ f_\theta(z) \right]$
   + $\nabla_{\theta}\mathrm{E}_{p_{\theta}(z)} \left[ f_\theta(z) \right]$
-- $E_{Q_{\phi}(Z|X)}\log P_{\theta}(X|Z)$ 的梯度计算问题
+- VAE: reconstruction error 的梯度计算
+   + $\nabla_{\phi}E_{Q_{\phi}(Z|X)}\log P_{\theta}(X|Z)$ 
 *** pdf不含有参数
 \[
 \nabla_\theta \mathrm{E}_{p(z)} \left[ f_\theta(z) \right] = \nabla_\theta \int p(z)f_\theta(z)dz
@@ -211,7 +240,6 @@ $X\sim \mathcal{N}(\mu,\Sigma)$
 - 如果 $z\sim p_z, z = g(\varepsilon), \varepsilon \sim p_\varepsilon$
 - 那么 $\mathrm{E}_{p_{z}}f(z)=\mathrm{E}_{p_\varepsilon}f(g(\varepsilon))$
 **** 解读
-- 期望依赖的随机变量换了，pdf也换了
 - 旧的pdf中可能不好处理，但是新的pdf比较容易处理
 **** 应用
 如果期望依赖的pdf中有参数，而我们需要针对这个期望对参数求导
@@ -241,57 +269,70 @@ $\begin{aligned}
 可以类比于强化学习中的 policy gradient 求导
    $J(\theta)= E_{\tau\sim \pi_{\theta}(\tau)} r(\tau)$
    
-   $\begin{aligned}\nabla_{\theta}J(\theta) = & \int \nabla_{\theta}\pi_{\theta}(\tau)r(\tau)d\tau \\
+   $\begin{aligned}
+   \nabla_{\theta}J(\theta)
+   = &  \nabla_{\theta} \int\pi_{\theta}(\tau)r(\tau)d\tau \\
+   = & \int \nabla_{\theta}\pi_{\theta}(\tau)r(\tau)d\tau \\
      = & \int \pi_{\theta}(\tau) \nabla_{\theta}\log \pi_{\theta}(\tau)r(\tau)d\tau \\
      = & E_{\tau \sim \pi_{\theta}(\tau)}\left[ \nabla_{\theta}\log \pi_{\theta}(\tau)r(\tau) \right]
      \end{aligned}$
 ** Jensen's inequality
 *** statement：
-the secant line of a convex function lies above the graph of the function
+the secant line of a convex function lies above the graph of the function.
+$f(tx_1+(1-t)x_{2}) \le tf(x_1)+(1-t)f(x_2), \forall t \in [0,1]$
 #+DOWNLOADED: screenshot @ 2024-04-13 16:46:32
 #+ATTR_HTML: :width 500px :align middle
 [[file:images/2024-04-13_16-46-32_screenshot.png]]
 *** 概率中的表述：
-如果 $X$ 是随机变量，$\phi$ 是一个凸函数的话，r$\phi (E(X)) \le E(\phi(X))$
+如果 $X$ 是随机变量，$f$ 是一个凸函数的话，$f (E(X)) \le E(f(X))$
 *** 注
 - log函数是一个凹函数,  $\log (E(X)) \ge E(\log(X))$
 - 如果遇到 log和期望的时候，我们可以让log穿过期望符号，得到一个好的下界
-   + $\log E_{Q(Z)} \dfrac{P(X,Z)}{Q(Z)} dZ \ge E_{Q(Z)}\log\dfrac{P(X,Z)}{Q(Z)}$
+   + VAE: $\log E_{Q(Z)} \dfrac{P(X,Z)}{Q(Z)} dZ \ge E_{Q(Z)}\log\dfrac{P(X,Z)}{Q(Z)}$
 ** 变分
 *** 泛函 fuctional
-- 输入是一个函数，输出一个值
+- 泛函是一个函数：
+  + 输入是一个函数
+  + 输出一个值
 - 例如熵的定义：$H(p)=\int p(x) \log p(x)dx$
 - 变分：是在一个函数空间中针对一个泛函来寻求极值。
 *** DNN 求解是在做泛函极小化的事情
 - 给定数据集合 $D=\{(x_i,y_i)|i=1,\ldots, N\}$
-- loss
+- loss：就是一个泛函
    
    $J(f) = \sum\limits_{(x_i,y_i)\in D} L(f(x_i), y_i)$
-- 在函数空间$F$ 中寻找极小化
-   
-   $\min\limits_{f\in F} J(f)$
-- DNN 参数化
-   $f(x)=f_{\theta}(x)$
-   $\min\limits_{\theta} J(\theta)$
-*** 变分和下界的关系
-**** 这个下界不是你想要的
+- 在函数空间$F$ 中做泛函的极小 
+      $\min\limits_{f\in F} J(f)$
+- 参数化: 泛函极小化到参数极小化
+  + 选定参数空间是DNN形式的函数
+  + $f(x)=f_{n}\circ \ldots f_1(x)}$, $f_{i}$ 是一层DNN变换，$\theta$ 是全部的DNN参数
+  + $f(x)=f_{\theta}(x)$
+  + $\min\limits_{\theta} J(\theta)$
+*** 变分的感觉
+- 有一个泛函的存在，$J(f)$
+- $f$在一个函数空间中变化 $\mathcal{F}$
+- 对 $J$ 求极值
+**** VAE中的变分
 $\begin{aligned}
 \log P(X)
+& = \log \int P(X,Z)dZ \\
+& = \log \int \dfrac{P(X,Z)}{Q(Z)} Q(Z) dZ \\
+&= \log E_{Q(Z)} \dfrac{P(X,Z)}{Q(Z)}  \\
+&\ge E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)} 
+\end{aligned}$
+- 上面的式子对任意的概率分布$Q(Z)$ 都成立
+- 泛函 $\mathcal{L}(Q) = E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)}$
+- 函数的空间是所有的PDF $Q(Z)$
+- 下界极大化
+**** 这个不是在做变分
+$\begin{aligned}
+\log P(X)
+& = \log \int P(X,Z)dZ \\
 & = log \int P(X|Z) P(Z) dZ \\
 &= log E_{P(Z)} P(X|Z)  \\
 & \ge E_{P(Z)} \log P(X|Z) 
 \end{aligned}$
 
-**** 下界需要动起来，变分的思想
-不断的提升上界天花板，逼近到原始值
-
-$\begin{aligned}
-\log P(X)
-& = \log \int \dfrac{P(X,Z)}{Q(Z)} Q(Z) dZ \\
-&= \log E_{Q(Z)} \dfrac{P(X,Z)}{Q(Z)}  \\
-&\ge E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)} 
-\end{aligned}$
-上面的式子对任意的概率分布$Q(Z)$ 都成立，我们可以在一个指定的函数空间寻找更好的 $Q(Z)$，不断提升这个下界。
 
 * 基于隐变量的生成模型
 ** latent variables
