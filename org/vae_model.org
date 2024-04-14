@@ -369,8 +369,8 @@ In Plato’s allegory, a group of prisoners face the wall as a punishment and th
 *** 基于隐变量的生成模型
 - latent variable 变的至关重要
   + $Z\rightarrow X$
-  + $Z$ 中是表达了图像中至关重要的特征
-  + 知道了$Z$, 整个图像就可以基于$P(X|Z) decode 构建出来。
+  + $Z$ 表达了图像中至关重要的特征
+  + 知道了$Z$, 整个图像就可以基于$P(X|Z)$ decode 构建出来。
   + 我们会把 $Z$ 当做是 $X$对一个的encoding 向量。
 - 生成：观测值是基于隐变量的值来生成的。
   + 先sample $Z$
@@ -382,43 +382,55 @@ $P(X)=\sum_{Z}P(Z)P(X|Z)=\sum\limits_{k=1}^{K} \pi_{k}\mathcal{N}(x|\mu_{k},\Sig
   + 先根据先验$P(Z)$ 决定在哪个群落点，
   + 再根据局部的似然 $P(X|Z)$ 采样，(根据这个群的均值，方差采样)
 - 直接优化 $\log P(X)$ 非常困难
-- 但是 $P(X,Z)=\prod\limits_{k=1}^K \pi_k^{Z_k}\mathcal{N}(X|\mu_{k}, \Sigma_{k})^{Z_k}$, 其中 $Z=(Z_1, Z_2, \ldots, Z_{k})$ one-hot 形式
+- 但是 $P(X,Z)=\prod\limits_{k=1}^K \pi_k^{Z_k}\mathcal{N}(X|\mu_{k}, \Sigma_{k})^{Z_k}$,
+  + 其中 $Z=(Z_1, Z_2, \ldots, Z_{k})$ one-hot 形式
   + $\log P(X,Z)=\sum\limits_{k=1}^{K}Z_k[log\pi_k+\log\mathcal{N}(X|\mu_{k}, \Sigma_{k})]$ 容易优化
 #+DOWNLOADED: screenshot @ 2024-03-29 09:31:36
 #+ATTR_HTML: :width 400px :align middle
 [[file:images/2024-03-29_09-31-36_screenshot.png]]
-
+**** VAE 就是一个高斯混合模型
+- 假设 $Z \sim \mathcal{N}(0, I)$
+- 假设 $P(X|Z) \sim \mathcal{N}(\mu(X), \Sigma(X))$
+- $P(X)=\int P(X|Z)P(Z) dX$
+  + 无穷个高斯的混合
 ** 生成式模型的概率建模
 *** 一般的模型的概率建模方式
-- 参数化单个样本$X$ 的概率 $P_{\theta}(X)$，
-- 得到若干的样本$X_1, X_2, \ldots, X_N$
-- 然后做概率的最大似然估计 $\prod_{i} P_{\theta}(X_i)$
+- 参数化单个样本$X$ 的概率
+   + $P_{\theta}(X)$
+   + $\log P_{\theta}(X)$ is easy
+- 最大似然估计 $\sum_{i} \log P_{\theta}(X_i)$
 *** 生成式模型的概率建模方式
-- $P(X)=\int_Z P_{\theta}(X,Z)=\int_{Z}P_{\theta}(X|Z)P_{\theta}(Z)dZ$
-- 是一堆分布做做加权平均
-- $P(X|Z)$ 参数化为 $P_{\theta}(X|Z)$
-  + 比如 $P(X|Z)=\mathcal{N}(\mu(Z;\theta),\Sigma(Z;\theta))$
-- $P(Z)$ 可以有参数，也可以没有参数
-  + 在VAE/diffusion model 中，$P(Z)=\mathcal{N}(0,I)$
-- 是一堆高斯分布做加权平均
-** 生成模型的优化
+- 参数化单个样本
+   + $P_{\theta}(X)=\int P_{\theta}(X|Z)P_{\theta}(Z)dZ$
+- VAE:
+   + $P_{\theta}(X|Z)=\mathcal{N}(\mu(Z;\theta),\Sigma(Z;\theta))$
+   + $P_{\theta}(Z)=\mathcal{N}(0,I)$
+- $\log P_{\theta}(X)=\log \int P_{\theta}(X|Z)P_{\theta}(Z)dZ$ ???
+** 生成模型的优化, VAE 的motivation
 *** 优化的目标：
 - $P(X)=\int_Z P_{\theta}(X|Z)P(Z) dZ$
 - 积分的存在，导致 $\log P(X)$ 无法直接优化
 *** 使用蒙特卡洛方法
-对于一个给定的样本 $X$,$P(X)= E\limits_{Z\sim P(Z)} P_{\theta}(X|Z)$
-- sample $Z_1, Z_2, \ldots, Z_n$ from $P(Z)$
-- $P(X) \approx \dfrac{1}{n} \sum_{i} P_{\theta}(X|Z_i)$
-- 再针对$\theta$ 做梯度下降
+对于一个给定的样本 $X$
+- 写成期望的形式
+   $P(X)= E\limits_{Z\sim P(Z)} P_{\theta}(X|Z)$
+- MC
+  + sample $Z_1, Z_2, \ldots, Z_n$ from $P(Z)$
+  + $P(X) \approx \dfrac{1}{n} \sum_{i} P_{\theta}(X|Z_i)$
+  + 再针对$\theta$ 做梯度下降
 *** 问题：
-- 维度灾难的问题：
-   + $n$ 需要极其大来得到一个准确的概率估计
+- 维度灾难的问题：高维空间中的sample 效率很低。
 - $Z_{i}$ 的有效性
   + $P(X|Z_i)$ 的概率大多为0，对参数的更新没有贡献
   + 所以我们要更加有效的 Z, 比如使用  $Q(Z|X)$ 来sample $Z$
   + $Q(Z|X)$ 能给出来容易生成$X$ 的Z 来。
   + 计算 $E_{Z\sim Q} P(X|Z)$
-- $\log P(X)$ 的问题依然存在     
+
+#+DOWNLOADED: screenshot @ 2024-03-29 09:31:36
+#+ATTR_HTML: :width 400px :align middle
+[[file:images/2024-03-29_09-31-36_screenshot.png]]     
+
+- $\log P(X)$ 的问题
 ** 换个思路建模密度
 *** 先验分布+确定性函数来建模
 $P(X)=P(Z)P(X|Z)$
@@ -459,8 +471,8 @@ sample $X$ 可以分两步走
 - 高斯分布有很多很好的性质可以使用
 * VAE
 ** VAE 的思路
-*** 思考点一：log穿过积分，优化下界
-- 利用$\log$ 函数的凹性，$\log$ 可以穿过去积分, 得到一个下界
+*** 思考点一：log穿过积分
+- 基于Jensen 不等式，$\log$ 可以穿过去积分, 得到一个下界
 - 而这个下界是容易优化的， 同时可以对下界优化不断提升
 $\begin{aligned}
 \log P(X)
@@ -482,7 +494,7 @@ $\begin{aligned}
   + $\mathcal{L}(Q) = E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)}$
   + $\mathcal{D}(Q(Z)\|P(Z|X)) = E_{Q(Z)} \log\dfrac{Q(Z)}{P(Z|X)}$
 - $\log P(X) \ge \mathcal{L} (Q)$ ，由于 KL 非负
-  + 寻找$Q(Z)$ 中最大化 $\mathcal{L}(Q)$
+  + $\mathcal{L}(Q)$ 是关于 $Q(Z)$ 的一个泛函
   + 参数化: $Q_{\phi}(Z)$
   + $\max\limits_{\phi}\mathcal{L}(Q)$ (变分的思想)
   + $\mathcal{L} (Q)$ 就是 ELBO
@@ -504,18 +516,21 @@ $\begin{aligned}
 & = E_{Q(Z)}\log P(X|Z) + E_{Q(Z)}\log\dfrac{P(Z)}{Q(Z)}\\
 & = E_{Q(Z)}\log P(X|Z) - E_{Q(Z)}\log\dfrac{Q(Z)}{P(Z)}\\
 \end{aligned}$
+
+
 **** 其中涉及到的几个分布
 - $P(X)$ 似然性
 - $P(X|Z)$
 - $P(Z)$ 先验分布
 - $Q(Z)$
 **** 理解
+一般的，我们会让 $Q(Z)$ 直接依赖于$X$, 变成$Q(Z|X)$ 
+$\mathcal{L}(Q) = \mathrm{E}_{Q(Z|X)}[\log P(X|Z)] - \mathcal{D}[Q(Z|) \| P(Z)]$
 - 第一项:
   + 有了encoding,decoding的意思
   + 可以使用MC的方法来优化
 - 第二项:
    + 正则的一个效果
-
 ** 参数化ELBO
 给定一个$X$,  $\mathcal{L} = \mathrm{E}_{Q(Z)}[\log P(X|Z)] - \mathcal{D}[Q(Z) \| P(Z)]$
 *** 参数化
