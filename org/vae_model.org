@@ -333,7 +333,6 @@ $\begin{aligned}
 & \ge E_{P(Z)} \log P(X|Z) 
 \end{aligned}$
 
-
 * 基于隐变量的生成模型
 ** latent variables
 *** 什么是latent variables
@@ -358,7 +357,7 @@ In Plato’s allegory, a group of prisoners face the wall as a punishment and th
 [[file:images/2024-03-29_09-31-36_screenshot.png]]
 
 - 在人脸的图片中，$Z$ 可能是肤色，脸型，发型，眼睛，鼻子的形状等
-*** 机器学习中的latent variables
+*** 对的latent variables的一些假设
 - 完整的样本是$(X, Z)$
   + 每个样本$X$ 对应一个latent variable $Z$
 - 但是我们只能观测到$X$, $Z$ 是观测不到的, 且一般没有一个明确的定义
@@ -393,6 +392,23 @@ $P(X)=\sum_{Z}P(Z)P(X|Z)=\sum\limits_{k=1}^{K} \pi_{k}\mathcal{N}(x|\mu_{k},\Sig
 - 假设 $P(X|Z) \sim \mathcal{N}(\mu(X), \Sigma(X))$
 - $P(X)=\int P(X|Z)P(Z) dX$
   + 无穷个高斯的混合
+** 基于隐变量的图像生成模型
+*** 不是把所有的图像放在一起做一个分布 $P(X)$
+- 这样的分布有了可能用处也不大，你在高维sample的时候困难极其的大
+- 另外你对sample做不了太多的控制
+*** 每个图像可以看做对应一个分布
+- 每个图像都可以看做是一个高斯分布下的采样
+- 按照像素点的当前值，是一个高斯分布，有均值，方差
+- 如果我们把方差relax以下，我们也可以基于每个图像得到一些新的图像
+*** 从一图一个分布到一个编码一个分布
+- 一个图像一个分布有点太细了，没法泛化
+- 对图像$X$ 来做低维编码$Z$ ，如果编码相同，那么对应的分布是$P(X|Z)$ 是相同的。
+- 这套编码至关重要，有了它，图像的基本特征就决定了，
+  + 人脸中，它可能包括了性别，肤色，发型，脸型等等
+- 把这个编码空间学好了，你可以对生成的东西做更好的操控
+- 如果把 $P(X|Z)$ 学好了
+  + 那么我直接采样 $Z$ 就好了，
+  + 这个分布需要很容易sample，首选的还是多维的gaussian 分布
 ** 生成式模型的概率建模
 *** 一般的模型的概率建模方式
 - 参数化单个样本$X$ 的概率
@@ -406,7 +422,7 @@ $P(X)=\sum_{Z}P(Z)P(X|Z)=\sum\limits_{k=1}^{K} \pi_{k}\mathcal{N}(x|\mu_{k},\Sig
    + $P_{\theta}(X|Z)=\mathcal{N}(\mu(Z;\theta),\Sigma(Z;\theta))$
    + $P_{\theta}(Z)=\mathcal{N}(0,I)$
 - $\log P_{\theta}(X)=\log \int P_{\theta}(X|Z)P_{\theta}(Z)dZ$ ???
-** 生成模型的优化, VAE 的motivation
+** 生成模型的优化困难
 *** 优化的目标：
 - $P(X)=\int_Z P_{\theta}(X|Z)P(Z) dZ$
 - 积分的存在，导致 $\log P(X)$ 无法直接优化
@@ -418,12 +434,12 @@ $P(X)=\sum_{Z}P(Z)P(X|Z)=\sum\limits_{k=1}^{K} \pi_{k}\mathcal{N}(x|\mu_{k},\Sig
   + sample $Z_1, Z_2, \ldots, Z_n$ from $P(Z)$
   + $P(X) \approx \dfrac{1}{n} \sum_{i} P_{\theta}(X|Z_i)$
   + 再针对$\theta$ 做梯度下降
-*** 问题：
+*** 困难
 - 维度灾难的问题：高维空间中的sample 效率很低。
 - $Z_{i}$ 的有效性
-  + $P(X|Z_i)$ 的概率大多为0，对参数的更新没有贡献
-  + 所以我们要更加有效的 Z, 比如使用  $Q(Z|X)$ 来sample $Z$
-  + $Q(Z|X)$ 能给出来容易生成$X$ 的Z 来。
+  + 直接来sample $Z_{i} \sim P(Z)$，$P(X|Z_i)$ 的概率大多为0，对参数的更新没有贡献
+  + 所以我们要更加有效的 Z, 最好使用  $P(Z|X)$ 来sample $Z$
+  + 但是 $P(Z|X)$ 是未知的，找 $Q(Z|X)$ 来近似 $P(Z|X)
   + 计算 $E_{Z\sim Q} P(X|Z)$
 
 #+DOWNLOADED: screenshot @ 2024-03-29 09:31:36
@@ -471,8 +487,12 @@ sample $X$ 可以分两步走
 - 高斯分布有很多很好的性质可以使用
 * VAE
 ** VAE 的思路
+$\log P(X)= \log \int P(Z) P(X|Z) dZ$
+
 *** 思考点一：log穿过积分
 - 基于Jensen 不等式，$\log$ 可以穿过去积分, 得到一个下界
+  + 积分项中加入分布Q(Z)
+  + 积分变成了期望，log穿过期望
 - 而这个下界是容易优化的， 同时可以对下界优化不断提升
 $\begin{aligned}
 \log P(X)
@@ -498,6 +518,7 @@ $\begin{aligned}
   + 参数化: $Q_{\phi}(Z)$
   + $\max\limits_{\phi}\mathcal{L}(Q)$ (变分的思想)
   + $\mathcal{L} (Q)$ 就是 ELBO
+- 当$Q(Z)=P(Z|X)$ 时，$\log P(X) = \mathcal{L}(Q)$
 *** 证明
 $\begin{aligned}
 \log P(X) &= E_{Q(Z)} \log P(X) \\
@@ -506,9 +527,25 @@ $\begin{aligned}
 & = E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)} + E_{Q(Z)} \log \dfrac{Q(Z)}{P(Z|X)}\\
 & = E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)} + \mathcal{D}[Q(Z)||P(Z|X)]
 \end{aligned}$
-*** ELBO=重建误差+正则项
-$\mathcal{L}(Q) = \mathrm{E}_{Q(Z)}[\log P(X|Z)] - \mathcal{D}[Q(Z) \| P(Z)]$
-**** proof
+** ELBO=重建误差+正则项
+- $\mathcal{L}(Q) = \mathrm{E}_{Q(Z)}[\log P(X|Z)] - \mathcal{D}[Q(Z) \| P(Z)]$
+- 一般的，我们会让 $Q(Z)$ 直接依赖于$X$, 变成$Q(Z|X)$
+- $\mathcal{L}(Q) = \mathrm{E}_{Q(Z|X)}[\log P(X|Z)] - \mathcal{D}[Q(Z|X) \| P(Z)]$
+*** 理解
+- 第一项:
+  + 对所有可能生成$X$ 的$Z$, 把似然性加权平均
+  + 有了encoding,decoding的意思
+    + Q(Z|X) 是对 X的一个编码
+    + P(X|Z) 是对 Z的一个解码
+  + 可以使用MC的方法来优化
+- 第二项:
+  + 需要同时最小化 Q(Z|X) 和 P(Z) 之间的距离
+  + 对Q(Z|X) 做一个正则，防止 $Q(Z|X)$ 变得过于尖锐，得到一个Dirac 分布
+  + 这里我们并不希望第二项成为0，否则采样效率又降低回到从前（KL散度消失）
+     
+     如果正则项成为0，这将意味着 Q(Z|X) 不含有关于X的任何信息，隐变量失去了
+     他的数据表征的能力。
+*** proof
 $\begin{aligned}
 \mathcal{L}(Q)
 & = E_{Q(Z)}\log\dfrac{P(X,Z)}{Q(Z)}\\
@@ -516,28 +553,12 @@ $\begin{aligned}
 & = E_{Q(Z)}\log P(X|Z) + E_{Q(Z)}\log\dfrac{P(Z)}{Q(Z)}\\
 & = E_{Q(Z)}\log P(X|Z) - E_{Q(Z)}\log\dfrac{Q(Z)}{P(Z)}\\
 \end{aligned}$
-
-
-**** 其中涉及到的几个分布
-- $P(X)$ 似然性
-- $P(X|Z)$
-- $P(Z)$ 先验分布
-- $Q(Z)$
-**** 理解
-一般的，我们会让 $Q(Z)$ 直接依赖于$X$, 变成$Q(Z|X)$ 
-$\mathcal{L}(Q) = \mathrm{E}_{Q(Z|X)}[\log P(X|Z)] - \mathcal{D}[Q(Z|) \| P(Z)]$
-- 第一项:
-  + 有了encoding,decoding的意思
-  + 可以使用MC的方法来优化
-- 第二项:
-   + 正则的一个效果
 ** 参数化ELBO
 给定一个$X$,  $\mathcal{L} = \mathrm{E}_{Q(Z)}[\log P(X|Z)] - \mathcal{D}[Q(Z) \| P(Z)]$
 *** 参数化
 - $Q(Z)$ 参数化为 $Q_{\phi}(Z|X)=\mathcal{N}(Z|\mu_{\phi}(X), \Sigma_{\phi}(X))$
   + 每个样本对应一个独立的正态分布
-  + $\mu_{\phi}(X)$ DNN
-  + $\Sigma_{\phi}(X)$ DNN
+  + $\mu_{\phi}(X)$，$\Sigma_{\phi}(X)$ DNN
 - $P(X|Z)$ 参数化为 $P_{\theta}(X|Z)=\mathcal{N}(X|f_{\theta}(Z), I)$
    + $f_{\theta}(Z)$ DNN
 - $P(Z)=\mathcal{N}(0,1)$
@@ -545,7 +566,6 @@ $\mathcal{L}(Q) = \mathrm{E}_{Q(Z|X)}[\log P(X|Z)] - \mathcal{D}[Q(Z|) \| P(Z)]$
 $\mathcal{L}(\phi,\theta)=\mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]$
 我们有两个参数$\phi, \theta$, $\phi$ 出现在变分的候选函数里面，$\theta$ 出现在decoder里面。
 ** 理解ELBO
-*** 理解ELBO
 - $\log P_{\theta}(X) = \mathcal{L}(Q, \theta) + \mathcal{D}[Q(Z)\|P(Z|X)}]$
 #+DOWNLOADED: screenshot @ 2024-03-29 11:29:54
 #+ATTR_HTML: :width 400px :align middle
@@ -559,31 +579,24 @@ $\mathcal{L}(\phi,\theta)=\mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \m
 #+DOWNLOADED: screenshot @ 2024-03-29 11:50:58
 [[file:images/2024-03-29_11-50-58_screenshot.png]]
 
-** 求解
-*** 整体思路
-- 第一项利用MC 近似，但是求解$\phi$ 梯度有问题，需要重参数化
-  + $\mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)]\approx \sum_i \log P_{\theta}(X|Z_i),\quad Z_i \sim Q_{\phi}(Z|X)$
-  + $\log P(X|Z)\sim \|X-f_{\theta}(Z)\|^{2}$
+** VAE求解
+$\mathcal{L}(\phi,\theta)=\mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]$
+如何对$\phi,\theta$ 求导？
+- 对$\theta$ 求导，easy
+- 对$\phi$ 求导？
+*** 对$\phi$ 求导思路
+- 第一项期望依赖的分布中有求导对应的参数, 需要重参数化
 - 第二项可以显式计算，只和$\phi$ 相关，容易计算梯度
    $\begin{aligned}
     &\mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]\\
-    =& D\left[ \mathcal{N}(\mu_{\phi}(X), \Sigma_{\theta}(X)) \parallel \mathcal{N}(0, I) \right] \\
+    =& D\left[ \mathcal{N}(\mu_{\phi}(X), \Sigma_{\phi}(X)) \parallel \mathcal{N}(0, I) \right] \\
     =& \frac{1}{2} \left( \text{tr}(\Sigma_{\phi}(X)) + (\mu_{\phi}(X))^T (\mu_{\phi}(X)) - k - \log \det (\Sigma_{\phi}(X)) \right)
     \end{aligned}$
-*** 前向的步骤
-#+DOWNLOADED: screenshot @ 2024-04-01 16:39:15
-#+ATTR_HTML: :width 600px :align middle
-[[file:images/2024-04-01_16-39-15_screenshot.png]]
-
-** 重参数化
-*** why
-- $E_{Q_{\phi}(Z|X)}\log P_{\theta}(X|Z)$ 的梯度计算问题
-  + $\nabla_{\phi} E_{Q_{\phi}(Z|X)}\log P_{\theta}(X|Z)$
-  + 期望依赖的分布依赖于参数$\phi$
-*** how
-- 重参数化
-  + $Z\sim Q_{\phi}(Z|X)=\mathcal{N}(Z|\mu(X;\phi), \Sigma(X;\phi))$ 
-  + $Z=\mu(X,\phi)+\Sigma^{1/2}(X,\phi)*\varepsilon, \quad \varepsilon \sim N(0,1)$
+*** 重参数化
+$\nabla_{\phi} E_{Q_{\phi}(Z|X)}\log P_{\theta}(X|Z)$ ，期望依赖的分布依赖于参数$\phi$
+- 重参数化：对随机变量做变量替换
+  + before： $Z\sim Q_{\phi}(Z|X)=\mathcal{N}(Z|\mu(X;\phi), \Sigma(X;\phi))$ 
+  + after： $Z=\mu(X,\phi)+\Sigma^{1/2}(X,\phi)*\varepsilon, \quad \varepsilon \sim N(0,1)$
   + $E_{Q_{\phi}(Z|X)}\log P(X|Z)=E_{\varepsilon}\log P(X|\mu(X,\phi)+\Sigma^{1/2}(X,\phi)*\varepsilon))$
 - 最后期望的分布不再依赖于参数
 - 求导此时可以穿过期望
@@ -594,20 +607,24 @@ $\mathcal{L}(\phi,\theta)=\mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \m
    = &E_{\varepsilon} \nabla_{\phi} \log P_{\theta}(X|\mu(X,\phi)+\Sigma^{1/2}(X,\phi)*\varepsilon)
    \end{aligned}$
    
-** 基于MC的优化算法
-ELBO，我们有两个参数$\phi, \theta$
+*** 最终的求解算法
+- 最后的优化目标
+  
+   $\begin{aligned}
+    \mathcal{L} &=
+    \mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]\\
+    &=\mathrm{E}_{\varepsilon}[\log P_{\theta}(X|Z(\phi,\varepsilon))] - \mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]\\
+    \end{aligned}$
+- 应用MC方法
+  + sample $\varepsilon_l \sim N(0,1), Z_l=\mu(X,\phi)+\Sigma^{1/2}(X,\phi)*\varepsilon_{l}$
+  + 计算ELBO
+    $\mathcal{L}(\theta, \phi, X)=\dfrac{1}{L}\sum\limits_{l=1}^{L} \log P_{\theta}(X| Z_{l})} -\mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]$
+  + 对$\phi, \theta$ 求导
+** 前向的步骤
+#+DOWNLOADED: screenshot @ 2024-04-01 16:39:15
+#+ATTR_HTML: :width 600px :align middle
+[[file:images/2024-04-01_16-39-15_screenshot.png]]
 
-$\begin{aligned}
-\mathcal{L} &=
-\mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]\\
-&=\mathrm{E}_{\varepsilon}[\log P_{\theta}(X|Z(\phi,\varepsilon))] - \mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]\\
-\end{aligned}$
-
-应用MC方法
-1. sample $\varepsilon_l \sim N(0,1), Z_l=\mu(X,\phi)+\Sigma^{1/2}(X,\phi)*\varepsilon_{l}$
-2. 计算ELBO
-   $\mathcal{L}(\theta, \phi, X)=\dfrac{1}{L}\sum\limits_{l=1}^{L} \log P_{\theta}(X| Z_{l})}$
-3. 对$\phi, \theta$ 求导
 ** VAE训练好后怎么用？
 *** 直接生成
 这个时候可以抛弃encoder $Q(Z|X)$ 了
@@ -616,34 +633,11 @@ $\begin{aligned}
   + 虽然 $f(Z)$ 只是gauss的 $\mu$ 参数，无需再次sample
 **** why？
 因为在优化的过程中 $Q(Z|X)$ 和 $P(Z)$ 已经充分靠近，作为优化的第二项
-
 *** 重构原来的图像
 encoder 和decoder 都需要使用
 - 基于$Q(Z|X)$ 得到encoding $Z$
 - 基于$P(X|Z)$ 生成出来 $\hat{X}$
-** open problems
-*** 如何来理解整个训练过程中的噪音？
-基于sample得到了$Z$，基于加入噪音后的sample来还原图像，这是一种提升模型鲁棒性的方法。
-*** 如何来理解训练完了以后，基于$P(Z)$ 来sample？
-- 正常使用生成工具的时候，原图是没有的
-   + 你需要基于给与的条件或者是无中生有。
-*** 为什么不考虑协方差？如何建模像素之间的依赖呢？
-*** 为什么只采样一次、在MC方法里面？
-** high level再看下
-*** 不是所有的图像放在一起做一个分布 $P(X)$
-*** 每个图像都是一个高斯分布下的采样
-- 按照像素点的当前值，是一个高斯分布，有唯一的均值，不过方差为0
-- 如果我们把方差relax以下，我们也可以基于每个图像得到一些新的图像
-*** 从一图一个分布到一个编码一个分布
-- key point
-- 一个图像一个分布有点太细了
-- 对图像$X$ 来做低维编码$Z$ ，如果编码相同，那么对应的分布是$P(X|Z)$ 是相同的。
-- 这套编码至关重要，有了它，图像的基本特征就决定了，
-  + 人脸中，它可能包括了性别，肤色，发型，脸型等等
-- 如果把 $P(X|Z)$ 学好了
-  + 那么我直接采样 $Z$ 就好了，
-  + 这个分布需要很容易sample，首选的还是多维的gaussian 分布
-  + 问题来了，$Z$的空间这么大，你sample出来的东西能合法吗？
+** 一些思考
 *** 我们的假设：
 - 可以基于隐变量来做sample
   + 先sample $Z$, 然后基于 $P(X|Z)$ 再sample 出来 $X$
@@ -652,9 +646,53 @@ encoder 和decoder 都需要使用
 - $P(X)$ 也是gaussian
 *** 本质的建模：无穷个高斯模型做加权混合
 + $P(X) = \int P(X|Z)P(Z) dZ \approx \sum_{i} P(X|Z_i) P(Z_{i}) \delta Z$
-+ 无穷多个高斯分布来做加权的组合
-+ 权重的分布是符合高斯分布
++ 整体看：图像的概率分布是无穷多个高斯分布来做加权的组合
+   + 且权重的分布是符合高斯分布
++ 微观的看：一个图像只对应于一个高斯分布 $\mathcal{N}(\mu(Z), \Sigma(Z))$
+   + 从生成的角度看，$Z$ 决定和生成了$X$
+*** open problems
+**** 如何来理解整个训练过程中的噪音？
+- 你可能sample到对$X$ 贡献不大的$Z$ 上去，怎么办？
+- 基于加入噪音后的$Z$来decode图像，本身是一种提升模型鲁棒性的方法。
+**** 为什么不考虑协方差？如何建模像素之间的依赖呢？
+- 图像中最重要的一个特征是相互之间的像素的依赖性
+- 而我们的给出的假设中，$P(Z), P(X|Z), P(Z|X)$ 统统都去掉了协方差。
+**** 在$Q(Z|X)$ 中依然存在着高维sample的维度灾难的问题
+**** $P(Z)$ 可以sample空间这么大，如何保证 $P(X|Z)$ 生成出来的也是个正常的人脸？
 * VAE代码实现
+** 代码实现
+
+** 总结
+*** 生成模型
+- 概率建模 $P(X)$：
+  + 目的是为了采样，生成样本以外的x
+  + 计算似然性
+- 如果直接基于autoregressive model，decode代价太大
+- 基于隐变量的方式: $Z\rightarrow X$
+  + $P(X) = P(Z)P(|X|Z)$
+*** 求解：
+- 每个X的背后都有一个Z，但是Z未知，所以需要遍历Z
+   $P(X)=\int P(Z)P(X|Z) dZ$
+  + log 很难处理，
+  + 很难采样到对X有实质贡献的Z
+- Jensen 不等式得到了似然函数的变分下界
+  + 最大似然转化为了对下界的优化上
+  + $\log P(X) \ge \mathcal{L} (Q)$
+  + $\mathcal{L}(Q) = E_{Q(Z)} \log \dfrac{P(X,Z)}{Q(Z)}$
+- 优化下界： $\mathcal{L}(\phi,\theta)=\mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]$
+  + 下界中有两套参数 $\phi, \theta$
+  + 变分相关的参数 $\phi$, encoder, 不断地提升下界
+  + 似然函数中的$\theta$, decoder
+*** 使用：
+- 使用的时候我们会丢掉 Encoder, 使用Decoder
+*** 优化中的独特点：
+- 对下界来优化
+- 有两套参数：一个是优化提升下界的，一个是正常的参数
+*** 建模的本质：无穷个高斯和一个高斯
+对于一个图像$X$
++ 如果Z不知道的情况下，X是无穷个高斯分布的组合
++ 当Z知道的情况下，X只对应唯一一个高斯分布$\mathcal{N}(\mu(Z), \Sigma(Z))$
+* others
 ** ELBO backbone
 *** 背景
 $P(x)=\int P(x|z) p(z)$
@@ -669,24 +707,7 @@ P(z∣X)。
 *** formula
 $\log P(X) - D_{KL}[Q(z|X) \| P(z|X)] = \mathbb{E}_{z \sim Q}[\log P(X|z)] - D_{KL}[Q(z|X) \| P(z)]$
 
-** 总结
-*** 生成模型
-- 概率建模 $P(X)$：目的是为了采样，生成样本以外的x
-- 直接基于类似于LM的条件概率建模，decode代价太大
-- 基于隐变量的方式: $Z\rightarrow X$
-  + $P(X) = P(Z)P(|X|Z)$
-*** 求解：
-- Jensen 不等式得到了似然函数的变分下界
-  + 最大似然转化为了对下界的优化上
-- 优化下界：
-  + 下界中有两套参数 $\phi, \theta$
-  + 变分相关的参数 $\phi$, 不断地提升下界
-  + 似然函数中的$\theta$, 这个是要不断提升的。
-*** 使用：
-- 使用的时候我们会丢掉 Encoder, 使用Decoder
-- 基于$N(0,1)$ sample 到$Z$, $Z$ 在
-
-* others
+*
 ** 建模
 *** 建模
 - latent variable space $\mathcal{Z}$, pdf $p(z)$
