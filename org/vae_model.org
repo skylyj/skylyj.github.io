@@ -1,30 +1,32 @@
 #+TITLE: 图像生成之VAE
 * 背景
 ** 主要内容
-- VAE是在图像生成模型扮演了极为重要的角色
-  + 理解diffusion model的基础
-  + 数学门槛比较高, 概率/泛函/微积分
-  + 随机性引入到了模型训练当中
-- 如何做概率密度估计
-  + 建模的难点/生成式/latent variable
-- VAE涉及的数学基础回顾
+- 背景
+  + VAE在图像生成模型扮演了非常重要的角色
+  + ELBO应用: VQVAE, Diffusion Model, Dalle
+  + 数学门槛较高: 概率/泛函/微积分
+- 生成模型之概率建模
+  + 生成模型在做什么/如何对概率密度建模/挑战
+- VAE建模之数学基础
   + 最大似然/蒙特卡洛/大数定律/维数灾难/积分变量替换/变分
 - VAE
-  + 建模/ELBO导出/如何求解
+  + 基于隐变量的生成模型/优化的困难
+  + 变分思想/下界的导出/如何求解
 - VAE的代码实现
 - 参考：
   + Tutorial on Variational Autoencoders [[cite:&doerschTutorialVariationalAutoencoders2021]]
   + Auto-Encoding Variational Bayes [[cite:&kingmaAutoEncodingVariationalBayes2022a]]
 ** 生成模型
-*** 机器学习的几个常见的topic
-- 分类
-- 回归
-- 概率密度估计：生成模型关注的事情
-*** 我们熟悉的概率建模
+*** 机器学习的几个topic
+- 监督学习：分类/回归
+- 无监督学习: 概率密度估计
+*** 监督学习中的概率建模
 - 基于特征来推断目标事件发生的概率
    $P(Y=1|X)=\sigma(f_{\theta}(X))$
-- ctr 里面：基于用户和item的特征信息来推测用户点击item的概率
-- NLP 中的相关性模型：基于用户输入的query和doc特征来推测两者相关的概率
+- ctr 里面：
+   基于用户和item的特征信息来推测用户点击item的概率
+- NLP 中的相关性模型：
+   基于用户输入的query和doc特征来推测两者相关的概率
 - 我们很少需要对样本特征的分布$P(X)$ 直接建模
 *** 生成模型在做什么？
 - 对样本$X$ 的概率分布$P(X)$ 做估计
@@ -39,6 +41,16 @@
      5 & 7 & 9 \\
      200 & 222 & 255 \\
      \end{pmatrix}$
+**** 图像的例子
+#+DOWNLOADED: screenshot @ 2024-04-18 23:10:59
+#+ATTR_HTML: :width 300px :align middle
+[[file:images/2024-04-18_23-10-59_screenshot.png]]
+✅
+
+#+DOWNLOADED: screenshot @ 2024-04-18 23:13:34
+#+ATTR_HTML: :width 300px :align middle
+[[file:images/2024-04-18_23-13-34_screenshot.png]]
+❌
 *** 用概率的语言描述这个世界
 - 我看到的都是一些实实在在的东西，一个图像怎么用概率来描述？
 - 可以认为
@@ -61,6 +73,15 @@
   + 给一些树木的样例图片，可以生成一片森林出来。
   + conditional 的时候会产生更大的价值
     + 控制的图像生成，P(x|c), 文本到图像的生成
+**** 例子1
+#+DOWNLOADED: screenshot @ 2024-04-19 23:52:53
+#+ATTR_HTML: :width 600px :align middle
+[[file:images/2024-04-19_23-52-53_screenshot.png]]
+**** 例子2
+#+DOWNLOADED: screenshot @ 2024-04-19 23:56:46
+#+ATTR_HTML: :width 600px :align middle
+[[file:images/2024-04-19_23-56-46_screenshot.png]]
+
 ** 概率密度建模
 *** 概率密度建模的难点在哪里？
 建模密度函数$P_{\theta}(x)$ 
@@ -142,23 +163,31 @@ $E_{X\sim p(x)} f(X)$
 *** 缺点：在高维空间中效率非常的低
 - 在高维空间里面，你的采样到的大部分的点都不是你想要的
 **** 看一个面试题目：计算$\pi$
-- 解法
+- 在二维空间的解法
   + sample n个[-1,1] 之间的均匀随机变量
   + 计算落入半径为1的圆形中间的比例
-- $n$ 维的球体的体积
-  + $V_n=\dfrac{\pi^{\frac{n}{2}}R^{n}}{\Gamma(\frac{n}{2}+1)}$
-  + $\Gamma(n+1)=n!$
-- 随机模拟方法
+  + $\pi r^2/4r^{2}=\pi/4$
+- 推广到n维空间中
+  + $n$ 维的球体的体积, 半径为$R$
+  + $V_n=\dfrac{\pi^{\frac{n}{2}}R^{n}}{\Gamma(\frac{n}{2}+1)},~\Gamma(n+1)=n!$
   + 基于单位球体的体积公式反向推导
-     $\pi = (\dfrac{V_n\Gamma(\frac{n}{2}+1)}{R^n})^{\frac{2}{n}}$
-  + sample n个[-1,1] 之间的均匀随机变量
-  + 计算单位球中的个数比例得到单位球体的体积
+     $\begin{aligned}\pi
+     &=(\dfrac{V_n\Gamma(\frac{n}{2}+1)}{R^n})^{\frac{2}{n}}\\
+     &=(\dfrac{V_n}{(2R)^{n}} \times 2^{n}\times \Gamma(\frac{n}{2}+1))^{\frac{2}{n}}\\
+     &=(\dfrac{V_{n}}{V_{cube}} \times 2^{n}\times \Gamma(\frac{n}{2}+1))^{\frac{2}{n}}
+     \end{aligned}$
+  + 方法：
+    + sample n个[-1,1] 之间的均匀随机变量
+    + 计算单位球中的个数比例得到 $V_{n}/V_{cube}$
 - 维度灾难
-  + $V_{n}\rightarrow 0, as\quad n\rightarrow \infty$
+  + $V_{n}\rightarrow 0, n\rightarrow \infty$
   + n维单位球体的体积趋向于0
   + sample失效
-*** 注意：
+*** 注：
 - MC 偏好期望形式的优化目标 $E_{P(X)} f(X)$
+- 例子：
+  + $E_{\tau\sim p(\tau)}r(\tau)$
+  + $\int_{p(z|x)}p(x|z)dz$
 ** 概率论基础的公式
 *** 链式法则
 $P(A_1 \cap A_2 \cap \ldots \cap A_n) = P(A_1) \times P(A_2 \mid A_1) \times  \ldots P(A_n \mid A_1 \cap \ldots \cap A_{n-1})$
@@ -169,13 +198,13 @@ $P(Z|X)=\dfrac{P(X|Z)P(Z)}{P(X)}$
 - $P(X|Z)$ 似然性
 - $P(Z|X)$ 后验
 - 在VAE中，$Z$ 是隐变量，$X$ 是图像
-$P(\theta|\mathcal{X}) = \dfrac{P(\mathcal{X}|\theta)P(\theta)}{P(\mathcal{X})}$
+- 贝叶斯估计MAP，$P(\theta|\mathcal{X}) = \dfrac{P(\mathcal{X}|\theta)P(\theta)}{P(\mathcal{X})}$
 
 ** 高斯分布
 *** 定义
 - $X\sim \mathcal{N}(\mu,\Sigma)$
   + 一维：$X\sim \mathcal{N}(\mu, \sigma^{2})$ , $p(x)=\dfrac{1}{\sqrt{2\pi\sigma^{2}}}\mathrm{exp}({-\dfrac{1}{2}(\dfrac{x-\mu}{\sigma})^{2}})$
-  + k维: $f(x)=\dfrac{1}{\sqrt{(2\pi)^{k}|\Sigma|}}\mathrm{exp}(-\dfrac{1}{2}(x-\mu)^T\Sigma^{-1}(x-\mu))$
+  + k维: $p(x)=\dfrac{1}{\sqrt{(2\pi)^{k}|\Sigma|}}\mathrm{exp}(-\dfrac{1}{2}(x-\mu)^T\Sigma^{-1}(x-\mu))$
 - mean vector: $\mu=\mathrm{E}[X]$
 - covariance matrix:
   + $\Sigma_{i,j} = \mathrm{E}[(X_i-\mu_i)(X_{j}-\mu_j)}]$
@@ -185,7 +214,7 @@ $P(\theta|\mathcal{X}) = \dfrac{P(\mathcal{X}|\theta)P(\theta)}{P(\mathcal{X})}$
 - 高斯随机变量的线性组合还是高斯分布
   + VDM: $z_{t}=\sqrt{1-\beta_t}{z_{t-1}}+\beta_{t}\varepsilon$
 - Product: if p(x) and p(z) are Gaussian, then p(x)p(z) is proportional to a Gaussian
-  + 先验gauss，似然高斯，后验依然是高斯
+  + 先验高斯，似然高斯，后验依然是高斯
   + $P(X|Z)=\dfrac{P(Z|X)P(X)}{P(Z)}$
   + VDM：$P(z_{t-1})$ 高斯，$P(z_t|z_{t-1})$ 高斯，那么$P(z_{t-1}|z_{t})$ 也是高斯。
 - Marginalization: if p(x, z) is Gaussian, then p(x) is Gaussian.
@@ -204,10 +233,10 @@ $P(\theta|\mathcal{X}) = \dfrac{P(\mathcal{X}|\theta)P(\theta)}{P(\mathcal{X})}$
    =& \frac{1}{2} \left( \text{tr}(\Sigma(X)) + (\mu(X))^T (\mu(X)) - k - \log \det (\Sigma(X)) \right)
    \end{aligned}$
 ** 重参数化
-*** 问题：期望依赖的pdf中是否有参数
+*** 问题：
 - 两种情形下求梯度
-  + $\nabla_{\theta}\mathrm{E}_{p(z)} \left[ f_\theta(z) \right]$
-  + $\nabla_{\theta}\mathrm{E}_{p_{\theta}(z)} \left[ f_\theta(z) \right]$
+  + $\nabla_{\theta}\mathrm{E}_{p(z)} \left[ f_\theta(z) \right]$，pdf没有参数
+  + $\nabla_{\theta}\mathrm{E}_{p_{\theta}(z)} \left[ f_\theta(z) \right]$，pdf有参数
 - VAE: reconstruction error 的梯度计算
    + $\nabla_{\phi}E_{Q_{\phi}(Z|X)}\log P_{\theta}(X|Z)$ 
 *** pdf不含有参数
@@ -236,15 +265,10 @@ $P(\theta|\mathcal{X}) = \dfrac{P(\mathcal{X}|\theta)P(\theta)}{P(\mathcal{X})}$
 \]
 - 多出来一个左端项，不好处理
 - 进一步，如果我们基于MC来表达期望的话
-  + sample $\{Z_{i}\}_{i=1}^{n}\sim p(Z)$
-  + 得到 $\dfrac{1}{n}\sum_{i}f_\theta(Z_{i})$
-  + 如果sample 的分布 $p(Z)$ 依赖于$\theta$, 将无法求导
 *** 重参数化=积分的变量替换
 **** 什么是reparameterization trick?
 - 如果 $z\sim p_z, z = g(\varepsilon), \varepsilon \sim p_\varepsilon$
 - 那么 $\mathrm{E}_{p_{z}}f(z)=\mathrm{E}_{p_\varepsilon}f(g(\varepsilon))$
-**** 解读
-- 旧的pdf中可能不好处理，但是新的pdf比较容易处理
 **** 应用
 如果期望依赖的pdf中有参数，而我们需要针对这个期望对参数求导
 $\begin{aligned}
@@ -265,11 +289,12 @@ $\begin{aligned}
     $\begin{aligned}
     & \quad\mathrm{E}_{p_{z}}f(z)\\
     =&\int f(s)p_z(s) ds \\
-    =&\int f(g(\varepsilon))p_z(g(\varepsilon))g'(\varepsilon) d\varepsilon \\
+    \overset{s=g(\varepsilon)}{=}&\int f(g(\varepsilon))p_z(g(\varepsilon))g'(\varepsilon) d\varepsilon \\
     =&\int f(g(\varepsilon))p_{\varepsilon}(\varepsilon)d\varepsilon \\
     =& \mathrm{E}_{p_\varepsilon}f(g(\varepsilon)) \\
     \end{aligned}$
-*** 类比
+
+*** 类比log trick
 可以类比于强化学习中的 policy gradient 求导
    $J(\theta)= E_{\tau\sim \pi_{\theta}(\tau)} r(\tau)$
    
@@ -280,6 +305,12 @@ $\begin{aligned}
      = & \int \pi_{\theta}(\tau) \nabla_{\theta}\log \pi_{\theta}(\tau)r(\tau)d\tau \\
      = & E_{\tau \sim \pi_{\theta}(\tau)}\left[ \nabla_{\theta}\log \pi_{\theta}(\tau)r(\tau) \right]
      \end{aligned}$
+     
+*** 启发：
+1. 目标函数是一个期望的形式, 依赖的pdf中含有参数
+3. 两种处理的手段
+   + 重参数化
+   + log trick
 ** Jensen's inequality
 *** statement：
 the secant line of a convex function lies above the graph of the function.
@@ -305,16 +336,16 @@ $f(tx_1+(1-t)x_{2}) \le tf(x_1)+(1-t)f(x_2), \forall t \in [0,1]$
 - loss：就是一个泛函
    
    $J(f) = \sum\limits_{(x_i,y_i)\in D} L(f(x_i), y_i)$
-- 在函数空间$F$ 中做泛函的极小 
+- 在函数空间$F$ 中做泛函的极小, F是连续函数的空间，无穷维。
       $\min\limits_{f\in F} J(f)$
 - 参数化: 泛函极小化到参数极小化
   + 选定参数空间是DNN形式的函数
   + $f(x)=f_{n}\circ \ldots f_1(x)}$, $f_{i}$ 是一层DNN变换，$\theta$ 是全部的DNN参数
   + $f(x)=f_{\theta}(x)$
-  + $\min\limits_{\theta} J(\theta)$
+  + $\min\limits_{\theta} J(\theta)$ 有限维空间中求解
 *** 变分的感觉
 - 有一个泛函的存在，$J(f)$
-- $f$在一个函数空间中变化 $\mathcal{F}$
+- $f$ 在一个函数空间中变化 $\mathcal{F}$
 - 对 $J$ 求极值
 **** VAE中的变分
 $\begin{aligned}
@@ -355,7 +386,7 @@ In Plato’s allegory, a group of prisoners face the wall as a punishment and th
 [[file:images/2024-04-14_17-22-01_screenshot.png]]
 *** 图片的latent variable
 - 尽管说，一张图片包含了所有的信息，但是很多的信息是你的人脑反馈分析出来的。
-   + 比如这个图里面，你会反应出来它有簇，群的概念。
+   + 比如这个图里面，你会反应出来它有簇，群的概念，这些就是$Z$
 #+DOWNLOADED: screenshot @ 2024-03-29 09:31:36
 #+ATTR_HTML: :width 400px :align middle
 [[file:images/2024-03-29_09-31-36_screenshot.png]]
@@ -437,7 +468,7 @@ $P(X)=\sum_{Z}P(Z)P(X|Z)=\sum\limits_{k=1}^{K} \pi_{k}\mathcal{N}(x|\mu_{k},\Sig
 *** 优化的目标：
 - $P(X)=\int_Z P_{\theta}(X|Z)P(Z) dZ$
 - 积分的存在，导致 $\log P(X)$ 无法直接优化
-*** 使用蒙特卡洛方法
+*** 使用蒙特卡洛方法？
 对于一个给定的样本 $X$
 - 写成期望的形式
    $P(X)= E\limits_{Z\sim P(Z)} P_{\theta}(X|Z)$
@@ -448,7 +479,8 @@ $P(X)=\sum_{Z}P(Z)P(X|Z)=\sum\limits_{k=1}^{K} \pi_{k}\mathcal{N}(x|\mu_{k},\Sig
 *** 困难
 - 维度灾难的问题：高维空间中的sample 效率很低。
 - $Z_{i}$ 的有效性
-  + 直接来sample $Z_{i} \sim P(Z)$，$P(X|Z_i)$ 的概率大多为0，对参数的更新没有贡献
+  + 直接来sample $Z_{i} \sim P(Z)$，$P(X|Z_i)$ 的概率大多为0，可能导致模型一直
+     error很大，很难拟合样本。
   + 所以我们要更加有效的 Z, 最好使用  $P(Z|X)$ 来sample $Z$
   + 但是 $P(Z|X)$ 是未知的，找 $Q(Z|X)$ 来近似 $P(Z|X)
   + 计算 $E_{Z\sim Q} P(X|Z)$
@@ -595,6 +627,10 @@ $\nabla_{\phi} E_{Q_{\phi}(Z|X)}\log P_{\theta}(X|Z)$ ，期望依赖的分布�
   + 对$\phi, \theta$ 求导
 ** 前向的步骤
 #+DOWNLOADED: screenshot @ 2024-04-01 16:39:15
+#+DOWNLOADED: screenshot @ 2024-04-20 00:13:24
+#+ATTR_HTML: :width 600px :align middle
+[[file:images/2024-04-20_00-13-24_screenshot.png]]
+
 #+ATTR_HTML: :width 600px :align middle
 [[file:images/2024-04-01_16-39-15_screenshot.png]]
 
@@ -641,6 +677,8 @@ sample $X$ 可以分两步走
 *** 为什么不用均匀分布做先验？而使用高斯？
 - 高斯分布在整个空间上有定义，计算KL 不会有除以0的问题发生
 - 高斯分布有很多很好的性质可以使用
+
+** VAE VS AE
 
 ** 一些思考
 *** 我们的假设：
