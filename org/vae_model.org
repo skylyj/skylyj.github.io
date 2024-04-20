@@ -444,7 +444,7 @@ $P(X)=\sum_{Z}P(Z)P(X|Z)=\sum\limits_{k=1}^{K} \pi_{k}\mathcal{N}(x|\mu_{k},\Sig
 - 如果把 $P(X|Z)$ 学好了
   + 那么我直接采样 $Z$ 就好了，
   + 这个分布需要很容易sample，首选的还是多维的gaussian 分布
-** 生成式模型的概率建模
+** 隐变量生成模型的概率建模
 *** 一般的模型的概率建模方式
 - 参数化单个样本$X$ 的概率
    + $P_{\theta}(X)$
@@ -464,7 +464,7 @@ $P(X)=\sum_{Z}P(Z)P(X|Z)=\sum\limits_{k=1}^{K} \pi_{k}\mathcal{N}(x|\mu_{k},\Sig
   1. ancestral sample：$Z\rightarrow X$
   2. VDM $Z_n\rightarrow Z_{n-1} \rightarrow Z_{n-2} \ldots \rightarrow X$
   3. 类比于自回归模型 $X_1\rightarrow X_2 \rightarrow X_3 \ldots \rightarrow X_n$
-** 生成模型的优化困难
+** 隐变量生成模型的优化困难
 *** 优化的目标：
 - $P(X)=\int_Z P_{\theta}(X|Z)P(Z) dZ$
 - 积分的存在，导致 $\log P(X)$ 无法直接优化
@@ -490,6 +490,18 @@ $P(X)=\sum_{Z}P(Z)P(X|Z)=\sum\limits_{k=1}^{K} \pi_{k}\mathcal{N}(x|\mu_{k},\Sig
 [[file:images/2024-03-29_09-31-36_screenshot.png]]     
 
 - $\log P(X)$ 的问题
+** 隐变量生成模型的另一个挑战
+- 我们的初衷：$Z\rightarrow X$
+  + 先sample $Z\sim P(Z)$
+  + 再sample $X\sim P(Z|X)$
+- $Z$ 所在的 latent space 应该满足
+  + 连续性：$Z$ 连续变化的时候，生成的图像也是在连续变化的。
+  + 完备性: 任意的一个sample $Z$, 都可以被解码生成一个有意义的图像。
+*** 关于完备性：
+本质是encoding部分$Q(Z|X)$ 需要和你将来要sample的 $P(Z)$ 之间是契合兼容的。
+#+DOWNLOADED: screenshot @ 2024-04-20 10:49:15
+#+ATTR_HTML: :width 600px :align middle
+[[file:images/2024-04-20_10-49-15_screenshot.png]]  
 * VAE
 ** VAE 的思路
 $\log P(X)= \log \int P(Z) P(X|Z) dZ$
@@ -537,17 +549,19 @@ $\begin{aligned}
 - 一般的，我们会让 $Q(Z)$ 直接依赖于$X$, 变成$Q(Z|X)$
 - $\mathcal{L}(Q) = \mathrm{E}_{Q(Z|X)}[\log P(X|Z)] - \mathcal{D}[Q(Z|X) \| P(Z)]$
 *** 理解
-- 第一项:
+- 第一项: reconstruction error
   + 对所有可能生成$X$ 的$Z$, 把似然性加权平均
   + 有了encoding,decoding的意思
     + Q(Z|X) 是对 X的一个编码
     + P(X|Z) 是对 Z的一个解码
   + 可以使用MC的方法来优化
-- 第二项:
+- 第二项: 正则项
   + 需要同时最小化 Q(Z|X) 和 P(Z) 之间的距离
-  + 对Q(Z|X) 做一个正则，防止 $Q(Z|X)$ 变得过于尖锐，得到一个Dirac 分布
+  + 一方面：对Q(Z|X) 做一个正则，防止 $Q(Z|X)$ 变得过于尖锐，得到一个Dirac 分布
+  + 另一方面：我们需要学习到latent space和我们要采样的空间是契合的。
+- 这两项之间需要有一个balance     
   + 这里我们并不希望第二项成为0，否则采样效率又降低回到从前（KL散度消失）
-     
+    
      如果正则项成为0，这将意味着 Q(Z|X) 不含有关于X的任何信息，隐变量失去了
      他的数据表征的能力。
 *** proof
@@ -626,14 +640,9 @@ $\nabla_{\phi} E_{Q_{\phi}(Z|X)}\log P_{\theta}(X|Z)$ ，期望依赖的分布�
     $\mathcal{L}(\theta, \phi, X)=\dfrac{1}{L}\sum\limits_{l=1}^{L} \log P_{\theta}(X| Z_{l})} -\mathcal{D}[Q_{\phi}(Z|X) \|P(Z)]$
   + 对$\phi, \theta$ 求导
 ** 前向的步骤
-#+DOWNLOADED: screenshot @ 2024-04-01 16:39:15
 #+DOWNLOADED: screenshot @ 2024-04-20 00:13:24
 #+ATTR_HTML: :width 600px :align middle
 [[file:images/2024-04-20_00-13-24_screenshot.png]]
-
-#+ATTR_HTML: :width 600px :align middle
-[[file:images/2024-04-01_16-39-15_screenshot.png]]
-
 ** VAE训练好后怎么用？
 *** 直接生成
 这个时候可以抛弃encoder $Q(Z|X)$ 了
@@ -678,8 +687,6 @@ sample $X$ 可以分两步走
 - 高斯分布在整个空间上有定义，计算KL 不会有除以0的问题发生
 - 高斯分布有很多很好的性质可以使用
 
-** VAE VS AE
-
 ** 一些思考
 *** 我们的假设：
 - 可以基于隐变量来做sample
@@ -693,6 +700,13 @@ sample $X$ 可以分两步走
    + 且权重的分布是符合高斯分布
 + 微观的看：一个图像只对应于一个高斯分布 $\mathcal{N}(\mu(Z), \Sigma(Z))$
    + 从生成的角度看，$Z$ 决定和生成了$X$
+** 关于噪音
+- 训练的过程中出现了一次$Z$的sample
+- $X$ 是基于一个不确定的，有噪音的东西生成的。
+- 监督学习中也会有加入噪音的方式来训练模型，提升模型的鲁棒性，抗过拟合。
+#+DOWNLOADED: screenshot @ 2024-04-20 00:13:24
+#+ATTR_HTML: :width 600px :align middle
+[[file:images/2024-04-20_00-13-24_screenshot.png]]   
 *** open problems
 **** 如何来理解整个训练过程中的噪音？
 - 你可能sample到对$X$ 贡献不大的$Z$ 上去，怎么办？
