@@ -590,7 +590,7 @@ $\mathcal{L}(\phi,\theta)=\mathrm{E}_{Q_{\phi}(Z|X))}[\log P_{\theta}(X|Z)] - \m
 #+DOWNLOADED: screenshot @ 2024-03-29 11:29:54
 #+ATTR_HTML: :width 400px :align middle
 [[file:images/2024-03-29_11-29-54_screenshot.png]]
-- 对于任意的$Q(Z)$，$\log P_\theta(X)\ge \mathcal{L}(Q,\theta)$
+       - 对于任意的$Q(Z)$，$\log P_\theta(X)\ge \mathcal{L}(Q,\theta)$
 - 给定一个$\theta$, $\mathcal{L}(Q(Z), \theta)$ 是一个泛函
   + 这也是变分的意义所在，在各种函数中寻找一个最好的。
 - 给定一个$Q(Z)$, $\mathcal{L}(Q(Z), \theta)$ 提供了一个$\theta$ 的函数曲线
@@ -722,7 +722,7 @@ sample $X$ 可以分两步走
 ** 代码实现
 *** model
 #+begin_src python
-class VAE(nn.Module):
+class VAE_Model(nn.Module):
     def __init__(self):
         super(VAE, self).__init__()
         # 网络的维度是 raw_dim -> hidden_dim -> latent_dim -> hidden_dim -> raw_dim
@@ -745,7 +745,7 @@ class VAE(nn.Module):
 
     def decode(self, z):
         h = F.relu(self.decoder_l1(z))
-        return torch.sigmoid(self.decoder_l2(h))  # 归一化
+        return torch.sigmoid(self.decoder_l2(h))
 
     def forward(self, x):
         mu, logvar = self.encode(x.view(-1, raw_dim))
@@ -764,8 +764,8 @@ def loss_function(recon_x, x, mu, logvar):
 #+end_src
 *** train
 #+begin_src python
-model = VAE().to(device)
 def train():
+    model = VAE_Model().to(device)
     model.train()
     train_loss = 0
     for batch_idx, (data, _) in enumerate(train_loader):
@@ -779,16 +779,15 @@ def train():
 #+end_src
 ** 总结
 *** 生成模型
-- 概率建模 $P(X)$：
+- 概率建模 $P(X)$
   + 目的是为了采样，生成样本以外的x
   + 计算似然性
 - 如果直接基于autoregressive model，decode代价太大
 - 基于隐变量的方式: $Z\rightarrow X$
-  + $P(X) = P(Z)P(|X|Z)$
 *** 求解：
 - 每个X的背后都有一个Z，但是Z未知，所以需要遍历Z
    $P(X)=\int P(Z)P(X|Z) dZ$
-  + log 很难处理，
+  + log 很难处理
   + 很难采样到对X有实质贡献的Z
 - Jensen 不等式得到了似然函数的变分下界
   + 最大似然转化为了对下界的优化上
@@ -806,4 +805,5 @@ def train():
 *** 建模的本质：无穷个高斯和一个高斯
 对于一个图像$X$
 + 如果Z不知道的情况下，X是无穷个高斯分布的组合
+      $P(X)=\int P(Z)P(X|Z) dZ$
 + 当Z知道的情况下，X只对应唯一一个高斯分布$\mathcal{N}(\mu(Z), \Sigma(Z))$

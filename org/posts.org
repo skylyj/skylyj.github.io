@@ -39,3 +39,14 @@
 :EXPORT_OPTIONS: author:nil
 :END:
 #+INCLUDE: "./configure_emacs.org" :minlevel 2 :lines "1-"
+* DONE 揭秘VAE背后的数学原理
+:PROPERTIES:
+:EXPORT_FILE_NAME: index
+:EXPORT_DATE: 2024-03-15
+:EXPORT_DESCRIPTION: 揭秘VAE背后的数学原理
+:EXPORT_HUGO_BUNDLE: 2024/vae
+:EXPORT_OPTIONS: author:nil
+:END:
+#+INCLUDE: "./vae_model.org" :minlevel 2 :lines "1-"
+** 参考论文
+[[bibliography:/Users/lianyijiang/llm.bib]]
